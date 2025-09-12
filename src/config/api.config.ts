@@ -16,15 +16,13 @@ const API_CONFIG = {
       RECOVERY_PASSWORD: (email: string) => `/user/recovery_password/${email}`,
     },
 
-    // Produits
+    // Produits (EPG)
     PRODUCTS: {
-      LIST: '/api_epg/all_products/1/10',
-      DETAIL: (id: string | number) => `/products/${id}`,
-      CATEGORIES: '/products/categories',
-      SEARCH: '/products/search',
-      CREATE: '/products',
-      UPDATE: (id: string | number) => `/products/${id}`,
-      DELETE: (id: string | number) => `/products/${id}`,
+      // Remarque: HomeService/ProductService paginent via paramètres dynamiques
+      LIST: (page: string | number, count: string | number) => `/api_epg/all_products/${page}/${count}`,
+      SEARCH: (libelle: string) => `/api_epg/products_by_search/${libelle}`,
+      DISPONIBILITY: '/api_epg/disponibility_product',
+      RESERVATION: '/api_epg/reservation',
     },
 
     // Utilisateurs

@@ -269,7 +269,7 @@ export class HomeService {
    * Expected response shape (example): { libelle: string, cip?: string, [k:string]: any } | null
    */
   async alternativeByProvince(payload: { cip?: string | number; province?: string; query?: string }) {
-    const url = joinUrl(this.apiEpgBase, 'alternative_by_province')
+    const url = joinUrl('api_epg', 'alternative_by_province')
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

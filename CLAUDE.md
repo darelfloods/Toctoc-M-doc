@@ -69,7 +69,9 @@ The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue
 ## Configuration
 
 ### API Endpoints
-- **Main API**: Proxied `/api/*` → `https://51.68.46.67:8000`
+- **Main API**: Base `https://51.68.46.67:8000`
+  - Auth endpoints: `/auth/...` (no `/api_epg` prefix)
+  - Product endpoints: `/api_epg/...`
 - **n8n Integration**: Proxied `/n8n/*` → `http://localhost:5678`
 - **Development Server**: Fixed on port 5173 with CORS enabled
 

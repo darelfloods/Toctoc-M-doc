@@ -2,29 +2,20 @@
 export const ENV = {
   // URL de base de l'API
   API_BASE_URL:
-    // En dev, on passe par le proxy Vite pour éviter les problèmes CORS/HTTPS
-    (import.meta.env.DEV ? '/api' : undefined) ||
-    // Sinon, on utilise la variable d'env si fournie, ou la valeur par défaut
-    import.meta.env.VITE_API_BASE_URL || 'https://51.68.46.67:8000',
+    // Utiliser l'URL explicite si fournie, sinon la valeur par défaut avec port 8000
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'https://51.68.46.67:8000',
 
   // Liste ordonnée des bases (avec fallback). La première qui répond est utilisée.
   API_BASE_URLS: (() => {
     const list: string[] = []
-    if (import.meta.env.DEV) {
-      // Dev: proxy Vite en premier, puis base explicite si définie
-      list.push('/api')
-      if (import.meta.env.VITE_API_BASE_URL) list.push(import.meta.env.VITE_API_BASE_URL)
-    } else {
-      // Prod: utiliser uniquement des bases explicites (pas de base vide same-origin)
-      const norm = (u?: string) => (u ? String(u).replace(/\/+$/g, '') : u)
-      const candidates = [
-        norm(import.meta.env.VITE_API_BASE_URL),
-        norm(import.meta.env.VITE_API_FALLBACK_BASE_URL),
-        'https://51.68.46.67:8000',
-      ] as const
-      for (const c of candidates) {
-        if (c && !list.includes(c)) list.push(c)
-      }
+    const norm = (u?: string) => (u ? String(u).replace(/\/+$/g, '') : u)
+    const candidates = [
+      norm(import.meta.env.VITE_API_BASE_URL),
+      norm(import.meta.env.VITE_API_FALLBACK_BASE_URL),
+      'https://51.68.46.67:8000',
+    ] as const
+    for (const c of candidates) {
+      if (c && !list.includes(c)) list.push(c)
     }
     return list
   })(),
