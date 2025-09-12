@@ -5,7 +5,9 @@
         <div class="modal-content pb-4">
           <div class="modal-body pt-0">
             <div class="modal-header-custom">
-              <button type="button" class="close-btn" aria-label="Close" @click="$emit('close')"></button>
+              <button type="button" class="close-btn" aria-label="Close" @click="$emit('close')">
+                <i class="fas fa-times"></i>
+              </button>
               <div class="header-center text-center w-100">
                 <img src="/assets/Fichier 12.svg" width="100" height="100" alt="" class="logo-header mb-2">
                 <h4 class="confirmation-title mb-0">Ajout au Panier</h4>
@@ -139,13 +141,40 @@ function pharmacyPhone(ph: any) {
 
 <style scoped>
 .modal-content { border-radius: 20px; border: none; box-shadow: 0 30px 60px rgba(0,0,0,.15); overflow: hidden; }
-.modal-header-custom { display:flex; flex-direction: column; align-items:center; justify-content:center; gap:8px; padding: 1.25rem 1rem 0.75rem; position: relative; text-align: center; }
-.close-btn { position:absolute; right:14px; top:14px; width:40px; height:40px; border-radius:50%; border:none; background: rgba(0,0,0,0.05); }
-.confirmation-title { font-weight: 700; }
+.modal-header-custom { 
+  display:flex; 
+  flex-direction: column; 
+  align-items:center; 
+  justify-content:center; 
+  gap:8px; 
+  padding: 1.25rem 0 0.75rem 0; 
+  margin: -20px -20px 20px -20px;
+  position: relative; 
+  text-align: center; 
+  background: #0F7ABB;
+  border-radius: 20px 20px 0 0;
+}
+.close-btn { 
+  position:absolute; 
+  right:14px; 
+  top:14px; 
+  width:40px; 
+  height:40px; 
+  border-radius:50%; 
+  border:none; 
+  background: rgba(255,255,255,0.2); 
+  color: white; 
+  z-index: 10;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirmation-title { font-weight: 700; color: white; }
 .confirmation-icon { color:#0F7ABB; }
 .logo-header { display:block; margin: 0 auto; }
 .product-image { width: 100%; max-width: 260px; height: auto; object-fit: contain; border-radius: 12px; }
-.badge-new { position:absolute; top:8px; left:50%; transform: translateX(-50%); background:#0F7ABB; color:#fff; border-radius: 8px; padding: 4px 8px; font-size: .75rem; }
+.badge-new { position:absolute; top:8px; left:50%; transform: translateX(-50%); background: linear-gradient(135deg, #10b981, #059669); color:#fff; border-radius: 8px; padding: 4px 8px; font-size: .75rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .pharmacy-name { font-weight: 700; display:flex; align-items:center; gap:8px; }
 .pharmacy-details { color:#4b5563; font-size:.9rem; }
 .product-name { font-weight:600; margin-top:6px; }
