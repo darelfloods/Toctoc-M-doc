@@ -1021,67 +1021,6 @@ watch(() => authStore.currentUser, (nu) => {
 const hasCartItems = computed(() => cart.hasItems)
 const cartItemCount = computed(() => cart.itemCount)
 
-// Fonction pour vérifier si un produit est disponible dans au moins une pharmacie
-async function isProductAvailable(product: any): Promise<boolean> {
-  try {
-    const cip = product?.cip || product?.id
-    if (!cip) return false
-    
-    const availability = await homeService.disponibilite(cip)
-    
-    // Vérifier s'il y a au moins une pharmacie avec stock > 1
-    if (availability && typeof availability === 'object') {
-      // Parcourir toutes les provinces
-      for (const province in availability) {
-        const pharmacies = availability[province]
-        if (Array.isArray(pharmacies)) {
-          for (const pharmacy of pharmacies) {
-            const stock = pharmacy?.stock || pharmacy?.quantite || 0
-            if (Number(stock) > 1) {
-              return true // Produit disponible !
-            }
-          }
-        }
-      }
-    }
-    return false
-  } catch (e) {
-    console.warn('Erreur vérification disponibilité pour produit', product?.libelle, e)
-    return false
-  }
-}
-
-// Fonction pour filtrer les produits disponibles
-async function filterAvailableProducts(products: any[]): Promise<any[]> {
-  console.log('🔍 [FILTER] Vérification disponibilité de', products.length, 'produits...')
-  
-  const availableProducts: any[] = []
-  
-  // Vérifier en parallèle (max 5 à la fois pour ne pas surcharger l'API)
-  const batchSize = 5
-  for (let i = 0; i < products.length; i += batchSize) {
-    const batch = products.slice(i, i + batchSize)
-    const availabilityPromises = batch.map(product => 
-      isProductAvailable(product).then(available => ({ product, available }))
-    )
-    
-    const results = await Promise.all(availabilityPromises)
-    
-    for (const { product, available } of results) {
-      if (available) {
-        availableProducts.push(product)
-      }
-    }
-    
-    // Si on a déjà assez de produits disponibles, arrêter
-    if (availableProducts.length >= visibleCount.value) {
-      break
-    }
-  }
-  
-  console.log('✅ [FILTER] Trouvé', availableProducts.length, 'produits disponibles')
-  return availableProducts
-}
 
 async function loadAllProduct() {
   isLoadingProducts.value = true
@@ -1095,17 +1034,8 @@ async function loadAllProduct() {
     initialProducts.value = data || []
     
     if (data && data.length > 0) {
-      // Filtrer les produits disponibles
-      const availableProducts = await filterAvailableProducts(data)
-      
-      if (availableProducts.length > 0) {
-        console.log('✅ [PRODUCTS] Affichage des produits disponibles')
-        products.value = availableProducts.slice(0, visibleCount.value)
-      } else {
-        console.log('⚠️ [PRODUCTS] Aucun produit disponible, affichage par défaut')
-        // Fallback: afficher les premiers produits par défaut
-        products.value = data.slice(0, visibleCount.value)
-      }
+      console.log('✅ [PRODUCTS] Affichage des produits')
+      products.value = data.slice(0, visibleCount.value)
     } else {
       products.value = []
     }
