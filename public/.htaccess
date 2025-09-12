@@ -1,0 +1,24 @@
+# Force le fallback SPA pour Vue Router en mode history
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Evite les conflits de MultiViews (souvent activés sur mutualisés OVH)
+  Options -MultiViews
+
+  # Ne pas réécrire si fichier ou dossier existe
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Sinon renvoyer vers index.html
+  # Utiliser un motif générique plus fiable sur OVH
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Gzip/Brotli si activés côté serveur
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Fallback supplémentaire si mod_rewrite n'est pas disponible
+ErrorDocument 404 /index.html

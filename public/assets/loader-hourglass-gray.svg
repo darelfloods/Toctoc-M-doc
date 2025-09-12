@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chargement">
+  <g fill="none" stroke="#9CA3AF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top/Bottom rails -->
+    <rect x="20" y="16" width="88" height="12" rx="6"/>
+    <rect x="20" y="100" width="88" height="12" rx="6"/>
+    <!-- Hourglass outline -->
+    <path d="M32 28h64c0 22-32 30-32 36s32 14 32 36H32c0-22 32-30 32-36S32 50 32 28z"/>
+    <!-- Sand triangle top -->
+    <path d="M48 44h32l-16 14z" fill="#9CA3AF" stroke="none"/>
+    <!-- Sand triangle bottom -->
+    <path d="M64 82l16 14H48z" fill="#9CA3AF" stroke="none"/>
+  </g>
+</svg>

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1000",
+    "name": "Paracétamol 500mg",
+    "description": "Soulage la douleur et la fièvre",
+    "price": 2.90,
+    "category": "Antalgique",
+    "image": "/img/placeholder.png",
+    "rating": 4.5,
+    "inventoryStatus": "INSTOCK"
+  },
+  {
+    "id": "1001",
+    "name": "Ibuprofène 200mg",
+    "description": "Anti-inflammatoire non stéroïdien",
+    "price": 3.40,
+    "category": "AINS",
+    "image": "/img/placeholder.png",
+    "rating": 4.0,
+    "inventoryStatus": "LOWSTOCK"
+  },
+  {
+    "id": "1002",
+    "name": "Vitamine C 1000",
+    "description": "Complément alimentaire",
+    "price": 5.90,
+    "category": "Vitamines",
+    "image": "/img/placeholder.png",
+    "rating": 4.2,
+    "inventoryStatus": "OUTOFSTOCK"
+  }
+]
