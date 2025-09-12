@@ -1654,32 +1654,195 @@ async function onPurchased(payload: any) {
   </section>
 
   <!-- Partners -->
-  <section class="partners-section d-flex justify-content-center">
-    <div class="container d-flex justify-content-center align-items-center flex-column ">
+  <section class="partners-section">
+    <div class="container">
       <div class="text-center mb-5">
-        <h2 class="display-5 fw-bold mb-3 ms-3">Nos pharmacies partenaires</h2>
-        <p class="lead text-muted ms-3">Ces personnes nous font confiance et nous accompagnent</p>
+        <h2 class="display-5 fw-bold mb-3">Nos pharmacies partenaires</h2>
+        <p class="lead text-muted">Ces professionnels nous font confiance et nous accompagnent</p>
       </div>
-      <div class="d-flex justify-content-center align-items-center flex-wrap">
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
-                width="150" alt="" /></div>
+      
+      <!-- Grille des pharmacies partenaires -->
+      <div class="row g-3">
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-image">
+              <img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png" alt="Dépôt Pharmaceutique AVOILE" />
+            </div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique AVOILE</h6>
+              <p class="partner-location">Libreville</p>
+            </div>
           </div>
         </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique CENTRALE</h6>
+              <p class="partner-location">Centre-ville</p>
+            </div>
           </div>
         </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique MODERNE</h6>
+              <p class="partner-location">Zone urbaine</p>
+            </div>
           </div>
         </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique SANTE</h6>
+              <p class="partner-location">Quartier résidentiel</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique NOTRE PHARMACIE</h6>
+              <p class="partner-location">Proximité</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">🏥</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique SOS BIBIKI</h6>
+              <p class="partner-location">Urgences 24/7</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique LA MANUFAC MEDIC</h6>
+              <p class="partner-location">Spécialisée</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique AYITEBE</h6>
+              <p class="partner-location">Quartier populaire</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique ANTOINE AYATSOU</h6>
+              <p class="partner-location">Pharmacien titulaire</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique NOTRE DAME DU BON REMEDE</h6>
+              <p class="partner-location">Centre hospitalier</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique NOTRE DAME DU ROSAIRE</h6>
+              <p class="partner-location">Communauté</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique EL RAPHA</h6>
+              <p class="partner-location">Soins spécialisés</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique LIBWE</h6>
+              <p class="partner-location">Quartier central</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique CENTRALE MOANDA</h6>
+              <p class="partner-location">Moanda</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique AKEWA</h6>
+              <p class="partner-location">Lambaréné</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique MITIS</h6>
+              <p class="partner-location">Services ciblés</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique PASSERELLE D'ALYNE</h6>
+              <p class="partner-location">Pont de soins</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique SAINT JEAN</h6>
+              <p class="partner-location">Quartier Saint-Jean</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique MANIEVA</h6>
+              <p class="partner-location">Soins naturels</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="partner-card">
+            <div class="partner-icon">💊</div>
+            <div class="partner-info">
+              <h6 class="partner-name">Dépôt Pharmaceutique SANTÉ POUR TOUS</h6>
+              <p class="partner-location">Accès universel</p>
+            </div>
           </div>
         </div>
       </div>
@@ -2379,11 +2542,78 @@ body {
 
 /* Partners section */
 .partners-section {
-  background: white;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 80px 0;
   border-radius: 30px;
   margin: 40px 0;
   box-shadow: var(--shadow-soft);
+}
+
+.partner-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 100%;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.partner-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #0F7ABB;
+}
+
+.featured-partner {
+  background: linear-gradient(135deg, #0F7ABB 0%, #1e40af 100%);
+  color: white;
+  transform: scale(1.05);
+}
+
+.featured-partner:hover {
+  transform: scale(1.08) translateY(-5px);
+}
+
+.partner-icon {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.partner-image img {
+  max-width: 80px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.partner-name {
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.featured-partner .partner-name {
+  color: white;
+  font-size: 1.1rem;
+}
+
+.partner-location {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.featured-partner .partner-status {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 500;
 }
 
 .partner-logo {
