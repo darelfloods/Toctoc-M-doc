@@ -6,7 +6,7 @@
           <!-- Header avec gradient violet -->
           <div class="modal-header-custom">
             <button type="button" class="close-btn" aria-label="Close" @click="$emit('close')">
-              <i class="fas fa-times">X</i>
+              <i class="bi bi-x" style="font-size: 24px;"></i>
             </button>
             <div class="text-center">
               <img class="pharmacy-icon" :src="productImage" alt="Pharmacie">
@@ -26,7 +26,7 @@
 
             <!-- Message si aucune pharmacie -->
             <div v-else-if="!pharmacies || pharmacies.length === 0" class="text-center py-5">
-              <i class="fas fa-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+              <i class="bi bi-exclamation" style="font-size: 24px;"></i>
               <h5 class="mt-3">Aucune pharmacie disponible</h5>
               <p class="text-muted">Ce produit n'est pas disponible dans {{ province || 'cette province' }} pour le moment.</p>
             </div>
@@ -44,7 +44,7 @@
                       <div class="col-md-6">
                         <h6 class="product-title">{{ productName }}</h6>
                         <button class="btn-other-products mt-1" type="button">
-                          <i class="fas fa-pills me-2"></i>
+                          <i class="bi bi-three-dots-vertical" style="font-size: 20px;"></i>
                           Autres produits
                         </button>
                       </div>
@@ -77,7 +77,7 @@
                           <td>{{ pharmacyDistrict(ph) }}</td>
                           <td>
                             <div class="contact-info">
-                              <i class="fas fa-phone"></i>
+                              <i class="bi bi-telephone ms-1" style="font-size: 20px;"></i>
                               {{ pharmacyPhone(ph) || '—' }}
                             </div>
                           </td>
@@ -86,7 +86,7 @@
                           </td>
                           <td>
                             <a class="btn-localiser" :href="mapsUrl(ph)" target="_blank" rel="noopener">
-                              <i class="fas fa-map-marker-alt me-1"></i>
+                              <i class="bi bi-geo-alt" style="font-size: 20px;"></i>
                               Localiser
                             </a>
                           </td>
@@ -101,7 +101,7 @@
                               >
                               <!-- Bouton ajout individuel -->
                               <button class="btn-add-cart" type="button" @click="$emit('select', ph)">
-                                <i class="fas fa-cart-plus me-1"></i>
+                                <i class="bi bi-cart4" style="font-size: 20px;"></i>
                                 Ajouter
                               </button>
                             </div>
@@ -118,7 +118,7 @@
           <!-- Actions du modal -->
           <div class="modal-actions">
             <button type="button" class="btn-cancel" @click="$emit('close')">
-              <i class="fas fa-times me-2"></i>
+              <i class="bi bi-x" style="font-size: 20px;"></i>
               Annuler
             </button>
             <button 
@@ -127,7 +127,7 @@
               :disabled="selectedPharmacies.size === 0"
               @click="confirmMultipleSelections"
             >
-              <i class="fas fa-check me-2"></i>
+              <i class="bi bi-check" style="font-size: 20px;"></i>
               Confirmer ({{ selectedPharmacies.size }})
             </button>
           </div>

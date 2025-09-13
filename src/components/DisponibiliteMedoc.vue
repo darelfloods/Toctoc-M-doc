@@ -6,7 +6,7 @@
           <!-- Header -->
           <div class="modal-header border-0 modal-header-provinces">
             <button type="button" class="close-btn-provinces" aria-label="Close" @click="$emit('close')">
-              <i class="fas fa-times-circle">X</i>
+              <i class="bi bi-x" style="font-size: 24px;"></i>
             </button>
             <div class="img">
               <img src="/assets/Fichier 12.svg" width="150" height="100" alt="">
@@ -20,7 +20,7 @@
             <!-- Résumé résultats -->
             <div class="pb-4">
               <div v-if="loading" class="text-center text-muted">
-                <i class="fas fa-spinner fa-spin me-2"></i>
+                <i class="bi bi-hourglass" style="font-size: 24px;"></i>
                 Recherche en cours...
               </div>
 
@@ -36,7 +36,7 @@
                         <div class="summary-card">
                           <h6 class="text-success">{{ prov }}</h6>
                           <p class="mb-0">
-                            <i class="fas fa-pills me-1"></i>
+                            <i class="bi bi-geo" style="font-size: 24px;"></i>
                             {{ list?.length || 0 }} pharmacie(s) disponible(s)
                           </p>
                         </div>
@@ -46,7 +46,7 @@
                 </template>
                 <template v-else>
                   <div class="text-center text-muted">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <i class="bi bi-x" style="font-size: 24px;"></i>
                     Aucune pharmacie disponible pour ce produit.
                   </div>
                 </template>
@@ -56,12 +56,12 @@
             <!-- Navigation -->
             <div class="navigation-controls nav-left">
               <button class="nav-btn" @click="previousPage" :disabled="page===1">
-                <i class="fas fa-chevron-left"></i>
+                <i class="bi bi-chevron-left" style="font-size: 24px;"></i>
               </button>
             </div>
             <div class="navigation-controls nav-right">
               <button class="nav-btn" @click="nextPage" :disabled="page===pages.length">
-                <i class="fas fa-chevron-right"></i>
+                <i class="bi bi-chevron-right" style="font-size: 24px;"></i>
               </button>
             </div>
 
@@ -77,7 +77,7 @@
                 <img :src="p.img" :alt="p.key" class="province-image">
                 <h6 class="province-name">{{ p.label }}</h6>
                 <div class="province-capital">
-                  <i class="fas fa-map-marker-alt"></i>
+                  <i class="bi bi-geo" style="font-size: 24px;"></i>
                   <span v-if="loading">Recherche de pharmacies en cours...</span>
                   <span v-else>
                     <template v-if="hasPharmacies(p.key)">
@@ -103,7 +103,7 @@
                   </div>
                 </div>
                 <button class="select-button">
-                  <i class="fas fa-check me-2"></i>
+                  <i class="bi bi-check" style="font-size: 24px;"></i>
                   Sélectionner
                 </button>
               </div>
@@ -118,11 +118,11 @@
             </div>
             <div class="action-buttons-provinces">
               <button type="button" class="btn-cancel-provinces" @click="$emit('close')">
-                <i class="fas fa-times me-2"></i>
+                <i class="bi bi-x" style="font-size: 24px;"></i>
                 Annuler
               </button>
-              <button type="button" class="btn-confirm-provinces" :disabled="!selectedProvince" @click="confirmSelection">
-                <i class="fas fa-check me-2"></i>
+              <button type="button" class="btn-confirm-provinces " :disabled="!selectedProvince" @click="confirmSelection">
+                <i class="bi bi-check" style="font-size: 24px;"></i>
                 Confirmer la sélection
               </button>
             </div>

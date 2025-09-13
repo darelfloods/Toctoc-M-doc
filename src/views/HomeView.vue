@@ -646,7 +646,7 @@ async function runAiSearch(): Promise<void> {
   aiConfirmLoading.value = false
   showAiConfirm.value = false
 
-  // Optionally set province if place detected (if handler exists)
+  // Optionnellement définir la province si le lieu est détecté (si le gestionnaire existe)
   try {
     if (place && typeof onSelectProvince === 'function') {
       onSelectProvince(place)
@@ -1342,6 +1342,17 @@ async function onPurchased(payload: any) {
   console.log('✅ Achat validé:', payload)
   await creditStore.refreshForCurrentUser()
 }
+
+// Ajout des partenaires demandés pour la section "Nos pharmacies partenaires"
+const partenaires = [
+  "AYITEBE",
+  "AKEWA",
+  "SOS BIBIKI",
+  "MARIE LAMLET",
+  "LIBWE",
+  "EL RAPHA",
+  "MANIEVA"
+]
 </script>
 
 <template>
@@ -1851,6 +1862,30 @@ async function onPurchased(payload: any) {
       </div>
     </div>
   </div>
+
+  <!-- Nos pharmacies partenaires (défilement horizontal en continu sur une ligne) -->
+  <section class="pharmacies-partenaires">
+    <h2>Nos pharmacies partenaires</h2>
+    <div class="marquee">
+      <div class="marquee-content">
+        <div
+          v-for="(pharma, idx) in partenaires"
+          :key="idx"
+          class="pharma-circle"
+        >
+          {{ pharma }}
+        </div>
+        <!-- Duplique pour effet infini -->
+        <div
+          v-for="(pharma, idx) in partenaires"
+          :key="'dup-' + idx"
+          class="pharma-circle"
+        >
+          {{ pharma }}
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <style>
@@ -2745,9 +2780,7 @@ body {
   from { transform: translateX(20px); opacity: .6; }
   to { transform: translateX(0); opacity: 1; }
 }
-</style>
 
-<style scoped>
 /* AI Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -2782,4 +2815,44 @@ body {
 /* List aesthetics for candidates */
 .list-group-item { border: 1px solid rgba(0,0,0,.08); margin-bottom: 6px; border-radius: 10px; }
 .list-group-item:hover { background: #f8fafc; }
+
+.pharmacies-partenaires {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.marquee {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  height: 90px;
+}
+
+.marquee-content {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: marquee 15s linear infinite;
+}
+
+.pharma-circle {
+  width: 80px;
+  height: 80px;
+  margin: 0 16px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  color: #2c3e50;
+  flex-shrink: 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 </style>
