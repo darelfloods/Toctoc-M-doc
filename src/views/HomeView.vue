@@ -749,7 +749,7 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
 
     // 6.b) Refine choice within candidates using commune/district matching and stock quantity
     const rawPlace = place || ''
-    const norm = (s: any) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const norm = (s: any) => (s || '').toString().toLowerCase()
     const placeNorm = norm(rawPlace)
     const scorePharmacy = (ph: any) => {
       // Fields used in manual UI helpers
@@ -1448,9 +1448,13 @@ const partenaires = [
         <div class="d-flex align-items-center">
           <img src="/assets/Fichier 12.svg" width="100" alt="Logo_Ttm" />
         </div>
-        <!-- Centered welcome text -->
-        <div class="position-absolute top-50 start-50 translate-middle fw-semibold" style="color:#0F7ABB; white-space: nowrap;">
-          {{ welcomeText }}
+        <!-- Centered welcome text with pharmacies button -->
+        <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center" style="color:#0F7ABB; white-space: nowrap;">
+          <span class="fw-semibold">{{ welcomeText }}</span>
+          <button v-if="isUserLoggedIn" class="btn btn-outline-primary btn-sm ms-3" style="border-radius: 20px; font-size: 12px;" @click="showRecherche = true">
+            <i class="bi bi-building me-1"></i>
+            Pharmacies
+          </button>
         </div>
         <!-- Desktop actions -->
         <div class="d-none d-md-flex ">
@@ -1594,12 +1598,12 @@ const partenaires = [
     <div class="container">
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">Tous les produits disponibles</h2>
-        <p class="lead text-muted">Recherchez et vérifiez la disponibilité de vos médicaments</p>
+        <p class="lead">Recherchez et vérifiez la disponibilité de vos médicaments</p>
       </div>
       <div class="search-container mb-5">
         <div class="search-input-wrapper">
           <input type="text" class="search-input" :value="searchTerm" @input="onSearchInput"
-            @keyup.enter="triggerImmediateSearch(true)" @blur="triggerImmediateSearch(false)" placeholder="Rechercher un médicament..." />
+            @keyup.enter.prevent="triggerImmediateSearch(true)" @blur="triggerImmediateSearch(false)" placeholder="Rechercher un médicament..." />
         </div>
         <div class="search-actions">
           <button class="icon-btn" type="button" @click="triggerImmediateSearch(true)" title="Rechercher">
@@ -1666,31 +1670,82 @@ const partenaires = [
 
   <!-- Partners -->
   <section class="partners-section d-flex justify-content-center">
-    <div class="container d-flex justify-content-center align-items-center flex-column ">
+    <div class="container d-flex justify-content-center align-items-center flex-column">
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3 ms-3">Nos pharmacies partenaires</h2>
-        <p class="lead text-muted ms-3">Ces personnes nous font confiance et nous accompagnent</p>
+        <p class="lead">Ces personnes nous font confiance et nous accompagnent</p>
       </div>
-      <div class="d-flex justify-content-center align-items-center flex-wrap">
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
-                width="150" alt="" /></div>
+      <!-- Défilement vertical des partenaires -->
+      <div class="vertical-marquee">
+        <div class="vertical-marquee-content">
+          <!-- Pharmacies déjà présentes -->
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
+                  width="80" alt="" /></div>
+            </div>
           </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
+            </div>
           </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
+            </div>
           </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
+            </div>
+          </div>
+          <!-- Nouvelles pharmacies partenaires -->
+          <div
+            v-for="(pharma, idx) in partenaires"
+            :key="pharma + idx"
+            class="partner-logo-vertical p-3"
+          >
+            <div class="text-center">
+              <div class="mb-2">
+                <i class="bi bi-building" style="font-size:2rem;"></i>
+              </div>
+              <small class="fw-bold">{{ pharma }}</small>
+            </div>
+          </div>
+          <!-- Dupliquer pour effet infini -->
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
+                  width="80" alt="" /></div>
+            </div>
+          </div>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
+            </div>
+          </div>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
+            </div>
+          </div>
+          <div class="partner-logo-vertical p-3">
+            <div class="text-center">
+              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
+            </div>
+          </div>
+          <div
+            v-for="(pharma, idx) in partenaires"
+            :key="'dup-' + pharma + idx"
+            class="partner-logo-vertical p-3"
+          >
+            <div class="text-center">
+              <div class="mb-2">
+                <i class="bi bi-building" style="font-size:2rem;"></i>
+              </div>
+              <small class="fw-bold">{{ pharma }}</small>
+            </div>
           </div>
         </div>
       </div>
@@ -1862,30 +1917,6 @@ const partenaires = [
       </div>
     </div>
   </div>
-
-  <!-- Nos pharmacies partenaires (défilement horizontal en continu sur une ligne) -->
-  <section class="pharmacies-partenaires">
-    <h2>Nos pharmacies partenaires</h2>
-    <div class="marquee">
-      <div class="marquee-content">
-        <div
-          v-for="(pharma, idx) in partenaires"
-          :key="idx"
-          class="pharma-circle"
-        >
-          {{ pharma }}
-        </div>
-        <!-- Duplique pour effet infini -->
-        <div
-          v-for="(pharma, idx) in partenaires"
-          :key="'dup-' + idx"
-          class="pharma-circle"
-        >
-          {{ pharma }}
-        </div>
-      </div>
-    </div>
-  </section>
 </template>
 
 <style>
@@ -2215,7 +2246,7 @@ body {
   height: 30px;
   margin-left: -7px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #22c55e 0%, #0ea5e9 100%);
+  background: linear-gradient(45deg, #22c55e 0%, #0ea5e9 100%);
   opacity: 0.25;
   transform-origin: center 38px;
   animation: ring-pulse 1.2s linear infinite;
@@ -2223,6 +2254,7 @@ body {
 }
 
 @keyframes ring-pulse {
+
   0% { opacity: .25; transform: translateY(6px) scale(.85); }
   50% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: .25; transform: translateY(6px) scale(.85); }
@@ -2279,7 +2311,7 @@ body {
 /* AI Search Panel (chat-like, centered) */
 .ai-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .ai-panel { width: 560px; max-width: 94vw; max-height: 78vh; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 20px 50px rgba(0,0,0,.25); display: flex; flex-direction: column; }
-.ai-header { display:flex; align-items:center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,.06); background: #f8fafc; }
+.ai-header { display:flex; align-items:center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,.08); background: #f8fafc; }
 .ai-body { padding: 14px; overflow: auto; }
 .ai-note { color: #4b5563; background: #f8fafc; border: 1px solid rgba(0,0,0,.06); padding: 8px 10px; border-radius: 8px; font-size: .9rem; }
 .ai-input { border-radius: 999px 0 0 999px; }
@@ -2815,44 +2847,4 @@ body {
 /* List aesthetics for candidates */
 .list-group-item { border: 1px solid rgba(0,0,0,.08); margin-bottom: 6px; border-radius: 10px; }
 .list-group-item:hover { background: #f8fafc; }
-
-.pharmacies-partenaires {
-  margin: 2rem 0;
-  text-align: center;
-}
-
-.marquee {
-  overflow: hidden;
-  width: 100%;
-  position: relative;
-  height: 90px;
-}
-
-.marquee-content {
-  display: flex;
-  align-items: center;
-  width: max-content;
-  animation: marquee 15s linear infinite;
-}
-
-.pharma-circle {
-  width: 80px;
-  height: 80px;
-  margin: 0 16px;
-  border-radius: 50%;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  color: #2c3e50;
-  flex-shrink: 0;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 </style>

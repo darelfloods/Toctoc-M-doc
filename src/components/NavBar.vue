@@ -33,6 +33,21 @@
           </template>
         </div>
 
+        <!-- Bouton Pharmacies (avant les autres icônes) -->
+        <Button
+          icon="pi pi-building"
+          label="Pharmacies"
+          class="ml-2"
+          text
+          @click="showPharmaciesModal = true"
+        />
+
+        <!-- Ici tu peux ajouter les boutons Paramètre et Panier si besoin -->
+        <!--
+        <Button icon="pi pi-cog" class="ml-2" text />
+        <Button icon="pi pi-shopping-cart" class="ml-2" text />
+        -->
+
         <!-- Hamburger (mobile uniquement) -->
         <Button
           class="md:hidden"
@@ -68,6 +83,15 @@
     <span class="label">Crédit:</span>
     <span class="value">{{ credit.credits }}</span>
   </div>
+
+  <!-- Modal Pharmacies -->
+  <Dialog v-model:visible="showPharmaciesModal" header="Liste des pharmacies" :modal="true" :closable="true" :style="{ width: '350px' }">
+    <ul style="list-style:none;padding:0;">
+      <li v-for="pharma in pharmaciesList" :key="pharma" class="mb-2">
+        <i class="pi pi-building mr-2"></i> {{ pharma }}
+      </li>
+    </ul>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -75,6 +99,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import Menu from 'primevue/menu'
 import Sidebar from 'primevue/sidebar'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 import { useAuthStore } from '@/stores/auth'
 import { AuthService } from '@/Services/AuthService'
 import { useCreditStore } from '@/stores/credit'
@@ -82,6 +107,18 @@ import { useCreditStore } from '@/stores/credit'
 import logoUrl from '@/assets/logo.svg'
 
 const mobileOpen = ref(false)
+const showPharmaciesModal = ref(false)
+
+const pharmaciesList = [
+  "AYITEBE",
+  "AKEWA",
+  "SOS BIBIKI",
+  "MARIE LAMLET",
+  "LIBWE",
+  "EL RAPHA",
+  "MANIEVA"
+]
+
 const auth = useAuthStore()
 const credit = useCreditStore()
 
