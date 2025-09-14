@@ -1859,7 +1859,7 @@ const partenaires = [
                   placeholder="Votre email" /><label for="email2">Votre email</label></div>
               <div class="form-floating mb-3"><textarea class="form-control" id="message" rows="4"
                   placeholder="Votre message"></textarea><label for="message">Votre message</label></div>
-              <button type="submit" class="btn btn-primary col-md-4  p-2" style="border-radius: 15px;">Envoyer</button>
+              <button type="submit" class="btn btn-success col-md-4  p-2" style="border-radius: 15px;">Envoyer</button>
             </form>
           </div>
         </div>
@@ -1868,11 +1868,10 @@ const partenaires = [
   </section>
 
   <!-- Footer -->
-  <footer class="text-center py-4 d-flex justify-content-center"
-    style="background: var(--primary-color); color: white;">
+  <footer class="text-center py-4 d-flex justify-content-center" style="background: var(--gradient-primary);">
     <div class="container">
-      <p class="mb-0"> 2023 Toctocmedoc. Tous droits réservés.</p>
-      <p class="mb-0">Développé avec ❤️ par E-Pharma</p>
+      <p class="mb-0 text-white"> 2023 Toctocmedoc. Tous droits réservés.</p>
+      <p class="mb-0 text-white">Développé avec ❤️ par E-Pharma</p>
     </div>
   </footer>
 
