@@ -1675,180 +1675,94 @@ const partenaires = [
         <h2 class="display-5 fw-bold mb-3 ms-3">Nos pharmacies partenaires</h2>
         <p class="lead">Ces personnes nous font confiance et nous accompagnent</p>
       </div>
-<<<<<<< HEAD
-      <div class="row justify-content-center g-4">
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
-                width="150" alt="" /></div>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique CENTRALE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">🏥</div><small class="fw-bold">Dépôt Pharmaceutique MODERNE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique SANTE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique NOTRE PHARMACIE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique SOS BIBIKI</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique LA MANUFAC MEDIC</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique AYITEBE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique ANTOINE AYATSOU</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique NOTRE DAME DU BON REMEDE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique NOTRE DAME DU ROSAIRE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique EL RAPHA</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique LIBWE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique CENTRALE MOANDA</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique AKEWA</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique MITIS</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique PASSERELLE D'ALYNE</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique SAINT JEAN</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique MANIEVA</small>
-          </div>
-        </div>
-        <div class="partner-logo p-3">
-          <div class="text-center">
-            <div class="mb-2">💊</div><small class="fw-bold">Dépôt Pharmaceutique SANTÉ POUR TOUS</small>
-=======
-      <!-- Défilement vertical des partenaires -->
-      <div class="vertical-marquee">
-        <div class="vertical-marquee-content">
-          <!-- Pharmacies déjà présentes -->
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
-                  width="80" alt="" /></div>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
-            </div>
-          </div>
-          <!-- Nouvelles pharmacies partenaires -->
-          <div
-            v-for="(pharma, idx) in partenaires"
-            :key="pharma + idx"
-            class="partner-logo-vertical p-3"
-          >
-            <div class="text-center">
-              <div class="mb-2">
-                <i class="bi bi-building" style="font-size:2rem;"></i>
+      <!-- Animation horizontale moderne des pharmacies partenaires -->
+      <div class="pharmacy-carousel-container">
+        <div class="pharmacy-carousel">
+          <div class="pharmacy-carousel-track">
+
+            <!-- Pharmacies principales avec icônes modernes -->
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
               </div>
-              <small class="fw-bold">{{ pharma }}</small>
+              <h6 class="partner-name">PHARMACIE CENTRALE</h6>
             </div>
-          </div>
-          <!-- Dupliquer pour effet infini -->
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2"><img src="/assets/WhatsApp_Image_2024-11-28_à_10.52.22_fbd8147c-removebg-preview.png"
-                  width="80" alt="" /></div>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie CENTRALE</small>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">🏥</div><small class="fw-bold">Pharmacie MODERNE</small>
-            </div>
-          </div>
-          <div class="partner-logo-vertical p-3">
-            <div class="text-center">
-              <div class="mb-2">💊</div><small class="fw-bold">Pharmacie SANTE</small>
-            </div>
-          </div>
-          <div
-            v-for="(pharma, idx) in partenaires"
-            :key="'dup-' + pharma + idx"
-            class="partner-logo-vertical p-3"
-          >
-            <div class="text-center">
-              <div class="mb-2">
-                <i class="bi bi-building" style="font-size:2rem;"></i>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-hospital"></i>
               </div>
-              <small class="fw-bold">{{ pharma }}</small>
+              <h6 class="partner-name">PHARMACIE MODERNE</h6>
             </div>
->>>>>>> 208d00ae300bc74a96661fac9683d99fb7dadb98
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-heart-pulse"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE SANTÉ</h6>
+            </div>
+
+            <!-- Nouvelles pharmacies dynamiques -->
+            <div
+              v-for="(pharma, idx) in partenaires"
+              :key="pharma + idx"
+              class="partner-card"
+            >
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE {{ pharma }}</h6>
+            </div>
+
+            <!-- Pharmacies supplémentaires avec icônes variées -->
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-capsule"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE LA MANUFAC</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-plus-circle-fill"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE BON REMÈDE</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-shield-heart"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE NOTRE DAME</h6>
+            </div>
+
+            <!-- Duplication pour effet infini seamless -->
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE CENTRALE</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-hospital"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE MODERNE</h6>
+            </div>
+
+            <!-- Duplication des nouvelles pharmacies -->
+            <div
+              v-for="(pharma, idx) in partenaires"
+              :key="'dup-' + pharma + idx"
+              class="partner-card"
+            >
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">PHARMACIE {{ pharma }}</h6>
+            </div>
+
           </div>
         </div>
       </div>
@@ -2556,6 +2470,148 @@ body {
   box-shadow: var(--shadow-soft);
 }
 
+/* Animation horizontale moderne des pharmacies partenaires */
+.pharmacy-carousel-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 20px 0;
+}
+
+.pharmacy-carousel {
+  width: 100%;
+  position: relative;
+}
+
+.pharmacy-carousel-track {
+  display: flex;
+  animation: scrollRight 60s linear infinite;
+  gap: 30px;
+  width: max-content;
+}
+
+.pharmacy-carousel-track:hover {
+  animation-play-state: paused;
+}
+
+.partner-card {
+  min-width: 160px;
+  height: 140px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(15, 122, 187, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(15, 122, 187, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.partner-card:hover::before {
+  left: 100%;
+}
+
+.partner-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 20px 40px rgba(15, 122, 187, 0.2);
+  border-color: #0F7ABB;
+}
+
+.partner-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0F7ABB 0%, #1e88e5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(15, 122, 187, 0.3);
+}
+
+.partner-card:hover .partner-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 24px rgba(15, 122, 187, 0.4);
+}
+
+.partner-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.partner-icon img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.partner-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2c3e50;
+  text-align: center;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.partner-card:hover .partner-name {
+  color: #0F7ABB;
+}
+
+@keyframes scrollRight {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+  .pharmacy-carousel-track {
+    animation: scrollRight 40s linear infinite;
+    gap: 20px;
+  }
+
+  .partner-card {
+    min-width: 120px;
+    height: 120px;
+    padding: 15px;
+  }
+
+  .partner-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .partner-icon i {
+    font-size: 20px;
+  }
+
+  .partner-name {
+    font-size: 10px;
+  }
+}
+
+/* Ancien styles partenaires (garde pour compatibilité) */
 .partner-logo {
   width: 120px;
   height: 120px;
