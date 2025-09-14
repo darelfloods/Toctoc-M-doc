@@ -1448,13 +1448,9 @@ const partenaires = [
         <div class="d-flex align-items-center">
           <img src="/assets/Fichier 12.svg" width="100" alt="Logo_Ttm" />
         </div>
-        <!-- Centered welcome text with pharmacies button -->
-        <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center" style="color:#0F7ABB; white-space: nowrap;">
-          <span class="fw-semibold">{{ welcomeText }}</span>
-          <button v-if="isUserLoggedIn" class="btn btn-outline-primary btn-sm ms-3" style="border-radius: 20px; font-size: 12px;" @click="showRecherche = true">
-            <i class="bi bi-building me-1"></i>
-            Pharmacies
-          </button>
+        <!-- Centered welcome text -->
+        <div class="position-absolute top-50 start-50 translate-middle fw-semibold" style="color:#0F7ABB; white-space: nowrap;">
+          {{ welcomeText }}
         </div>
         <!-- Desktop actions -->
         <div class="d-none d-md-flex ">
