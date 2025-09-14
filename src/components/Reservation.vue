@@ -5,8 +5,8 @@
         <div class="modal-content pb-4">
           <div class="modal-body pt-0">
             <div class="modal-header-custom">
-              <button type="button" class="close-btn" aria-label="Close" @click="$emit('close')">
-                <i class="fas fa-times"></i>
+              <button type="button" class="close-btn mt-3" aria-label="Close" @click="$emit('close')">
+                <i class="bi bi-x" style="font-size: 20px;"></i>
               </button>
               <div class="header-center text-center w-100">
                 <img src="/assets/Fichier 12.svg" width="100" height="100" alt="" class="logo-header mb-2">
@@ -26,19 +26,19 @@
                   <span class="badge bg-primary">{{ province || '—' }}</span>
                 </div>
                 <h6 class="pharmacy-name">
-                  <i class="fas fa-clinic-medical"></i>
+                  <i class="bi bi-shop" style="font-size: 20px;"></i>
                   {{ pharmacyName(pharmacy) }}
                 </h6>
                 <p class="pharmacy-details">
-                  <i class="fas fa-map-marker-alt text-primary"></i>
+                  <i class="bi bi-info" style="font-size: 20px;"></i>
                   {{ pharmacyAddress(pharmacy) }}<span v-if="pharmacyPhone(pharmacy)">, Tel: {{ pharmacyPhone(pharmacy) }}</span>
                 </p>
                 <div class="product-name">
-                  <i class="fas fa-pills me-2"></i>
+                  <i class="bi bi-capsule" style="font-size: 20px;"></i>
                   {{ productName }}
                 </div>
                 <div class="stock-status">
-                  <i class="fas fa-check-circle"></i>
+                  <i class="bi bi-bar-chart" style="font-size: 20px;"></i>
                   {{ pharmacy?.statut === 'disponible' ? 'Actuellement en stock' : 'Stock limité' }}
                 </div>
 
@@ -49,7 +49,7 @@
                     <div class="col-md-6">
                       <div class="input-group-custom">
                         <div class="input-label">
-                          <i class="fas fa-calculator"></i>
+                          <i class="bi bi-123" style="font-size: 20px;"></i>
                           Quantité
                         </div>
                         <input v-model.number="quantite" type="number" class="form-control form-control-custom" min="1" />
@@ -58,11 +58,11 @@
                     <div class="col-md-6">
                       <div class="input-group-custom">
                         <div class="input-label">
-                          <i class="fas fa-tag"></i>
+                          <i class="bi bi-cash" style="font-size: 20px;"></i>
                           Prix unitaire
                         </div>
                         <div class="price-display">
-                          <i class="fas fa-coins"></i>
+                          <i class="bi bi-currency-exchange" style="font-size: 20px;"></i>
                           {{ unitPrice }} FCFA
                         </div>
                       </div>
@@ -72,11 +72,11 @@
                     <div class="col-12">
                       <div class="input-group-custom">
                         <div class="input-label">
-                          <i class="fas fa-receipt"></i>
+                          <i class="bi bi-receipt" style="font-size: 20px;"></i>
                           Total
                         </div>
                         <div class="price-display" style="font-size: 1.3rem; color: #0F7ABB;">
-                          <i class="fas fa-money-bill-wave"></i>
+                          <i class="bi bi-currency-exchange" style="font-size: 20px;"></i>
                           {{ totalPrice }} FCFA
                         </div>
                       </div>
@@ -86,11 +86,11 @@
 
                 <div class="action-buttons">
                   <button class="btn-continue" @click="$emit('close')">
-                    <i class="fas fa-search"></i>
+                    <i class="bi bi-search" style="font-size: 20px;"></i>
                     Continuer les recherches
                   </button>
                   <button class="btn-confirm" @click="confirm">
-                    <i class="fas fa-check"></i>
+                    <i class="bi bi-check" style="font-size: 20px;"></i>
                     Confirmer l'ajout
                   </button>
                 </div>

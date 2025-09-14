@@ -6,7 +6,7 @@
           <!-- Header avec gradient -->
           <div class="modal-header-cart">
             <button type="button" class="close-btn-cart" aria-label="Fermer" @click="$emit('close')">
-              <i class="fas fa-times"></i>
+              <i class="bi bi-x" style="font-size: 20px;"></i>
             </button>
             <div class="cart-icon position-relative">
               <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
@@ -31,7 +31,7 @@
                       <div class="product-info">
                         <div class="product-name-cart">{{ item.product?.libelle || item.product?.nom || 'Produit' }}</div>
                         <div class="product-pharmacy">
-                          <i class="fas fa-clinic-medical"></i>
+                          <i class="bi bi-shop" style="font-size: 20px;"></i>
                           {{ pharmacyName(item.pharmacy) }}<template v-if="pharmacyCity(item.pharmacy)">,{{ pharmacyCity(item.pharmacy) }}</template>
                         </div>
                         <div class="mt-2">
@@ -48,7 +48,7 @@
                         <button class="qty-btn" @click="increment(i)">+</button>
                       </div>
                       <button class="remove-btn" @click="remove(i)">
-                        <i class="fas fa-trash"></i>
+                        <i class="bi bi-trash" style="font-size: 20px;"></i>
                       </button>
                     </div>
                   </div>
@@ -86,6 +86,7 @@
 
                   <div class="action-buttons justify-content-center">
                     <button v-if="items.length > 0" class="btn-clear" @click="clearCart">
+                      <i class="bi bi-trash" style="font-size: 20px;"></i>
                       Vider
                     </button>
                     <!-- 🚫 Bouton Commander temporairement masqué -->
