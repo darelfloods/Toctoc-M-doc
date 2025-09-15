@@ -24,6 +24,7 @@ import { CreditService } from '../Services/CreditService'
 import ForgotPassword from '../components/ForgotPassword.vue'
 import ChangePassword from '../components/ChangePassword.vue'
 import EditProfile from '../components/EditProfile.vue'
+import Pharmacies from '../components/Pharmacies.vue'
 
 const homeService = new HomeService()
 const authStore = useAuthStore()
@@ -1385,6 +1386,7 @@ const partenaires = [
   <RecherchePharmacie :visible="showRecherche" :results="products" :query="searchTerm" :loading="isSearching" @close="showRecherche = false"
     @select="disponibilite" @queryChange="onModalQueryChange" />
   <Magasin :visible="showMagasin" @close="showMagasin = false" @purchased="onPurchased" />
+  <Pharmacies :visible="showPharmacies" @close="showPharmacies = false" />
 
   <!-- AI Notice Modal (better design instead of alert) -->
   <div v-if="showAiNotice" class="modal-overlay" @click.self="closeAiNotice()">
@@ -1461,14 +1463,6 @@ const partenaires = [
                 <i class="bi bi-gear-wide-connected" style="font-size:25px"></i>
               </span>
             </button>
-            <button style="border: none;" @click="showPanier = true">
-              <span class="badge bg-success p-2 position-relative" style="border-radius: 50px;">
-                <i class="bi bi-cart4" style="font-size:25px"></i>
-                <span v-if="hasCartItems" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 11px;">
-                  {{ cartItemCount }}
-                </span>
-              </span>
-            </button>
             <div class="credit-badge ms-3" @click="showMagasin = true">
               <i class="fa-solid fa-crown icon"></i>
               <span class="text">{{ creditStore.credits }} crédits</span>
@@ -1477,6 +1471,14 @@ const partenaires = [
             <button class="pharmacies-btn ms-3" @click="showPharmacies = true">
               <i class="bi bi-hospital"></i>
               <span class="text">Pharmacies</span>
+            </button>
+            <button style="border: none;" @click="showPanier = true">
+              <span class="badge bg-success p-2 position-relative" style="border-radius: 50px;">
+                <i class="bi bi-cart4" style="font-size:25px"></i>
+                <span v-if="hasCartItems" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 11px;">
+                  {{ cartItemCount }}
+                </span>
+              </span>
             </button>
           </template>
           <template v-else>
