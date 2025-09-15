@@ -92,13 +92,15 @@ const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close','purchased'])
 
 // Ajout du libelle (clé produit) attendu par l'API pour résoudre le bon rate_id côté backend
+// 🎯 SEULEMENT L'OFFRE 100F AVEC L'IMAGE DES 20 CRÉDITS
 const offers = [
-  { id: 1, libelle: 'starter', title: 'Offre Starter', price: '100 F CFA', img: '/assets/offre1.png' },
-  { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },
-  { id: 3, libelle: 'standard', title: 'Offre Standard', price: '1000 F CFA', img: '/assets/offre3.png', popular: true },
-  { id: 4, libelle: 'premium', title: 'Offre Premium', price: '2500 F CFA', img: '/assets/offre4.png', badge: { icon: 'fas fa-percentage', text: 'Économie' } },
-  { id: 5, libelle: 'pro', title: 'Offre Pro', price: '5000 F CFA', img: '/assets/offre5.png', badge: { icon: 'fas fa-fire', text: 'Top Deal' } },
-  { id: 6, libelle: 'elite', title: 'Offre Elite', price: '7500 F CFA', img: '/assets/offre6.png', badge: { icon: 'fas fa-crown', text: 'VIP' } },
+  { id: 1, libelle: 'starter', title: 'Offre Starter', price: '100 F CFA', img: '/assets/offre3.png' },
+  // Autres offres masquées temporairement
+  // { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },
+  // { id: 3, libelle: 'standard', title: 'Offre Standard', price: '1000 F CFA', img: '/assets/offre3.png', popular: true },
+  // { id: 4, libelle: 'premium', title: 'Offre Premium', price: '2500 F CFA', img: '/assets/offre4.png', badge: { icon: 'fas fa-percentage', text: 'Économie' } },
+  // { id: 5, libelle: 'pro', title: 'Offre Pro', price: '5000 F CFA', img: '/assets/offre5.png', badge: { icon: 'fas fa-fire', text: 'Top Deal' } },
+  // { id: 6, libelle: 'elite', title: 'Offre Elite', price: '7500 F CFA', img: '/assets/offre6.png', badge: { icon: 'fas fa-crown', text: 'VIP' } },
 ]
 
 const showConfirm = ref(false)
@@ -220,7 +222,9 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
 <style scoped>
 .custom-modal-content { background: rgba(255,255,255,0.98); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); overflow: hidden; }
-.grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 24px; }
+.grid-container { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 24px; min-height: 300px; }
+/* Pour plusieurs offres, utiliser grid */
+.grid-container.multiple-offers { display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; }
 .credit-card { background: #fff; border-radius: 16px; padding: 24px; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; }
 .credit-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
 .credit-amount { display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
@@ -230,6 +234,12 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 .value-indicator { position: absolute; top: 10px; left: 10px; background: rgba(58,178,79,0.1); color: #059669; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .popular-badge { position: absolute; top: 10px; right: 10px; background: #F59E0B; color: #fff; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; box-shadow: 0 5px 15px rgba(245,158,11,0.4); }
 
-@media (max-width: 992px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 576px) { .grid-container { grid-template-columns: 1fr; } }
+@media (max-width: 992px) {
+  .grid-container { flex-direction: column; min-height: 200px; }
+  .grid-container.multiple-offers { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px) {
+  .grid-container { padding: 16px; min-height: 150px; }
+  .grid-container.multiple-offers { grid-template-columns: 1fr; }
+}
 </style>
