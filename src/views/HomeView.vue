@@ -57,6 +57,7 @@ const showPanier = ref(false)
 const showDisponibilite = ref(false)
 const showRecherche = ref(false)
 const showMagasin = ref(false)
+const showPharmacies = ref(false)
 const showMobileMenu = ref(false)
 const showReservation = ref(false)
 const showSelectPharmacy = ref(false)
@@ -1472,6 +1473,11 @@ const partenaires = [
               <i class="fa-solid fa-crown icon"></i>
               <span class="text">{{ creditStore.credits }} crédits</span>
             </div>
+            <!-- Bouton Pharmacies -->
+            <button class="pharmacies-btn ms-3" @click="showPharmacies = true">
+              <i class="bi bi-hospital"></i>
+              <span class="text">Pharmacies</span>
+            </button>
           </template>
           <template v-else>
             <button type="button"
@@ -1521,6 +1527,9 @@ const partenaires = [
           </button>
           <button class="list-group-item list-group-item-action" @click="showMagasin = true; toggleMobileMenu()">
             <i class="bi bi-bag me-2"></i> Magasin de crédits
+          </button>
+          <button class="list-group-item list-group-item-action" @click="showPharmacies = true; toggleMobileMenu()">
+            <i class="bi bi-hospital me-2"></i> Pharmacies
           </button>
         </template>
         <template v-else>
@@ -2932,6 +2941,37 @@ body {
   color: #2d3748;
   font-weight: 700;
   font-size: 1rem;
+}
+
+/* Bouton Pharmacies */
+.pharmacies-btn {
+  background: linear-gradient(145deg, #0F7ABB, #0a5a8a);
+  border-radius: 30px;
+  padding: 0.75rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(15, 122, 187, 0.4);
+  border: none;
+  color: white;
+}
+
+.pharmacies-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(15, 122, 187, 0.6);
+  color: white;
+}
+
+.pharmacies-btn i {
+  font-size: 1rem;
+}
+
+.pharmacies-btn .text {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 /* Mobile menu overlay and sidebar */
