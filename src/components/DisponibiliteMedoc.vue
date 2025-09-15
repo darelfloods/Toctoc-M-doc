@@ -53,17 +53,7 @@
               </div>
             </div>
 
-            <!-- Navigation -->
-            <div class="navigation-controls nav-left">
-              <button class="nav-btn" @click="previousPage" :disabled="page===1">
-                <i class="bi bi-chevron-left" style="font-size: 24px;"></i>
-              </button>
-            </div>
-            <div class="navigation-controls nav-right">
-              <button class="nav-btn" @click="nextPage" :disabled="page===pages.length">
-                <i class="bi bi-chevron-right" style="font-size: 24px;"></i>
-              </button>
-            </div>
+            <!-- Navigation supprimée pour afficher toutes les provinces -->
 
             <!-- En-tête section -->
             <div class="provinces-header">
@@ -71,9 +61,9 @@
               <p>Choisissez la province où vous souhaitez rechercher des pharmacies</p>
             </div>
 
-            <!-- Grille provinces -->
+            <!-- Grille provinces - toutes affichées en une fois -->
             <div class="provinces-grid">
-              <div v-for="p in pages[page-1]" :key="p.key" class="province-card" :class="{ 'selected-province': selectedProvince===p.key }" @click="selectProvince(p.key)">
+              <div v-for="p in provinces" :key="p.key" class="province-card" :class="{ 'selected-province': selectedProvince===p.key }" @click="selectProvince(p.key)">
                 <img :src="p.img" :alt="p.key" class="province-image">
                 <h6 class="province-name">{{ p.label }}</h6>
                 <div class="province-capital">
@@ -154,12 +144,13 @@ const provinces = [
   { key: 'Woleu-Ntem', label: 'Woleu-Ntem (G9)', img: '/assets/Woleu-Ntem.png' },
 ]
 
-const pages = computed(() => [
-  provinces.slice(0,3),
-  provinces.slice(3,6),
-  provinces.slice(6,9),
-])
-const page = ref(1)
+// Pagination supprimée - toutes les provinces affichées en une fois
+// const pages = computed(() => [
+//   provinces.slice(0,3),
+//   provinces.slice(3,6),
+//   provinces.slice(6,9),
+// ])
+// const page = ref(1)
 const selectedProvince = ref<string | null>(null)
 
 const hasAnyData = computed(() => Object.keys(props.groupedPharmacies || {}).length > 0)
@@ -206,8 +197,9 @@ function getCitiesFor(key: string) {
   }
   return result
 }
-function previousPage() { if (page.value > 1) page.value-- }
-function nextPage() { if (page.value < pages.value.length) page.value++ }
+// Fonctions de pagination supprimées
+// function previousPage() { if (page.value > 1) page.value-- }
+// function nextPage() { if (page.value < pages.value.length) page.value++ }
 function selectProvince(key: string) {
   selectedProvince.value = key
   // Ne plus émettre l'événement selectProvince ici
@@ -230,13 +222,17 @@ function confirmSelection() {
 .modal-header-provinces .img { display:flex; justify-content:center; margin-bottom:.25rem; }
 .provinces-container { padding:2rem; background: linear-gradient(145deg,#ffffff,#f8fafc); overflow-x: hidden; }
 .results-summary .summary-card { background:#fff; border:1px solid rgba(102,126,234,0.15); border-radius:12px; padding:1rem; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
-.navigation-controls { position:absolute; top:50%; transform: translateY(-50%); z-index:2; }
+/* Navigation supprimée */
+/* .navigation-controls { position:absolute; top:50%; transform: translateY(-50%); z-index:2; }
 .nav-left { left:0; }
 .nav-right { right:0; }
 .nav-btn { width:44px; height:44px; border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; box-shadow:0 8px 24px rgba(102,126,234,0.3); }
-.nav-btn:disabled { opacity:.4; }
+.nav-btn:disabled { opacity:.4; } */
 .provinces-header { text-align:center; margin: 1rem 0 1.5rem; }
 .provinces-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; max-width: 100%; }
+@media (min-width: 1200px) { .provinces-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 992px) { .provinces-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 576px) { .provinces-grid { grid-template-columns: 1fr; } }
 .province-card { background:#fff; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 8px 24px rgba(0,0,0,0.06); padding:16px; position:relative; overflow:hidden; transition:.2s ease; cursor:pointer; }
 .province-card::before { content:''; position:absolute; left:0; top:0; width:4px; height:100%; background: linear-gradient(135deg,#667eea,#764ba2); }
 .province-card:hover { transform: translateY(-2px); box-shadow:0 12px 28px rgba(102,126,234,0.2); border-color:#667eea; }
@@ -254,5 +250,7 @@ function confirmSelection() {
 .action-buttons-provinces { display:flex; gap:12px; }
 .btn-cancel-provinces { background:transparent; border:2px solid #f56565; color:#f56565; border-radius:10px; padding:8px 16px; font-weight:600; }
 .btn-confirm-provinces { background: linear-gradient(135deg,#667eea,#764ba2); border:none; color:#fff; border-radius:10px; padding:8px 16px; font-weight:600; }
-@media (max-width: 992px) { .provinces-grid { grid-template-columns: 1fr; } .nav-left { left:0; } .nav-right { right:0; } }
+/* Responsive amélioré sans navigation */
+@media (max-width: 992px) { .provinces-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .provinces-grid { grid-template-columns: 1fr; } }
 </style>
