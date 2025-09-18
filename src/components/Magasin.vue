@@ -88,12 +88,22 @@ import { useAuthStore } from '@/stores/auth'
 import { CreditService } from '@/Services/CreditService'
 import { useCreditStore } from '@/stores/credit'
 
+interface Offer {
+  id: number
+  libelle: string
+  title: string
+  price: string
+  img: string
+  popular?: boolean
+  badge?: { icon: string; text: string }
+}
+
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close','purchased'])
 
 // Ajout du libelle (clé produit) attendu par l'API pour résoudre le bon rate_id côté backend
 // 🎯 SEULEMENT L'OFFRE 100F AVEC L'IMAGE DES 20 CRÉDITS
-const offers = [
+const offers: Offer[] = [
   { id: 1, libelle: 'starter', title: 'Offre Starter', price: '100 F CFA', img: '/assets/offre3.png' },
   // Autres offres masquées temporairement
   // { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },

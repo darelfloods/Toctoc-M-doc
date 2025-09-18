@@ -122,7 +122,7 @@ export class WebhookDiagnostic {
   private static async testDifferentHeaders(message: string): Promise<void> {
     console.log('[WebhookDiagnostic] 🏷️ Testing different headers...')
     
-    const headerSets = [
+    const headerSets: Record<string, string>[] = [
       { 'Content-Type': 'application/json' },
       { 'Content-Type': 'application/x-www-form-urlencoded' },
       { 'Content-Type': 'text/plain' },
@@ -148,7 +148,7 @@ export class WebhookDiagnostic {
         
         const response = await fetch(this.WEBHOOK_URL, {
           method: 'POST',
-          headers: headerSets[i],
+          headers: headerSets[i] as HeadersInit,
           body: body
         })
         

@@ -100,6 +100,6 @@ export class WebhookTester {
 
 // Global function for easy console testing
 if (typeof window !== 'undefined') {
-  (window as any).testWebhook = WebhookTester.testWebhook
-  (window as any).checkWebhook = WebhookTester.checkWebhookAvailability
+  (window as any).testWebhook = WebhookTester.testWebhook;
+  (window as any).checkWebhook = WebhookTester.checkWebhookAvailability;
 }

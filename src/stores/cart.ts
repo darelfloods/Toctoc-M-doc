@@ -38,7 +38,7 @@ export const useCartStore = defineStore('cart', () => {
     return 0
   }
 
-  function deriveUnitPrice(src: { product?: any; pharmacy?: any }): number {
+  function deriveUnitPrice(src: { product?: any; pharmacy?: any; [key: string]: any }): number {
     const p = src.product || {}
     const ph = src.pharmacy || src['pharmacie'] || {}
     const candidates = [
