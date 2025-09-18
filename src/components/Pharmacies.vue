@@ -2,89 +2,140 @@
   <div v-if="visible">
     <div class="modal fade show" id="pharmacies" tabindex="-1" aria-labelledby="pharmaciesLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="display:block;" role="dialog" aria-modal="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header border-0">
-            <h1 class="modal-title d-flex align-items-center" id="pharmaciesLabel">
-              <i class="bi bi-hospital me-3" style="color: var(--primary-color);"></i>
-              Toutes nos Pharmacies Partenaires
-            </h1>
-            <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
+        <div class="modal-content modern-modal">
+          <!-- Enhanced Header -->
+          <div class="modal-header modern-header">
+            <div class="header-content">
+              <div class="header-icon">
+                <i class="bi bi-hospital"></i>
+              </div>
+              <div class="header-text">
+                <h1 class="modal-title" id="pharmaciesLabel">
+                  Nos Pharmacies Partenaires
+                </h1>
+                <p class="header-subtitle">
+                  Réseau de {{ totalPharmacies }} pharmacies à travers le Gabon
+                </p>
+              </div>
+            </div>
+            <button type="button" class="btn-close modern-close" aria-label="Close" @click="$emit('close')">
+              <i class="bi bi-x-lg"></i>
+            </button>
           </div>
 
-          <div class="modal-body p-4">
-            <div class="mb-4">
-              <p class="lead text-muted">
-                Découvrez toutes nos pharmacies partenaires et leur statut de disponibilité en temps réel.
-              </p>
+          <div class="modal-body modern-body">
+            <!-- Search Bar -->
+            <div class="search-section">
+              <div class="search-container">
+                <i class="bi bi-search search-icon"></i>
+                
+                <div class="search-filters">
+                  <select v-model="statusFilter" class="filter-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="active">Actives</option>
+                    <option value="inactive">Inactives</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <!-- Statistics Summary -->
-            <div class="row mb-4">
-              <div class="col-md-4">
-                <div class="stat-card-pharmacy">
+            <!-- Enhanced Statistics Summary -->
+            <div class="stats-grid">
+              <div class="stat-card total">
+                <div class="stat-icon">
+                  <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-content">
                   <div class="stat-number">{{ totalPharmacies }}</div>
                   <div class="stat-label">Total Pharmacies</div>
                 </div>
+                <div class="stat-trend">
+                  <i class="bi bi-graph-up"></i>
+                </div>
               </div>
-              <div class="col-md-4">
-                <div class="stat-card-pharmacy active">
+              
+              <div class="stat-card active">
+                <div class="stat-icon">
+                  <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-content">
                   <div class="stat-number">{{ activePharmacies }}</div>
                   <div class="stat-label">Actives</div>
                 </div>
+                <div class="stat-percentage">{{ Math.round((activePharmacies / totalPharmacies) * 100) }}%</div>
               </div>
-              <div class="col-md-4">
-                <div class="stat-card-pharmacy inactive">
+              
+              <div class="stat-card inactive">
+                <div class="stat-icon">
+                  <i class="bi bi-pause-circle-fill"></i>
+                </div>
+                <div class="stat-content">
                   <div class="stat-number">{{ inactivePharmacies }}</div>
                   <div class="stat-label">Inactives</div>
                 </div>
+                <div class="stat-percentage">{{ Math.round((inactivePharmacies / totalPharmacies) * 100) }}%</div>
               </div>
             </div>
 
-            <!-- Pharmacies Grid -->
-            <div class="pharmacies-grid">
-              <div
-                v-for="(pharmacy, index) in allPharmacies"
-                :key="pharmacy.id || index"
-                class="pharmacy-card"
-                :class="{ 'active': pharmacy.status === 'active', 'inactive': pharmacy.status === 'inactive' }"
-              >
-                <div class="pharmacy-icon">
-                  <i class="bi bi-building" v-if="pharmacy.type === 'main'"></i>
-                  <i class="bi bi-hospital" v-else-if="pharmacy.type === 'hospital'"></i>
-                  <i class="bi bi-heart-pulse" v-else-if="pharmacy.type === 'health'"></i>
-                  <i class="bi bi-capsule" v-else-if="pharmacy.type === 'capsule'"></i>
-                  <i class="bi bi-plus-circle-fill" v-else-if="pharmacy.type === 'plus'"></i>
-                  <i class="bi bi-shield-heart" v-else-if="pharmacy.type === 'shield'"></i>
-                  <i class="bi bi-building" v-else></i>
-                </div>
-
-                <h6 class="pharmacy-name">{{ pharmacy.name }}</h6>
-
-                <div class="pharmacy-info">
-                  <div class="pharmacy-address" v-if="pharmacy.address">
-                    <i class="bi bi-geo-alt me-1"></i>
-                    {{ pharmacy.address }}
+            <!-- Enhanced Pharmacies Grid -->
+            <div class="pharmacies-section">
+              <div class="section-header">
+                <h3>Liste des Pharmacies</h3>
+                <div class="results-count">{{ filteredPharmacies.length }} résultat(s)</div>
+              </div>
+              
+              <div class="pharmacies-grid">
+                <div
+                  v-for="(pharmacy, index) in filteredPharmacies"
+                  :key="pharmacy.id || index"
+                  class="pharmacy-card modern-card"
+                  :class="{ 'active': pharmacy.status === 'active', 'inactive': pharmacy.status === 'inactive' }"
+                >
+                  <div class="card-header">
+                    <div class="pharmacy-icon">
+                      <i class="bi bi-building" v-if="pharmacy.type === 'main'"></i>
+                      <i class="bi bi-hospital" v-else-if="pharmacy.type === 'hospital'"></i>
+                      <i class="bi bi-heart-pulse" v-else-if="pharmacy.type === 'health'"></i>
+                      <i class="bi bi-capsule" v-else-if="pharmacy.type === 'capsule'"></i>
+                      <i class="bi bi-plus-circle-fill" v-else-if="pharmacy.type === 'plus'"></i>
+                      <i class="bi bi-shield-heart" v-else-if="pharmacy.type === 'shield'"></i>
+                      <i class="bi bi-building" v-else></i>
+                    </div>
+                    <div class="pharmacy-status">
+                      <span class="status-badge" :class="pharmacy.status">
+                        <i class="bi bi-circle-fill"></i>
+                        {{ pharmacy.status === 'active' ? 'Active' : 'Inactive' }}
+                      </span>
+                    </div>
                   </div>
-                  <div class="pharmacy-province" v-if="pharmacy.province">
-                    <i class="bi bi-map me-1"></i>
-                    {{ pharmacy.province }}
+
+                  <div class="card-body">
+                    <h6 class="pharmacy-name">{{ pharmacy.name }}</h6>
+                    
+                    <div class="pharmacy-details">
+                      <div class="detail-item" v-if="pharmacy.address">
+                        <i class="bi bi-geo-alt"></i>
+                        <span>{{ pharmacy.address }}</span>
+                      </div>
+                      <div class="detail-item" v-if="pharmacy.province">
+                        <i class="bi bi-map"></i>
+                        <span>{{ pharmacy.province }}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div class="pharmacy-status">
-                  <span class="status-badge" :class="pharmacy.status">
-                    <i class="bi bi-circle-fill me-1"></i>
-                    {{ pharmacy.status === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
                 </div>
-
               </div>
             </div>
           </div>
 
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-outline-secondary" @click="$emit('close')">
-              <i class="bi bi-x-lg me-2"></i>
+          <div class="modal-footer modern-footer">
+            <div class="footer-info">
+              <i class="bi bi-info-circle"></i>
+              <span>Données mises à jour en temps réel</span>
+            </div>
+            <button type="button" class="btn btn-primary modern-btn" @click="$emit('close')">
+              <i class="bi bi-check-lg"></i>
               Fermer
             </button>
           </div>
@@ -95,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Pharmacy {
   id?: string
@@ -217,223 +268,604 @@ const allPharmacies = computed<Pharmacy[]>(() => [
   }
 ])
 
+// Search and filter states
+const searchQuery = ref('')
+const statusFilter = ref('')
+
+// Computed filtered pharmacies
+const filteredPharmacies = computed(() => {
+  let filtered = allPharmacies.value
+  
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    filtered = filtered.filter(pharmacy => 
+      pharmacy.name.toLowerCase().includes(query) ||
+      (pharmacy.address && pharmacy.address.toLowerCase().includes(query)) ||
+      (pharmacy.province && pharmacy.province.toLowerCase().includes(query))
+    )
+  }
+  
+  // Filter by status
+  if (statusFilter.value) {
+    filtered = filtered.filter(pharmacy => pharmacy.status === statusFilter.value)
+  }
+  
+  return filtered
+})
+
 const totalPharmacies = computed(() => allPharmacies.value.length)
 const activePharmacies = computed(() => allPharmacies.value.filter(p => p.status === 'active').length)
 const inactivePharmacies = computed(() => allPharmacies.value.filter(p => p.status === 'inactive').length)
 </script>
 
 <style scoped>
-.pharmacies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.8rem;
-  max-height: 60vh;
-  overflow-y: auto;
+/* Modern Modal Styling */
+.modern-modal {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
-.pharmacy-card {
+/* Enhanced Header */
+.modern-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 2rem;
+  color: white;
+  position: relative;
+}
+
+.modern-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  backdrop-filter: blur(10px);
+}
+
+.header-text .modal-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.modern-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.modern-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Modern Body */
+.modern-body {
+  padding: 2rem;
+  background: #f8fafc;
+}
+
+/* Search Section */
+.search-section {
+  margin-bottom: 2rem;
+}
+
+.search-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
   background: white;
-  border-radius: 6px;
-  padding: 0.8rem;
-  border: 1px solid #e9ecef;
+  border-radius: 15px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 4px 25px rgba(102, 126, 234, 0.15);
+}
+
+.search-icon {
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  padding: 0.5rem 0;
+  background: transparent;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.search-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  background: white;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Enhanced Statistics */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card.total::before {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.stat-card.active::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.stat-card.inactive::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-card.total .stat-icon {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.stat-card.active .stat-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-card.inactive .stat-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.stat-percentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.stat-trend {
+  color: #10b981;
+  font-size: 1.2rem;
+}
+
+/* Pharmacies Section */
+.pharmacies-section {
+  margin-top: 1rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.results-count {
+  background: #e2e8f0;
+  color: #475569;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Enhanced Pharmacy Cards */
+.pharmacies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.pharmacies-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pharmacies-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.pharmacies-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.pharmacies-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.modern-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
   transition: all 0.3s ease;
   position: relative;
 }
 
-.pharmacy-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+.modern-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
-.pharmacy-card.active {
-  border-color: #28a745;
-  background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
+.modern-card.active {
+  border-color: #10b981;
 }
 
-.pharmacy-card.inactive {
-  border-color: #dc3545;
-  background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
+.modern-card.inactive {
+  border-color: #ef4444;
   opacity: 0.8;
 }
 
+.card-header {
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .pharmacy-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  border-radius: 50%;
-  margin: 0 auto 0.5rem;
+  font-size: 1.3rem;
   color: white;
-  font-size: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
-.pharmacy-card.active .pharmacy-icon {
-  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+.modern-card.active .pharmacy-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.pharmacy-card.inactive .pharmacy-icon {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-}
-
-.pharmacy-name {
-  font-weight: bold;
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  font-size: 0.85rem;
-  line-height: 1.2;
-}
-
-.pharmacy-info {
-  margin-bottom: 0.5rem;
-}
-
-.pharmacy-address, .pharmacy-province {
-  font-size: 0.72rem;
-  color: #6c757d;
-  margin-bottom: 0.2rem;
-  display: flex;
-  align-items: center;
-  line-height: 1.1;
-}
-
-.pharmacy-status {
-  text-align: center;
-  margin-bottom: 0;
+.modern-card.inactive .pharmacy-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 .status-badge {
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.65rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .status-badge.active {
-  background: #d4edda;
-  color: #155724;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .status-badge.inactive {
-  background: #f8d7da;
-  color: #721c24;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
+.status-badge i {
+  font-size: 0.6rem;
+}
 
-.stat-card-pharmacy {
-  background: white;
-  border-radius: 10px;
-  padding: 1.5rem;
+.card-body {
+  padding: 1rem 1.5rem;
+}
+
+.pharmacy-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  line-height: 1.3;
+}
+
+.pharmacy-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.detail-item i {
+  color: #94a3b8;
+  width: 16px;
   text-align: center;
-  border: 2px solid #e9ecef;
+}
+
+.card-footer {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.action-btn.active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.action-btn.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.action-btn.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Modern Footer */
+.modern-footer {
+  background: #f8fafc;
+  border: none;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.footer-info i {
+  color: #94a3b8;
+}
+
+.modern-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   transition: all 0.3s ease;
 }
 
-.stat-card-pharmacy:hover {
+.modern-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #5a67d8, #6b46c1);
 }
 
-.stat-card-pharmacy.active {
-  border-color: #28a745;
-  background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
-}
-
-.stat-card-pharmacy.inactive {
-  border-color: #dc3545;
-  background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
-}
-
-.stat-card-pharmacy .stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #007bff;
-  margin-bottom: 0.5rem;
-}
-
-.stat-card-pharmacy.active .stat-number {
-  color: #28a745;
-}
-
-.stat-card-pharmacy.inactive .stat-number {
-  color: #dc3545;
-}
-
-.stat-card-pharmacy .stat-label {
-  font-size: 0.9rem;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Responsive design */
+/* Responsive Design */
 @media (max-width: 768px) {
+  .modern-header {
+    padding: 1.5rem;
+  }
+  
+  .header-content {
+    gap: 1rem;
+  }
+  
+  .header-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .header-text .modal-title {
+    font-size: 1.5rem;
+  }
+  
+  .modern-body {
+    padding: 1.5rem;
+  }
+  
+  .search-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
   .pharmacies-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.6rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-
-  .pharmacy-card {
-    padding: 0.6rem;
-  }
-
-  .pharmacy-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-    margin: 0 auto 0.3rem;
-  }
-
-  .pharmacy-name {
-    font-size: 0.75rem;
-    margin-bottom: 0.3rem;
-  }
-
-  .pharmacy-address, .pharmacy-province {
-    font-size: 0.65rem;
-    margin-bottom: 0.15rem;
-  }
-
-  .status-badge {
-    font-size: 0.6rem;
-    padding: 0.15rem 0.4rem;
+  
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
   }
 }
 
 @media (max-width: 480px) {
-  .pharmacies-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.3rem;
+  .modern-header {
+    padding: 1rem;
   }
-
-  .pharmacy-card {
-    padding: 0.3rem;
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
   }
-
-  .pharmacy-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-    margin: 0 auto 0.2rem;
+  
+  .modern-body {
+    padding: 1rem;
   }
-
-  .pharmacy-name {
-    font-size: 0.6rem;
-    margin-bottom: 0.2rem;
+  
+  .stat-card {
+    padding: 1rem;
   }
-
-  .pharmacy-address, .pharmacy-province {
-    font-size: 0.55rem;
-    margin-bottom: 0.1rem;
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
   }
-
-  .status-badge {
-    font-size: 0.5rem;
-    padding: 0.1rem 0.3rem;
+  
+  .stat-number {
+    font-size: 1.5rem;
   }
 }
 </style>

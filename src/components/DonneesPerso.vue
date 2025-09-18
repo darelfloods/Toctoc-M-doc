@@ -10,12 +10,10 @@
           <!-- En-tête du modal -->
           <div class="modal-header-custom">
             <button type="button" class="btn-close-custom" aria-label="Fermer" @click="$emit('close')">
-              <i class="fas fa-times"></i>
+              <i class="bi bi-x"></i>
             </button>
             <div class="logo-container">
-              <i class="fas fa-user-shield logo-icon">
-                <img src="/assets/Fichier 12.svg" width="70" alt="" />
-              </i>
+              <img src="/assets/Fichier 12.svg" width="70" alt="" />
             </div>
             <h1 class="modal-title-custom" id="privacyModalLabel">
               Utilisation des données personnelles
@@ -37,7 +35,7 @@
             <!-- Section 1: Collecte des données -->
             <div class="section-card">
               <h6 class="section-title">
-                <span class="section-icon"><i class="fas fa-database"></i></span>
+                <span class="section-icon"><i class="bi bi-clipboard-data"></i></span>
                 1. Collecte des Données Personnelles
               </h6>
               <div class="section-content">

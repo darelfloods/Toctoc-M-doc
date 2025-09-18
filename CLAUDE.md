@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Tech Stack**: Vue 3 + TypeScript + Pinia + PrimeVue + Vite
 - **Main File**: HomeView.vue (~1500+ lines) - Primary application interface
 - **Core Mechanic**: Pharmacy reservation system with credit-based payments
-- **Key Integration**: Backend API at https://51.68.46.67:8000, n8n at localhost:5678
+- **Key Integration**: Backend API at https://vps-b9ccb6e1.vps.ovh.net:8000, n8n at localhost:5678
 - **Platform Support**: Web application with mobile-responsive design
 - **DO NOT**: Commit changes unless explicitly requested by user
 
@@ -69,7 +69,7 @@ The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue
 ## Configuration
 
 ### API Endpoints
-- **Main API**: Base `https://51.68.46.67:8000`
+- **Main API**: Base `https://vps-b9ccb6e1.vps.ovh.net:8000`
   - Auth endpoints: `/auth/...` (no `/api_epg` prefix)
   - Product endpoints: `/api_epg/...`
 - **n8n Integration**: Proxied `/n8n/*` → `http://localhost:5678`

@@ -80,7 +80,7 @@ async function testAuth(method: string) {
 
     switch (method) {
       case 'fetch':
-        response = await fetch('https://51.68.46.67:8000/auth/login', {
+        response = await fetch('https://vps-b9ccb6e1.vps.ovh.net:8000/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody)
