@@ -3,7 +3,7 @@ export const ENV = {
   // URL de base de l'API
   API_BASE_URL:
     // Utiliser l'URL explicite si fournie, sinon la valeur par défaut avec port 8000
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'https://51.68.46.67:8000',
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'https://vps-b9ccb6e1.vps.ovh.net:8000',
 
   // Liste ordonnée des bases (avec fallback). La première qui répond est utilisée.
   API_BASE_URLS: (() => {
@@ -12,7 +12,7 @@ export const ENV = {
     const candidates = [
       norm(import.meta.env.VITE_API_BASE_URL),
       norm(import.meta.env.VITE_API_FALLBACK_BASE_URL),
-      'https://51.68.46.67:8000',
+      'https://vps-b9ccb6e1.vps.ovh.net:8000',
     ] as const
     for (const c of candidates) {
       if (c && !list.includes(c)) list.push(c)

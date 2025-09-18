@@ -1,8 +1,8 @@
 # Proxy API calls to the backend (replace target with your backend ngrok URL if applicable)
-/api/*  http://51.68.46.67:8000/:splat  200
+/api/*  http://vps-b9ccb6e1.vps.ovh.net:8000/:splat  200
 # Also proxy direct /api_epg calls (without the /api prefix)
-/api_epg/*  http://51.68.46.67:8000/api_epg/:splat  200
+/api_epg/*  http://vps-b9ccb6e1.vps.ovh.net:8000/api_epg/:splat  200
 # Proxy MyPayGA endpoints
-/my_pay_ga/*  http://51.68.46.67:8000/my_pay_ga/:splat  200
+/my_pay_ga/*  http://vps-b9ccb6e1.vps.ovh.net:8000/my_pay_ga/:splat  200
 # SPA fallback
 /*      /index.html 200

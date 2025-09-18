@@ -27,14 +27,14 @@ export default defineConfig({
     cors: true,        // autorise les appels cross-origin
     proxy: {
       '/api': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://vps-b9ccb6e1.vps.ovh.net:8000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Support calls that directly hit /api_epg/... (without the /api prefix)
       '/api_epg': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://vps-b9ccb6e1.vps.ovh.net:8000',
         changeOrigin: true,
         secure: false,
         // do not rewrite, keep the path as-is
