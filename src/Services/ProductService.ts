@@ -1,6 +1,7 @@
 // src/service/ProductService.ts
 import { fetchApi } from '@/utils/api'
 import { joinUrl } from '@/utils/url'
+import { ExcelProductService } from './ExcelProductService'
 export type Product = {
   id: number;
 
@@ -40,17 +41,22 @@ export type Product = {
 
 export class ProductService {
   static async getProductsSmall(): Promise<Product[]> {
-    // Récupération via API réelle (fallback géré par fetchApi)
-    const path = joinUrl('api_epg', 'all_products', '1', '10')
-    const res = await fetchApi(path)
-    if (!res.ok) throw new Error('Erreur de chargement produits');
-    return await res.json();
+    // Récupération depuis fichier Excel local
+    return await ExcelProductService.getProductsSmall();
   }
 
   static async getProducts(): Promise<Product[]> {
-    // JSON statique local (depuis public/data)
-    const res = await fetch('/data/products-small.json');
-    if (!res.ok) throw new Error('Erreur de chargement produits');
-    return await res.json();
+    // Récupération depuis fichier Excel local
+    return await ExcelProductService.getProducts();
+  }
+
+  static async searchProducts(term: string): Promise<Product[]> {
+    // Recherche dans le fichier Excel local
+    return await ExcelProductService.searchProducts(term);
+  }
+
+  static async getProductByCip(cip: string | number): Promise<Product | null> {
+    // Recherche par CIP dans le fichier Excel local
+    return await ExcelProductService.getProductByCip(cip);
   }
 }

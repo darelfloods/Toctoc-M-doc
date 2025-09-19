@@ -200,10 +200,14 @@ export class HomeService {
   }
 
   async getAllProduct(page: number, count: number) {
-    const path = joinUrl('api_epg', 'all_products', String(page), String(count));
-    const res = await fetchApi(path);
-    if (!res.ok) throw new Error('Erreur lors du chargement des produits');
-    return await res.json();
+    const { ExcelProductService } = await import('./ExcelProductService');
+    const allProducts = await ExcelProductService.getProducts();
+
+    // Simulation de la pagination
+    const startIndex = (page - 1) * count;
+    const endIndex = startIndex + count;
+
+    return allProducts.slice(startIndex, endIndex);
   }
 
   async disponibilite(cip: string | number) {
@@ -218,36 +222,22 @@ export class HomeService {
   }
 
   async searchProducts(term: string) {
-    const path = joinUrl('api_epg', 'products_by_search', encodeURIComponent(term));
+    const { ExcelProductService } = await import('./ExcelProductService');
     const key = term.toLowerCase();
+
     // Retour immédiat si déjà en cache
     if (this.searchCache.has(key)) {
       return this.searchCache.get(key) as any[];
     }
-    // Si on a un préfixe en cache, filtrer rapidement en attendant le réseau
-    for (let i = key.length - 1; i >= 1; i--) {
-      const prefix = key.slice(0, i);
-      if (this.searchCache.has(prefix)) {
-        const pref = this.searchCache.get(prefix) as any[];
-        const quick = pref.filter((p: any) => (p?.libelle || '').toString().toLowerCase().includes(key));
-        if (quick.length > 0) {
-          // Ne pas enregistrer ce quick dans le cache pour éviter pollution; simplement le retourner
-          // Cela rend l'expérience instantanée si des données proches existent déjà
-          // On ne coupe pas ici: on pourrait renvoyer le quick, mais comme la méthode est async attendue,
-          // on continue pour récupérer réseau et mettre à jour le cache.
-        }
-        break;
-      }
-    }
-    // Annuler la requête précédente si elle est encore en cours
-    if (this.searchController) {
-      this.searchController.abort();
-    }
+
+    // Annuler la recherche précédente si elle est encore en cours
+    this.cancelSearch();
     this.searchController = new AbortController();
+
     try {
-      const res = await fetchApi(path, {});
-      if (!res.ok) throw new Error('Erreur lors de la recherche de produits');
-      const data = await res.json();
+      // Rechercher dans le fichier Excel local
+      const data = await ExcelProductService.searchProducts(term);
+
       // Mettre en cache le résultat
       this.searchCache.set(key, Array.isArray(data) ? data : []);
       return data;
@@ -258,7 +248,7 @@ export class HomeService {
       }
       throw err;
     } finally {
-      // Nettoyage du controller courant seulement s'il s'agit du même
+      // Nettoyage du controller courant
       this.searchController = undefined;
     }
   }
