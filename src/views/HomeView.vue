@@ -466,6 +466,13 @@ async function runAiSearch(): Promise<void> {
   if (!q) return
   aiIsParsing.value = true
   const runId = ++aiSearchReqId
+
+  // Reset previous search data
+  aiOriginalQuery.value = ''
+  aiPendingPlace.value = null
+  aiPendingQty.value = 1
+  selectedProvince.value = null
+
   const { productName, quantity, place } = parseAiQuery(q)
 
   // find best matching product (consider both loaded products and initialProducts to widen pool)
