@@ -66,6 +66,7 @@ const showInscription = ref(false)
 const showForgotPassword = ref(false)
 const showChangePassword = ref(false)
 const showEditProfile = ref(false)
+
 const disponibilityPharmacies = ref<any[]>([])
 const isLoadingDisponibilite = ref(false)
 const selectedProvince = ref<string | null>(null)
@@ -1394,6 +1395,7 @@ const partenaires = [
     @select="disponibilite" @queryChange="onModalQueryChange" />
   <Magasin :visible="showMagasin" @close="showMagasin = false" @purchased="onPurchased" />
   <Pharmacies :visible="showPharmacies" @close="showPharmacies = false" />
+
 
   <!-- AI Notice Modal (better design instead of alert) -->
   <div v-if="showAiNotice" class="modal-overlay" @click.self="closeAiNotice()">

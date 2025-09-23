@@ -3,11 +3,11 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Critical Context (Read First)
-- **Tech Stack**: Vue 3 + TypeScript + Pinia + PrimeVue + Vite
-- **Main File**: HomeView.vue (~1500+ lines) - Primary application interface
-- **Core Mechanic**: Pharmacy reservation system with credit-based payments
-- **Key Integration**: Backend API at https://vps-b9ccb6e1.vps.ovh.net:8000, n8n at localhost:5678
-- **Platform Support**: Web application with mobile-responsive design
+- **Tech Stack**: Vue 3 + TypeScript + Pinia + PrimeVue + Vite + FontAwesome + XLSX
+- **Main File**: HomeView.vue (~3000+ lines) - Primary application interface
+- **Core Mechanic**: Pharmacy reservation system with credit-based payments and AI-powered search
+- **Key Integration**: Backend TTM hébergé à https://51.68.46.67:8000 (remplace l'API avec certificat expiré), additional reservations API at demo2.srv557357.hstgr.cloud
+- **Platform Support**: Web application with mobile-responsive design, ngrok-ready dev server
 - **DO NOT**: Commit changes unless explicitly requested by user
 
 ## Commands Reference
@@ -24,9 +24,12 @@ npm run format       # Format code with Prettier
 
 ### Testing
 ```bash
-npm run test:unit    # Run Vitest unit tests
-npm run test:e2e     # Run Playwright end-to-end tests
-npx playwright install  # Install browsers for first E2E run
+npm run test:unit              # Run Vitest unit tests
+npm run test:e2e               # Run Playwright end-to-end tests
+npm run test:e2e -- --project=chromium  # Run tests only on Chromium
+npm run test:e2e -- tests/example.spec.ts  # Run specific test file
+npm run test:e2e -- --debug   # Run tests in debug mode
+npx playwright install        # Install browsers for first E2E run
 ```
 
 ## Architecture Overview
@@ -51,7 +54,7 @@ npx playwright install  # Install browsers for first E2E run
 
 ## Smart Reservation System
 
-The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue:567) performs:
+The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue) performs:
 
 1. **Authentication Check** - Ensures user is logged in
 2. **Province Resolution** - Matches location mentions to valid provinces
@@ -61,24 +64,75 @@ The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue
 6. **Cart Addition** - Adds reservation to cart automatically
 
 ### Known Issue: Credit System Bug
-**Location**: HomeView.vue:692-708
 **Problem**: Credit verification fails even with sufficient balance
 **Symptoms**: "Impossibilité de faire une réservation intelligente" message
-**Root Cause**: Credit deduction fails at `CreditService.souscrireCredit()` call
+**Root Cause**: Credit deduction fails at `CreditService.souscrireCredit()` call - this service tries 6 different API endpoints as fallbacks
 
 ## Configuration
 
-### API Endpoints
-- **Main API**: Base `https://vps-b9ccb6e1.vps.ovh.net:8000`
-  - Auth endpoints: `/auth/...` (no `/api_epg` prefix)
-  - Product endpoints: `/api_epg/...`
-- **n8n Integration**: Proxied `/n8n/*` → `http://localhost:5678`
-- **Development Server**: Fixed on port 5173 with CORS enabled
+### API Endpoints (MISE À JOUR - Backend TTM Hébergé)
+- **Backend TTM Hébergé**: `https://51.68.46.67:8000` (remplace l'ancien serveur avec certificat expiré)
+  - Auth endpoints: `/auth/login`, `/auth/login_admin`
+  - User management: `/user/*`
+  - Account management: `/account/*`
+  - Rate management: `/rate/*`
+  - Product endpoints: `/api_epg/*`
+  - Payment: `/my_pay_ga/*`, `/sing_pay_api/*`
+- **Reservations API**: `https://demo2.srv557357.hstgr.cloud` (via `/reservations-api/*` proxy)
+- **Development Server**: Fixed on port 5173 with CORS enabled and multiple proxy configurations
+
+### Vite Proxy Configuration (MISE À JOUR - Backend TTM Hébergé)
+Nouvelle configuration proxy pour le backend TTM hébergé dans vite.config.ts:
+- `/auth/*` → backend TTM hébergé (authentification)
+- `/user/*` → backend TTM hébergé (gestion utilisateurs)
+- `/account/*` → backend TTM hébergé (gestion comptes)
+- `/rate/*` → backend TTM hébergé (tarification)
+- `/api_epg/*` → backend TTM hébergé (produits EPG)
+- `/my_pay_ga/*` → backend TTM hébergé (paiements MyPayGa)
+- `/sing_pay_api/*` → backend TTM hébergé (paiements SingPay)
+- `/reservations-api/*` → reservations API (externe, inchangé)
+
+**Important**: `secure: false` est configuré pour ignorer les problèmes de certificat SSL
+
+## Authentification Backend TTM
+
+### Structure des données
+Le backend TTM utilise une structure différente pour les utilisateurs:
+```typescript
+interface User {
+  id: number
+  email: string
+  firstname: string
+  lastname: string
+  phone?: string
+  role: string // "USER" ou "ADMIN"
+  created_at?: string
+  updated_at?: string
+}
+
+interface Token {
+  access_token: string
+  token_type: string // "bearer"
+}
+```
+
+### Endpoints d'authentification
+- **POST /auth/login**: Connexion utilisateur standard (OAuth2PasswordRequestForm)
+- **POST /auth/login_admin**: Connexion administrateur (vérification du rôle)
+
+### Méthodes AuthService
+- `AuthService.login()`: Connexion standard
+- `AuthService.loginAdmin()`: Connexion admin
+- `AuthService.register()`: Inscription (vers `/user/add`)
+
+### Tests de développement
+Composant de test disponible: `BackendTestComponent.vue`
+Service de test: `BackendTestService.ts`
 
 ### Environment Integration
-- **NGROK Support**: Configured for external tunnel access
+- **NGROK Support**: Configured for external tunnel access with `host: true` and `allowedHosts: true`
 - **Hot Reload**: Vite dev server with Vue DevTools integration
-- **Proxy Configuration**: Handles API routing and CORS issues
+- **Strict Port**: Development server enforces port 5173 with `strictPort: true`
 
 ## Development Workflow
 
@@ -131,10 +185,11 @@ src/
 ```
 
 ## Performance Considerations
-- Large HomeView.vue component (~1500 lines) - consider splitting for maintainability
-- API calls include multiple fallback strategies (see CreditService.ts:44-83)
+- Large HomeView.vue component (~3000 lines) - consider splitting for maintainability
+- API calls include multiple fallback strategies (see CreditService.ts for 6 different credit endpoints)
 - Province matching uses fuzzy search algorithms
-- Cart data persists to localStorage on every change
+- Cart data persists to localStorage on every change via Pinia store persistence
+- Excel file processing via XLSX library for product imports
 
 ## Testing Strategy
 - Unit tests with Vitest for store logic

@@ -5,13 +5,17 @@ export interface User {
   id: number
   email: string
   name: string
-  role?: string
-  // Ajoutez d'autres propriétés selon votre modèle utilisateur
+  firstname?: string
+  lastname?: string
+  phone?: string
+  role: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Token {
   access_token: string
-  refresh_token?: string
+  token_type?: string
   expires_in?: number
 }
 

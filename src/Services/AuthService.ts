@@ -5,14 +5,17 @@ import { useAuthStore } from '@/stores/auth'
 export interface User {
   id: number
   email: string
-  name: string
-  role?: string
+  firstname: string
+  lastname: string
+  phone?: string
+  role: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Token {
   access_token: string
-  refresh_token?: string
-  expires_in?: number
+  token_type: string
 }
 
 export interface LoginCredentials {
@@ -21,11 +24,12 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  name: string
+  firstname: string
+  lastname: string
   email: string
   password: string
-  password_confirmation: string
   phone?: string
+  role?: string
 }
 
 export interface AuthResponse {
@@ -37,26 +41,42 @@ export interface AuthResponse {
 export class AuthService {
   // Connexion utilisateur
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    console.log(' Tentative de connexion...')
-    console.log(' Credentials:', credentials)
+    console.log('🔐 Tentative de connexion directe au backend TTM...')
+    console.log('📝 Credentials:', { username: credentials.username })
 
-    // Convertir les credentials en FormData car l'API l'attend
+    // Convertir les credentials en FormData car l'API backend FastAPI l'attend avec OAuth2PasswordRequestForm
     const formData = new FormData()
-    formData.append('grant_type', 'password')
     formData.append('username', credentials.username)
     formData.append('password', credentials.password)
-
-    console.log(' FormData créé:', formData)
 
     try {
       const response = await HttpService.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.LOGIN,
         formData,
+        {
+          headers: {
+            // Ne pas spécifier Content-Type, le navigateur le fait automatiquement pour FormData
+          }
+        }
       )
+
+      console.log('✅ Réponse backend reçue:', response.data)
 
       // Utiliser le store Pinia pour gérer l'état
       const authStore = useAuthStore()
-      authStore.login(response.data.user, response.data.token)
+
+      // Adapter les données du backend pour le frontend
+      const userData = {
+        id: response.data.user.id,
+        email: response.data.user.email,
+        name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
+        firstname: response.data.user.firstname,
+        lastname: response.data.user.lastname,
+        phone: response.data.user.phone,
+        role: response.data.user.role
+      }
+
+      authStore.login(userData as any, response.data.token as any)
 
       // Stocker le token dans HttpService pour les futures requêtes
       if (response.data.token) {
@@ -65,47 +85,103 @@ export class AuthService {
 
       return response.data
     } catch (error) {
-      console.error('Erreur de connexion:', error)
-      throw new Error('Échec de la connexion')
+      console.error('❌ Erreur de connexion backend TTM:', error)
+      throw new Error('Échec de la connexion au backend TTM')
+    }
+  }
+
+  // Connexion administrateur
+  static async loginAdmin(credentials: LoginCredentials): Promise<AuthResponse> {
+    console.log('🔐 Tentative de connexion admin au backend TTM...')
+
+    const formData = new FormData()
+    formData.append('username', credentials.username)
+    formData.append('password', credentials.password)
+
+    try {
+      const response = await HttpService.post<AuthResponse>(
+        '/auth/login_admin',
+        formData,
+        {
+          headers: {
+            // Ne pas spécifier Content-Type pour FormData
+          }
+        }
+      )
+
+      console.log('✅ Connexion admin réussie:', response.data)
+
+      const authStore = useAuthStore()
+
+      const userData = {
+        id: response.data.user.id,
+        email: response.data.user.email,
+        name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
+        firstname: response.data.user.firstname,
+        lastname: response.data.user.lastname,
+        phone: response.data.user.phone,
+        role: response.data.user.role
+      }
+
+      authStore.login(userData as any, response.data.token as any)
+
+      if (response.data.token) {
+        HttpService.setAuthToken(response.data.token.access_token)
+      }
+
+      return response.data
+    } catch (error) {
+      console.error('❌ Erreur de connexion admin backend TTM:', error)
+      throw new Error('Échec de la connexion admin au backend TTM')
     }
   }
 
   // Inscription utilisateur
   static async register(userData: RegisterData): Promise<AuthResponse> {
-    try {
-      // Envoyer les données en JSON (application/json)
-      // Adapter les données du formulaire (name, password_confirmation) au contrat backend
-      const [first, ...rest] = (userData.name || '').trim().split(/\s+/)
-      const firstname = first || userData.name || ''
-      const lastname = rest.join(' ') || ''
+    console.log('📝 Tentative d\'inscription au backend TTM...')
 
+    try {
+      // Préparer les données selon le schema UserSchema.Create du backend
       const payload = {
-        firstname,
-        lastname,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
         email: userData.email,
-        ...(userData.phone ? { phone: userData.phone } : {}),
-        role: 'user',
         password: userData.password,
+        phone: userData.phone || null,
+        role: userData.role || 'USER', // Par défaut USER selon le backend
       }
+
+      console.log('📤 Données d\'inscription:', { ...payload, password: '[HIDDEN]' })
 
       const response = await HttpService.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.REGISTER,
         payload,
       )
 
-      // Utiliser le store Pinia pour gérer l'état
-      const authStore = useAuthStore()
-      authStore.login(response.data.user, response.data.token)
+      console.log('✅ Inscription réussie:', response.data)
 
-      // Stocker le token dans HttpService pour les futures requêtes
+      // Note: Le backend retourne directement un utilisateur créé, pas forcément avec token
+      // Il faudra peut-être faire un login séparé après l'inscription
       if (response.data.token) {
+        const authStore = useAuthStore()
+        const userData = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
+          firstname: response.data.user.firstname,
+          lastname: response.data.user.lastname,
+          phone: response.data.user.phone,
+          role: response.data.user.role
+        }
+
+        authStore.login(userData as any, response.data.token as any)
         HttpService.setAuthToken(response.data.token.access_token)
       }
 
       return response.data
     } catch (error) {
-      console.error("Erreur d'inscription:", error)
-      throw new Error("Échec de l'inscription")
+      console.error('❌ Erreur d\'inscription backend TTM:', error)
+      throw new Error('Échec de l\'inscription au backend TTM')
     }
   }
 
