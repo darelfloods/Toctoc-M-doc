@@ -50,8 +50,8 @@ const API_CONFIG = {
     Accept: 'application/json',
   },
 
-  // Timeout par défaut (en millisecondes)
-  TIMEOUT: 10000,
+  // Timeout par défaut (en millisecondes) - utilise ENV.API_TIMEOUT_MS
+  TIMEOUT: ENV.API_TIMEOUT_MS,
 
   // Configuration des retry
   RETRY: {
