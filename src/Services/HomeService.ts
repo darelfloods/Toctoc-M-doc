@@ -215,7 +215,13 @@ export class HomeService {
     const res = await fetchApi(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: { cip: String(cip) }
+      body: {
+        cip: String(cip),
+        pharmacy: '', // Champ requis mais non utilisé par le backend (ligne 132 du ProductApi.py)
+        name: 'Product', // Champs requis par le schema Pydantic
+        price: 0,
+        stock: 0
+      }
     });
     if (!res.ok) throw new Error('Erreur lors de la vérification de disponibilité');
     return await res.json();

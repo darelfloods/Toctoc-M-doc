@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Tech Stack**: Vue 3 + TypeScript + Pinia + PrimeVue + Vite + FontAwesome + XLSX
 - **Main File**: HomeView.vue (~3000+ lines) - Primary application interface
 - **Core Mechanic**: Pharmacy reservation system with credit-based payments and AI-powered search
-- **Key Integration**: Backend TTM hébergé à https://51.68.46.67:8000 (remplace l'API avec certificat expiré), additional reservations API at demo2.srv557357.hstgr.cloud
+- **Key Integration**: Backend TTM hébergé sur Render à https://api-ttm.onrender.com (production), fallback vers localhost:8000 (développement local), additional reservations API at demo2.srv557357.hstgr.cloud
 - **Platform Support**: Web application with mobile-responsive design, ngrok-ready dev server
 - **DO NOT**: Commit changes unless explicitly requested by user
 
@@ -70,29 +70,35 @@ The intelligent reservation feature (`aiHeadlessReservationFlow` in HomeView.vue
 
 ## Configuration
 
-### API Endpoints (MISE À JOUR - Backend TTM Hébergé)
-- **Backend TTM Hébergé**: `https://51.68.46.67:8000` (remplace l'ancien serveur avec certificat expiré)
+### API Endpoints (Backend Render - Production)
+- **Backend TTM sur Render** (Production): `https://api-ttm.onrender.com`
   - Auth endpoints: `/auth/login`, `/auth/login_admin`
   - User management: `/user/*`
   - Account management: `/account/*`
   - Rate management: `/rate/*`
   - Product endpoints: `/api_epg/*`
   - Payment: `/my_pay_ga/*`, `/sing_pay_api/*`
+- **Backend Local** (Développement): `http://localhost:8000` (fallback automatique)
 - **Reservations API**: `https://demo2.srv557357.hstgr.cloud` (via `/reservations-api/*` proxy)
 - **Development Server**: Fixed on port 5173 with CORS enabled and multiple proxy configurations
 
-### Vite Proxy Configuration (MISE À JOUR - Backend TTM Hébergé)
-Nouvelle configuration proxy pour le backend TTM hébergé dans vite.config.ts:
-- `/auth/*` → backend TTM hébergé (authentification)
-- `/user/*` → backend TTM hébergé (gestion utilisateurs)
-- `/account/*` → backend TTM hébergé (gestion comptes)
-- `/rate/*` → backend TTM hébergé (tarification)
-- `/api_epg/*` → backend TTM hébergé (produits EPG)
-- `/my_pay_ga/*` → backend TTM hébergé (paiements MyPayGa)
-- `/sing_pay_api/*` → backend TTM hébergé (paiements SingPay)
+### Vite Proxy Configuration (Backend Render)
+Configuration proxy pour le backend TTM sur Render dans vite.config.ts:
+- `/auth/*` → https://api-ttm.onrender.com (authentification)
+- `/user/*` → https://api-ttm.onrender.com (gestion utilisateurs)
+- `/account/*` → https://api-ttm.onrender.com (gestion comptes)
+- `/rate/*` → https://api-ttm.onrender.com (tarification)
+- `/api_epg/*` → https://api-ttm.onrender.com (produits EPG)
+- `/my_pay_ga/*` → https://api-ttm.onrender.com (paiements MyPayGa)
+- `/sing_pay_api/*` → https://api-ttm.onrender.com (paiements SingPay)
 - `/reservations-api/*` → reservations API (externe, inchangé)
 
-**Important**: `secure: false` est configuré pour ignorer les problèmes de certificat SSL
+**Développement Local**: Pour utiliser le backend local, créer un fichier `.env.local` avec:
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+**Important**: `secure: true` car Render fournit HTTPS natif
 
 ## Authentification Backend TTM
 

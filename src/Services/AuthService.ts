@@ -84,9 +84,15 @@ export class AuthService {
       }
 
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur de connexion backend TTM:', error)
-      throw new Error('Échec de la connexion au backend TTM')
+      console.error('❌ Détails de l\'erreur:', {
+        message: error?.message,
+        status: error?.status,
+        statusText: error?.statusText,
+        data: error?.data
+      })
+      throw error // Relancer l'erreur originale pour garder les détails
     }
   }
 

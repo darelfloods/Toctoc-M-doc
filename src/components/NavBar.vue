@@ -151,6 +151,11 @@ onMounted(() => {
   startTyping()
   // Refresh credits for current user on mount (mobile badge uses it)
   credit.refreshForCurrentUser()
+
+  // Debug: afficher les crédits toutes les 2 secondes
+  setInterval(() => {
+    console.log('🔍 [NAVBAR] Crédits affichés:', credit.credits)
+  }, 2000)
 })
 
 watch(fullText, () => {

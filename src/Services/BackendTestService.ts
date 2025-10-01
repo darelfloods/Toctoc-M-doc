@@ -2,11 +2,11 @@ import { HttpService } from './HttpService'
 
 export class BackendTestService {
   /**
-   * Test la connexion au backend TTM hébergé
+   * Test la connexion au backend TTM local
    */
   static async testConnection(): Promise<{ status: 'ok' | 'error', message: string, data?: any }> {
     try {
-      console.log('🔗 Test de connexion au backend TTM hébergé (51.68.46.67:8000)...')
+      console.log('🔗 Test de connexion au backend TTM local (localhost:8000)...')
 
       // Test de la route racine du backend TTM
       const response = await HttpService.get('/')
@@ -15,11 +15,11 @@ export class BackendTestService {
 
       return {
         status: 'ok',
-        message: 'Connexion au backend TTM hébergé réussie',
+        message: 'Connexion au backend TTM local réussie',
         data: response.data
       }
     } catch (error: any) {
-      console.error('❌ Erreur de connexion au backend TTM hébergé:', error)
+      console.error('❌ Erreur de connexion au backend TTM local:', error)
 
       return {
         status: 'error',
@@ -71,7 +71,7 @@ export class BackendTestService {
   static getConfigInfo(): { environment: string, apiBaseUrl: string, proxyConfigured: boolean } {
     return {
       environment: import.meta.env.MODE,
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://51.68.46.67:8000',
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
       proxyConfigured: import.meta.env.DEV // Le proxy n'est actif qu'en mode dev
     }
   }

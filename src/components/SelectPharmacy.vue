@@ -3,15 +3,30 @@
     <div class="modal fade show" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
       <div class="modal-dialog" style="--bs-modal-width: 1100px; --bs-modal-height: 1000px;">
         <div class="modal-content">
-          <!-- Header avec gradient violet -->
-          <div class="modal-header-custom">
+          <!-- Header modern, sobre -->
+          <div class="modal-header-modern">
             <button type="button" class="close-btn" aria-label="Close" @click="$emit('close')">
-              <i class="bi bi-x" style="font-size: 24px;"></i>
+              <i class="bi bi-x" style="font-size: 22px;"></i>
             </button>
-            <div class="text-center">
-              <img class="pharmacy-icon" :src="productImage" alt="Pharmacie">
-              <h4 class="modal-title">Liste des pharmacies de {{ province || 'la province sélectionnée' }}</h4>
-              <p class="modal-subtitle">Où vous pouvez trouver le produit</p>
+            <div class="header-main">
+              <div class="header-info">
+                <img class="pharmacy-icon" :src="productImage" alt="Pharmacie">
+                <div>
+                  <h4 class="modal-title">Pharmacies — {{ province || 'province non définie' }}</h4>
+                  <p class="modal-subtitle">Sélectionnez une ou plusieurs pharmacies pour votre produit</p>
+                </div>
+              </div>
+              <div class="header-actions">
+                <div class="searchbar">
+                  <i class="bi bi-search"></i>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Rechercher par nom, quartier ou contact..."
+                    aria-label="Rechercher une pharmacie"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -33,82 +48,62 @@
 
             <!-- Contenu principal si des pharmacies sont disponibles -->
             <div v-else>
-              <!-- Carte du produit - au-dessus du tableau -->
-              <div class="row mb-5">
-                <div class="col-md-12">
-                  <div class="product-card mb-0">
-                    <div class="row align-items-center">
-                      <div class="col-md-3 text-center">
-                        <img class="product-image" :src="productImage" alt="Produit">
-                      </div>
-                      <div class="col-md-6">
-                        <h6 class="product-title">{{ productName }}</h6>
-                        <button class="btn-other-products mt-1" type="button">
-                          <i class="bi bi-three-dots-vertical" style="font-size: 20px;"></i>
-                          Autres produits
-                        </button>
-                      </div>
-                    </div>
+              <!-- Bandeau produit allégé -->
+              <div class="product-strip">
+                <div class="strip-left">
+                  <img class="product-thumb" :src="productImage" alt="Produit" />
+                  <div class="strip-info">
+                    <span class="product-name">{{ productName }}</span>
+                    <span class="product-helper">Produits similaires</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Tableau des pharmacies - pleine largeur -->
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="pharmacy-table">
-                    <table class="table">
-                      <thead>
-                        <tr>
-                          <th>Nom</th>
-                          <th>Quartier</th>
-                          <th>Contact</th>
-                          <th>Assurance</th>
-                          <th>Itinéraire</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(ph, idx) in pharmacies" :key="idx">
-                          <td style="text-decoration: underline; font-weight: 600;">
-                            {{ pharmacyName(ph) }}
-                            <span class="status-available">Ouverte</span>
-                          </td>
-                          <td>{{ pharmacyDistrict(ph) }}</td>
-                          <td>
-                            <div class="contact-info">
-                              <i class="bi bi-telephone ms-1" style="font-size: 20px;"></i>
-                              {{ pharmacyPhone(ph) || '—' }}
-                            </div>
-                          </td>
-                          <td>
-                            <span class="insurance-badge">{{ pharmacyAssurance(ph) }}</span>
-                          </td>
-                          <td>
-                            <a class="btn-localiser" :href="mapsUrl(ph)" target="_blank" rel="noopener">
-                              <i class="bi bi-geo-alt" style="font-size: 20px;"></i>
-                              Localiser
-                            </a>
-                          </td>
-                          <td>
-                            <div class="action-buttons">
-                              <!-- Checkbox pour sélection multiple -->
-                              <input 
-                                type="checkbox" 
-                                :checked="selectedPharmacies.has(ph)"
-                                @change="togglePharmacySelection(ph)"
-                                class="pharmacy-checkbox"
-                              >
-                              <!-- Bouton ajout individuel -->
-                              <button class="btn-add-cart" type="button" @click="$emit('select', ph)">
-                                <i class="bi bi-cart4" style="font-size: 20px;"></i>
-                                Ajouter
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+              <!-- Grille des pharmacies -->
+              <div class="pharmacy-grid">
+                <div 
+                  class="pharmacy-card"
+                  v-for="(ph, idx) in filteredPharmacies" 
+                  :key="idx"
+                >
+                  <div class="card-head">
+                    <div class="card-title">
+                      <i class="bi bi-hospital"></i>
+                      <span class="name">{{ pharmacyName(ph) }}</span>
+                    </div>
+                    <span class="badge open">Ouverte</span>
+                  </div>
+                  <div class="card-body">
+                    <div class="rowed">
+                      <i class="bi bi-geo"></i>
+                      <span>{{ pharmacyDistrict(ph) }}</span>
+                    </div>
+                    <div class="rowed">
+                      <i class="bi bi-telephone"></i>
+                      <span>{{ pharmacyPhone(ph) || '—' }}</span>
+                    </div>
+                    <div class="rowed">
+                      <i class="bi bi-shield-check"></i>
+                      <span class="insurance">Assurance: <strong>{{ pharmacyAssurance(ph) }}</strong></span>
+                    </div>
+                  </div>
+                  <div class="card-actions">
+                    <label class="checkline">
+                      <input 
+                        type="checkbox" 
+                        :checked="selectedPharmacies.has(ph)"
+                        @change="togglePharmacySelection(ph)"
+                      />
+                      Sélectionner
+                    </label>
+                    <a class="btn-ghost" :href="mapsUrl(ph)" target="_blank" rel="noopener">
+                      <i class="bi bi-geo-alt"></i>
+                      Localiser
+                    </a>
+                    <button class="btn-primary" type="button" @click="$emit('select', ph)">
+                      <i class="bi bi-cart4"></i>
+                      Ajouter
+                    </button>
                   </div>
                 </div>
               </div>
@@ -150,6 +145,25 @@ const selectedPharmacies = ref<Set<any>>(new Set())
 const productName = computed(() => props.product?.libelle || props.product?.nom || props.product?.name || 'Produit')
 const productImage = computed(() => props.product?.photoURL || '/assets/placeholder.png')
 const loading = computed(() => props.loading === true)
+
+// Recherche et filtrage
+const searchQuery = ref<string>('')
+const filteredPharmacies = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  const list = props.pharmacies || []
+  if (!q) return list
+  return list.filter((ph: any) => {
+    const haystack = [
+      pharmacyName(ph),
+      pharmacyDistrict(ph),
+      pharmacyPhone(ph)
+    ]
+      .filter(Boolean)
+      .map((v) => String(v).toLowerCase())
+      .join(' | ')
+    return haystack.includes(q)
+  })
+})
 
 function pharmacyName(ph: any) {
   return ph?.nom_pharmacie || ph?.pharmacie?.nom_pharmacie || ph?.name || ph?.pharmacie?.name || 'Pharmacie'
@@ -194,6 +208,130 @@ function confirmMultipleSelections() {
 </script>
 
 <style scoped>
+.modal-header-modern {
+  background: #ffffff;
+  border-bottom: 1px solid #edf2f7;
+  padding: 1rem 1.5rem;
+  position: relative;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.searchbar i { color: #64748b; }
+.searchbar input {
+  border: none;
+  outline: none;
+  background: transparent;
+  min-width: 280px;
+  color: #111827;
+}
+
+.product-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 16px 0 22px;
+}
+.strip-left { display: flex; align-items: center; gap: 12px; }
+.product-thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
+.product-name { font-weight: 600; color: #1f2937; }
+.product-helper { color: #6b7280; font-size: 0.85rem; }
+
+.pharmacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.pharmacy-card {
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pharmacy-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.card-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #1f2937; }
+.card-title i { color: #0F7ABB; }
+.badge.open { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+
+.card-body .rowed { display: flex; gap: 8px; align-items: center; color: #4b5563; margin: 6px 0; }
+.card-body i { color: #64748b; }
+.insurance strong { color: #111827; font-weight: 600; }
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.checkline { display: flex; align-items: center; gap: 6px; color: #374151; margin-right: auto; }
+.checkline input { width: 18px; height: 18px; accent-color: #0F7ABB; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover { background: #f3f4f6; }
+
+.btn-primary {
+  background: #0F7ABB;
+  border: none;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-primary:hover { background: #0a5a8a; }
 .modal-content {
   border-radius: 20px;
   border: none;

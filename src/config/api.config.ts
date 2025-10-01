@@ -2,8 +2,8 @@ import { ENV } from './environment'
 
 // Configuration des URLs de l'API
 const API_CONFIG = {
-  // URL de base de l'API
-  BASE_URL: ENV.API_BASE_URL,
+  // URL de base de l'API - vide en dev pour utiliser le proxy Vite
+  BASE_URL: ENV.IS_DEV ? '' : ENV.API_BASE_URL,
 
   // Endpoints de l'API
   ENDPOINTS: {

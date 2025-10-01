@@ -26,58 +26,58 @@ export default defineConfig({
     strictPort: true,  // oblige Vite à rester sur ce port
     cors: true,        // autorise les appels cross-origin
     proxy: {
-      // Proxy pour connexion directe au backend TTM hébergé (évite le certificat expiré)
+      // Proxy vers le backend TTM sur Render
       '/auth': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false, // Ignore SSL certificate issues
+        secure: true,
       },
       '/user': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/account': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/rate': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/event': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/price_list': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/my_pay_ga': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/sing_pay_api': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
-      // API EPG vers le backend TTM hébergé
+      // API EPG vers le backend TTM sur Render
       '/api_epg': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
-      // Fallback pour anciens endpoints /api (peut être supprimé plus tard)
+      // Fallback pour anciens endpoints /api
       '/api': {
-        target: 'https://51.68.46.67:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Proxy for reservation products endpoint to bypass CORS in dev

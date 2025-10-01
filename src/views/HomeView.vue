@@ -709,7 +709,9 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
     let pharmacies: any[] = []
     try {
       const response = await homeService.disponibilite(product.cip)
-      pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible' && p.qte > 0)
+      // Accepter les pharmacies disponibles même avec qte = 0 (quantité peut être mise à jour par la pharmacie)
+      pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible')
+      console.log(`[AI Flow] 📊 Found ${pharmacies.length} pharmacies with status 'disponible'`)
     } catch (e) {
       console.error(e)
       pharmacies = []
@@ -1231,7 +1233,9 @@ async function disponibilite(product: any) {
     // Ouvrir la modale immédiatement pour afficher le chargement
     showDisponibilite.value = true
     const response = await homeService.disponibilite(product.cip)
-    const pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible' && p.qte > 0)
+    // Accepter les pharmacies disponibles même avec qte = 0 (quantité peut être mise à jour par la pharmacie)
+    const pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible')
+    console.log(`[Manual Check] 📊 Found ${pharmacies.length} pharmacies with status 'disponible'`)
     appStore.setDisponibilityPharmacies(pharmacies)
   } catch (err) {
     console.error(err)

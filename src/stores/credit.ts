@@ -10,20 +10,28 @@ export const useCreditStore = defineStore('credit', () => {
 
   async function refreshForCurrentUser() {
     const auth = useAuthStore()
-    if (!auth.isLoggedIn || !auth.currentUser?.id) return
+    console.log('🔄 [CREDIT STORE] refreshForCurrentUser called')
+    console.log('🔄 [CREDIT STORE] isLoggedIn:', auth.isLoggedIn, 'userId:', auth.currentUser?.id)
+    if (!auth.isLoggedIn || !auth.currentUser?.id) {
+      console.warn('⚠️ [CREDIT STORE] User not logged in, skipping refresh')
+      return
+    }
     loading.value = true
     try {
+      console.log('📞 [CREDIT STORE] Calling getAccountByUserId...')
       const acc = await CreditService.getAccountByUserId(auth.currentUser.id)
+      console.log('📦 [CREDIT STORE] Account received:', acc)
       if (acc) {
         accountId.value = acc.id
-        // Back-end renvoie typiquement le champ "credit"; il peut être un nombre ou une chaîne formatée (ex: "9 433", "9,433", "9.433", "9’433")
+        // Back-end renvoie typiquement le champ "credit"; il peut être un nombre ou une chaîne formatée (ex: "9 433", "9,433", "9.433", "9'433")
         const raw: any = (acc as any).credit ?? (acc as any).credits
+        console.log('💰 [CREDIT STORE] Raw credit value:', raw, 'type:', typeof raw)
         let parsed = 0
         if (typeof raw === 'number') {
           parsed = raw
         } else if (typeof raw === 'string') {
           // Stratégie la plus robuste: retirer tout ce qui n'est pas un chiffre, puis parser en entier
-          // Exemple: "9 433", "9,433", "9.433", "9’433", "9433,00" -> "9433"
+          // Exemple: "9 433", "9,433", "9.433", "9'433", "9433,00" -> "9433"
           const onlyDigits = raw.replace(/[^0-9]/g, '')
           if (onlyDigits.length > 0) {
             parsed = parseInt(onlyDigits, 10)
@@ -36,8 +44,13 @@ export const useCreditStore = defineStore('credit', () => {
         } else {
           parsed = 0
         }
+        console.log('✅ [CREDIT STORE] Parsed credit:', parsed, '(was:', credits.value, ')')
         credits.value = parsed
+      } else {
+        console.warn('⚠️ [CREDIT STORE] No account returned from API')
       }
+    } catch (error) {
+      console.error('❌ [CREDIT STORE] Error refreshing credits:', error)
     } finally {
       loading.value = false
     }
