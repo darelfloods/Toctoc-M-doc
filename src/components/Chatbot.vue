@@ -149,107 +149,130 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook via Vite proxy to avoid CORS
-  const baseTest = 'http://localhost:5678/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
-  const webhookTestUrl = `${baseTest}?text=${encodeURIComponent(text)}`
+  // Free-text: POST to n8n webhook (production)
+  const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
+
+  // Timeout configuration
+  const timeoutMs = 30000 // 30 seconds for hosted n8n with AI processing
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
   try {
-    console.log('[Chatbot] Sending to webhook-test on send click with text=', text)
-    // Try sending as x-www-form-urlencoded with multiple common keys first (many workflows expect this)
-    const form = new URLSearchParams()
-    form.set('text', text)
-    form.set('message', text)
-    form.set('query', text)
-    form.set('prompt', text)
-    form.set('input', text)
-    form.set('content', text)
-    form.set('source', 'chatbot')
-    form.set('timestamp', new Date().toISOString())
+    console.log('[Chatbot] 📤 Sending to webhook-test:', text)
 
-    let res = await fetch(webhookTestUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: form.toString(),
-    })
-    if (!res.ok) {
-      console.warn('[Chatbot] webhook-test returned status', res.status)
-    }
-    // If still not OK, try JSON payload with many aliases
-    if (!res.ok) {
-      const payload = {
-        text,
-        message: text,
-        query: text,
+    // Try multiple payload formats
+    const payloads = [
+      { prompt: text },
+      { message: text },
+      { text: text },
+      { input: text },
+      { query: text },
+      { content: text },
+      {
         prompt: text,
-        input: text,
-        content: text,
+        message: text,
+        text: text,
         source: 'chatbot',
-        timestamp: new Date().toISOString(),
+        type: 'chat_request'
       }
-      // Try test URL JSON
-      let resJson = await fetch(webhookTestUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!resJson.ok) {
-        console.warn('[Chatbot] webhook-test (json) returned status', resJson.status)
+    ]
+
+    let res: Response | null = null
+
+    // Try each format until one works
+    for (let i = 0; i < payloads.length; i++) {
+      try {
+        console.log(`[Chatbot] 🔄 Trying payload format ${i + 1}:`, payloads[i])
+
+        const testResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloads[i]),
+          signal: controller.signal
+        })
+
+        if (testResponse.ok) {
+          // Check if response has valid content (clone to read without consuming)
+          const testText = await testResponse.clone().text()
+          console.log(`[Chatbot] 📥 Response ${i + 1} preview (${testText.length} chars):`, testText.substring(0, 200))
+
+          const hasContent = testText && testText.trim()
+          const isNotEmpty = testText !== '{}' && testText !== 'null' && testText !== ''
+          const hasMinLength = testText.length > 5
+
+          if (hasContent && isNotEmpty && hasMinLength) {
+            res = testResponse
+            console.log(`[Chatbot] ✅ Payload format ${i + 1} worked! Got ${testText.length} chars`)
+            break
+          } else {
+            console.log(`[Chatbot] ⚠️ Format ${i + 1} response seems empty or invalid`)
+          }
+        } else {
+          console.log(`[Chatbot] ❌ Format ${i + 1} returned status ${testResponse.status}`)
+        }
+      } catch (e) {
+        if ((e as any)?.name === 'AbortError') {
+          console.warn(`[Chatbot] ⏰ Format ${i + 1} timed out`)
+        } else {
+          console.warn(`[Chatbot] ❌ Format ${i + 1} failed:`, e)
+        }
       }
-      res = resJson
     }
 
-    // If still not OK, try GET with query param (some webhooks are configured to accept GET)
-    if (!res.ok) {
-      console.warn('[Chatbot] webhook POST attempts failed, trying GET...')
-      let resGet = await fetch(webhookTestUrl, { method: 'GET' })
-      if (!resGet.ok) {
-        console.warn('[Chatbot] webhook-test (GET) returned status', resGet.status)
-      }
-      res = resGet
-    }
+    clearTimeout(timeoutId)
 
-    if (res.ok) {
-      console.log('[Chatbot] Webhook status OK:', res.status)
-      const ct = (res.headers && res.headers.get('content-type')) || ''
-      if (ct.includes('application/json')) {
+    if (res && res.ok) {
+      console.log('[Chatbot] ✅ Webhook status OK:', res.status)
+      const rawText = await res.text().catch(() => '')
+      console.log('[Chatbot] 📄 Raw response:', rawText)
+
+      if (!rawText || !rawText.trim()) {
+        console.warn('[Chatbot] ⚠️ Empty response from webhook')
+        botText = null
+      } else {
+        // Try to parse as JSON
         try {
-          const data = await res.json()
-          console.log('[Chatbot] JSON response from webhook:', data)
+          const data = JSON.parse(rawText)
+          console.log('[Chatbot] 📊 Parsed JSON response:', data)
           // Try multiple common shapes
           const keys = [
             'reply','text','message','output','output_text','content','answer','result','response'
           ] as const
           for (const k of keys) {
             const v = (data as any)?.[k]
-            if (typeof v === 'string' && v.trim()) { botText = escapeHtml(v); break }
+            if (typeof v === 'string' && v.trim()) {
+              botText = escapeHtml(v)
+              console.log(`[Chatbot] 🎯 Found response in field '${k}':`, v.substring(0, 100))
+              break
+            }
           }
-          // Nested shapes (OpenAI-like)
+          // Nested shapes
           if (!botText) {
-            const nested = (data as any)?.choices?.[0]?.message?.content
-            if (typeof nested === 'string' && nested.trim()) botText = escapeHtml(nested)
+            const nested = (data as any)?.choices?.[0]?.message?.content ||
+                          (data as any)?.data?.reply ||
+                          (data as any)?.data?.text
+            if (typeof nested === 'string' && nested.trim()) {
+              botText = escapeHtml(nested)
+              console.log('[Chatbot] 🎯 Found response in nested field:', nested.substring(0, 100))
+            }
           }
-          // Another nested possibility
-          if (!botText) {
-            const nested2 = (data as any)?.data?.reply || (data as any)?.data?.text
-            if (typeof nested2 === 'string' && nested2.trim()) botText = escapeHtml(nested2)
-          }
-          // Fallback to raw text if JSON didn’t contain expected fields
-          if (!botText) {
-            const raw = await res.text().catch(() => '')
-            if (raw && raw.trim()) botText = escapeHtml(raw)
+          // If no field matched, use raw text
+          if (!botText && rawText.trim()) {
+            botText = escapeHtml(rawText)
+            console.log('[Chatbot] 📝 Using raw JSON text as response')
           }
         } catch (e) {
-          console.warn('[Chatbot] Could not parse JSON, falling back to text:', e)
-          const raw = await res.text().catch(() => '')
-          if (raw && raw.trim()) botText = escapeHtml(raw)
+          console.warn('[Chatbot] ⚠️ Not JSON, using raw text:', e)
+          if (rawText.trim()) {
+            botText = escapeHtml(rawText)
+            console.log('[Chatbot] 📝 Using raw text as response')
+          }
         }
-      } else {
-        const raw = await res.text().catch(() => '')
-        if (raw && raw.trim()) botText = escapeHtml(raw)
       }
     } else {
-      console.warn('[Chatbot] webhook returned non-OK status', res.status)
+      console.warn('[Chatbot] ❌ All webhook formats failed or timed out')
     }
   } catch (e) {
     console.warn('[Chatbot] Webhook send error:', e)

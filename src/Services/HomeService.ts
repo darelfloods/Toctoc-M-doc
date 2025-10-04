@@ -29,8 +29,8 @@ export class HomeService {
     
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
     
-    // Webhook URL n8n
-    const webhookUrl = 'http://localhost:5678/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    // Webhook URL n8n (production sur Render)
+    const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
     
     // Timeout configuration (5s max as requested)
     const timeoutMs = 5000
