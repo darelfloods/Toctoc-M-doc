@@ -160,66 +160,23 @@ async function sendMessage() {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    console.log('[Chatbot] 📤 Sending to webhook-test:', text)
+    console.log('[Chatbot] 📤 Sending to webhook:', text)
 
-    // Try multiple payload formats
-    const payloads = [
-      { prompt: text },
-      { message: text },
-      { text: text },
-      { input: text },
-      { query: text },
-      { content: text },
-      {
-        prompt: text,
-        message: text,
-        text: text,
-        source: 'chatbot',
-        type: 'chat_request'
-      }
-    ]
-
-    let res: Response | null = null
-
-    // Try each format until one works
-    for (let i = 0; i < payloads.length; i++) {
-      try {
-        console.log(`[Chatbot] 🔄 Trying payload format ${i + 1}:`, payloads[i])
-
-        const testResponse = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloads[i]),
-          signal: controller.signal
-        })
-
-        if (testResponse.ok) {
-          // Check if response has valid content (clone to read without consuming)
-          const testText = await testResponse.clone().text()
-          console.log(`[Chatbot] 📥 Response ${i + 1} preview (${testText.length} chars):`, testText.substring(0, 200))
-
-          const hasContent = testText && testText.trim()
-          const isNotEmpty = testText !== '{}' && testText !== 'null' && testText !== ''
-          const hasMinLength = testText.length > 5
-
-          if (hasContent && isNotEmpty && hasMinLength) {
-            res = testResponse
-            console.log(`[Chatbot] ✅ Payload format ${i + 1} worked! Got ${testText.length} chars`)
-            break
-          } else {
-            console.log(`[Chatbot] ⚠️ Format ${i + 1} response seems empty or invalid`)
-          }
-        } else {
-          console.log(`[Chatbot] ❌ Format ${i + 1} returned status ${testResponse.status}`)
-        }
-      } catch (e) {
-        if ((e as any)?.name === 'AbortError') {
-          console.warn(`[Chatbot] ⏰ Format ${i + 1} timed out`)
-        } else {
-          console.warn(`[Chatbot] ❌ Format ${i + 1} failed:`, e)
-        }
-      }
+    // Simple payload format
+    const payload = {
+      message: text,
+      text: text,
+      source: 'chatbot'
     }
+
+    console.log('[Chatbot] 📦 Payload:', payload)
+
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    })
 
     clearTimeout(timeoutId)
 
@@ -272,7 +229,7 @@ async function sendMessage() {
         }
       }
     } else {
-      console.warn('[Chatbot] ❌ All webhook formats failed or timed out')
+      console.warn('[Chatbot] ❌ Webhook request failed, status:', res?.status)
     }
   } catch (e) {
     console.warn('[Chatbot] Webhook send error:', e)
