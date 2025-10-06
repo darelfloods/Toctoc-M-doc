@@ -87,6 +87,13 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/reservations-api/, ''),
       },
+      // Proxy n8n webhooks to bypass CORS
+      '/n8n-webhook': {
+        target: 'https://n8n-workflows-cktx.onrender.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/n8n-webhook/, '/webhook'),
+      },
     },
-  },  
+  },
 })
