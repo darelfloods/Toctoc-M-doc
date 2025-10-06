@@ -149,8 +149,8 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook (via proxy to avoid CORS)
-  const webhookUrl = '/n8n-webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Free-text: POST to n8n webhook (production)
+  const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
 
