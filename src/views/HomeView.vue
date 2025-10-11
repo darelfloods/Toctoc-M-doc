@@ -484,7 +484,11 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
   }
   // product name heuristic: remove numbers and place words, keep words with letters
   const cleaned = tokens.join(' ').replace(/[,.;:!?]/g, ' ')
-  let productTokens = cleaned
+
+  // Retirer les articles contractés AVANT la tokenisation pour éviter "d'efferalgan" -> "'efferalgan"
+  const cleanedNoArticles = cleaned.replace(/(^|\s)(d['']|l[''])\s*/gi, ' ')
+
+  let productTokens = cleanedNoArticles
     .split(/\s+/)
     .filter(w => w && !knownPlaces.includes(w))
 
@@ -492,7 +496,7 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
   const stop = new Set(['je','veux','j','de','des','du','au','aux','un','une','le','la','les','à','a','en','pour','moi','chez','dans','souhaite','souhaiterais','souhait','acheter','trouve','trouver','svp','s il','s\'il','boite','boites','boîte','boîtes','desire','désire','voudrais','aimerais','me','et','&','estuaire','haut','moyen','bas','ogooue','ntem','lolo','maritime','ivindo','woleu'])
 
   productTokens = productTokens
-    .map(w => w.replace(/^(d'|d'|l'|l')/i, '')) // enlever les contractions françaises
+    .map(w => w.replace(/^[''\s]+|[''\s]+$/g, '')) // Nettoyer apostrophes et espaces en début/fin
     .filter(w => w && !stop.has(normalize(w))) // Normaliser aussi pour les stopwords
 
   // retirer les tokens qui correspondent à la province détectée avec normalisation
