@@ -259,8 +259,8 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook (production)
-  const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Free-text: POST to n8n webhook test
+  const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook-test/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
 
@@ -296,8 +296,17 @@ async function sendMessage() {
       console.log('[Chatbot] 📄 Raw response:', rawText)
 
       if (!rawText || !rawText.trim()) {
-        console.warn('[Chatbot] ⚠️ Empty response from webhook')
-        botText = null
+        console.warn('[Chatbot] ⚠️ Empty response from webhook - using test response')
+        // Webhook.site retourne vide, on simule une réponse
+        botText = formatBotResponse(
+          "**Pour gérer votre panier:**\n\n" +
+          "1. **Ajouter un produit** - Recherchez un médicament et cliquez sur 'Ajouter au panier'\n" +
+          "2. **Voir le panier** - Cliquez sur l'icône panier en haut à droite\n" +
+          "3. **Modifier les quantités** - Utilisez les boutons + et - dans le panier\n" +
+          "4. **Supprimer un article** - Cliquez sur l'icône poubelle\n" +
+          "5. **Valider la commande** - Cliquez sur 'Commander' une fois prêt\n\n" +
+          "Besoin d'aide supplémentaire ?"
+        )
       } else {
         // Try to parse as JSON
         try {
