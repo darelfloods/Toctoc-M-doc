@@ -130,6 +130,101 @@ function escapeHtml(t: string): string {
     .replace(/>/g, '&gt;')
 }
 
+function formatBotResponse(text: string): string {
+  // Si c'est déjà du HTML structuré (contient des balises), on le retourne tel quel
+  if (text.includes('<div') || text.includes('<ol') || text.includes('<ul')) {
+    return text
+  }
+
+  // Sinon, on applique le formatage automatique pour du texte brut
+  let formatted = text
+
+  // 1. Remplacer les **texte** par <strong>texte</strong>
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+
+  // 2. Mettre en gras les mots-clés importants (boutons, actions, UI)
+  const keywords = [
+    'Recherche Intelligente', 'Panier', 'Paramètres', 'Magasin de crédits', 'Crédits',
+    'Se connecter', 'S\'inscrire', 'Connexion', 'Déconnexion',
+    'Airtel Money', 'Mobi Cash', 'Payer', 'Valider', 'Confirmer',
+    'Vérifier la disponibilité', 'Ajouter au panier', 'Réserver',
+    'Nom d\'utilisateur', 'Mot de passe', 'Email', 'Adresse mail'
+  ]
+
+  keywords.forEach(keyword => {
+    const regex = new RegExp(`\\b(${keyword})\\b`, 'gi')
+    formatted = formatted.replace(regex, '<strong class="text-primary">$1</strong>')
+  })
+
+  // 3. Ajouter <br> après les deux-points suivis d'un retour à ligne
+  formatted = formatted.replace(/:\s*\n/g, ':<br>')
+
+  // 4. Gérer les listes avec tirets ou numéros
+  const lines = formatted.split('\n')
+  let inList = false
+  let listType = 'ul' // 'ul' ou 'ol'
+  const processedLines: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+
+    // Détecter une ligne de liste avec tiret ou puce
+    const bulletMatch = line.match(/^[-•]\s*(.+)/)
+    const numberMatch = line.match(/^(\d+)[.)]\s*(.+)/)
+
+    if (bulletMatch) {
+      if (!inList) {
+        processedLines.push('<ul class="bot-list mb-2 ps-3">')
+        inList = true
+        listType = 'ul'
+      } else if (listType === 'ol') {
+        processedLines.push('</ol>')
+        processedLines.push('<ul class="bot-list mb-2 ps-3">')
+        listType = 'ul'
+      }
+      processedLines.push(`<li>${bulletMatch[1]}</li>`)
+    } else if (numberMatch) {
+      if (!inList) {
+        processedLines.push('<ol class="bot-list-numbered mb-2 ps-3">')
+        inList = true
+        listType = 'ol'
+      } else if (listType === 'ul') {
+        processedLines.push('</ul>')
+        processedLines.push('<ol class="bot-list-numbered mb-2 ps-3">')
+        listType = 'ol'
+      }
+      processedLines.push(`<li>${numberMatch[2]}</li>`)
+    } else {
+      // Ligne normale
+      if (inList) {
+        processedLines.push(listType === 'ul' ? '</ul>' : '</ol>')
+        inList = false
+      }
+      if (line) {
+        processedLines.push(line + '<br>')
+      }
+    }
+  }
+
+  // Fermer la liste si elle est encore ouverte
+  if (inList) {
+    processedLines.push(listType === 'ul' ? '</ul>' : '</ol>')
+  }
+
+  formatted = processedLines.join('')
+
+  // 5. Mettre en évidence les emojis et symboles spéciaux
+  formatted = formatted.replace(/(💡|⚠️|✅|❌|🔍|💳|🛒|⭐|👋|🔧)/g, '<span class="emoji-highlight">$1</span>')
+
+  // 6. Nettoyer les <br> multiples
+  formatted = formatted.replace(/(<br>\s*){3,}/g, '<br><br>')
+
+  // 7. Wrapper dans une div pour l'affichage
+  formatted = `<div class="bot-formatted-response">${formatted}</div>`
+
+  return formatted
+}
+
 async function sendMessage() {
   const text = messageText.value.trim()
   if (!text) return
@@ -215,7 +310,7 @@ async function sendMessage() {
           for (const k of keys) {
             const v = (data as any)?.[k]
             if (typeof v === 'string' && v.trim()) {
-              botText = v // Don't escape HTML - AI generates formatted HTML
+              botText = formatBotResponse(v) // Format the response
               console.log(`[Chatbot] 🎯 Found response in field '${k}':`, v.substring(0, 100))
               break
             }
@@ -226,19 +321,19 @@ async function sendMessage() {
                           (data as any)?.data?.reply ||
                           (data as any)?.data?.text
             if (typeof nested === 'string' && nested.trim()) {
-              botText = nested // Don't escape HTML - AI generates formatted HTML
+              botText = formatBotResponse(nested) // Format the response
               console.log('[Chatbot] 🎯 Found response in nested field:', nested.substring(0, 100))
             }
           }
           // If no field matched, use raw text
           if (!botText && rawText.trim()) {
-            botText = rawText // Don't escape HTML - AI generates formatted HTML
+            botText = formatBotResponse(rawText) // Format the response
             console.log('[Chatbot] 📝 Using raw JSON text as response')
           }
         } catch (e) {
           console.warn('[Chatbot] ⚠️ Not JSON, using raw text:', e)
           if (rawText.trim()) {
-            botText = rawText // Don't escape HTML - AI generates formatted HTML
+            botText = formatBotResponse(rawText) // Format the response
             console.log('[Chatbot] 📝 Using raw text as response')
           }
         }
@@ -496,4 +591,42 @@ function getAnswer(key: string): string | null {
  .btn-send:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
  .quick-toggle:focus,
  .btn-send:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
+
+ /* Bot formatted response styles */
+ .bot-formatted-response {
+   line-height: 1.6;
+ }
+ .bot-formatted-response .text-primary {
+   color: #0F7ABB !important;
+   font-weight: 600;
+ }
+ .bot-list,
+ .bot-list-numbered {
+   margin: 8px 0;
+   padding-left: 1.5rem;
+ }
+ .bot-list-numbered {
+   counter-reset: item;
+   list-style: none;
+ }
+ .bot-list-numbered > li {
+   counter-increment: item;
+   margin-bottom: 6px;
+ }
+ .bot-list-numbered > li::before {
+   content: counter(item) ". ";
+   color: #0F7ABB;
+   font-weight: 600;
+   margin-right: 6px;
+ }
+ .bot-list > li {
+   margin-bottom: 6px;
+ }
+ .bot-list > li::marker {
+   color: #0F7ABB;
+ }
+ .emoji-highlight {
+   font-size: 1.1em;
+   margin-right: 4px;
+ }
 </style>
