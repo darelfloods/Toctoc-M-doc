@@ -215,7 +215,7 @@ async function sendMessage() {
           for (const k of keys) {
             const v = (data as any)?.[k]
             if (typeof v === 'string' && v.trim()) {
-              botText = escapeHtml(v)
+              botText = v // Don't escape HTML - AI generates formatted HTML
               console.log(`[Chatbot] 🎯 Found response in field '${k}':`, v.substring(0, 100))
               break
             }
@@ -226,19 +226,19 @@ async function sendMessage() {
                           (data as any)?.data?.reply ||
                           (data as any)?.data?.text
             if (typeof nested === 'string' && nested.trim()) {
-              botText = escapeHtml(nested)
+              botText = nested // Don't escape HTML - AI generates formatted HTML
               console.log('[Chatbot] 🎯 Found response in nested field:', nested.substring(0, 100))
             }
           }
           // If no field matched, use raw text
           if (!botText && rawText.trim()) {
-            botText = escapeHtml(rawText)
+            botText = rawText // Don't escape HTML - AI generates formatted HTML
             console.log('[Chatbot] 📝 Using raw JSON text as response')
           }
         } catch (e) {
           console.warn('[Chatbot] ⚠️ Not JSON, using raw text:', e)
           if (rawText.trim()) {
-            botText = escapeHtml(rawText)
+            botText = rawText // Don't escape HTML - AI generates formatted HTML
             console.log('[Chatbot] 📝 Using raw text as response')
           }
         }
