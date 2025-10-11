@@ -188,16 +188,20 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
     const amount = parseAmount(offer?.price)
     // Récupérer rate_id et le nombre de crédits à créditer
     const { rate_id, creditAmount } = await resolvePricing(offer)
-    
+
     // DEBUG: Log des valeurs pour comprendre le problème
     console.log('🔍 [MAGASIN] Debug recharge crédits:')
     console.log('  - Offre:', offer)
     console.log('  - Montant:', amount)
     console.log('  - Rate ID:', rate_id)
     console.log('  - Crédits à ajouter:', creditAmount)
-    
+    console.log('  - Téléphone:', payload.phone)
+    console.log('  - Méthode:', payload.method)
+
     const user = auth.currentUser
-    await MyPayGaService.subscribePricing({
+    console.log('📞 [MAGASIN] Appel API MyPayGa...')
+
+    const paymentResult = await MyPayGaService.subscribePricing({
       phone: payload.phone,
       amount,
       lastname: user?.name || 'Client',
@@ -208,21 +212,46 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       disable_auto_credit: true,
       frontend_managed: true
     })
-    
-    // 🎯 SOLUTION FINALE : Backend désactivé, frontend maître des crédits
+
+    console.log('📦 [MAGASIN] Réponse MyPayGa:', paymentResult)
+    console.log('📦 [MAGASIN] request_status:', paymentResult.request_status)
+    console.log('📦 [MAGASIN] message:', paymentResult.message)
+
+    // Vérifier si le paiement a réussi (request_status === 0 ou 200)
+    const paymentSuccess = paymentResult.request_status === 0 || paymentResult.request_status === 200
+
+    if (!paymentSuccess) {
+      console.error('❌ [MAGASIN] Paiement échoué:', paymentResult.message)
+      alert(`Erreur de paiement: ${paymentResult.message || 'Échec du paiement'}`)
+      return
+    }
+
+    console.log('✅ [MAGASIN] Paiement réussi, ajout des crédits...')
     console.log('💰 [MAGASIN] Crédits AVANT paiement:', creditStore.credits)
-    
-    // ✅ Notre logique frontend fiable (rate_id = 0 pour désactiver backend)
-    if (creditAmount > 0) {
-      console.log('🏦 [MAGASIN] Ajout manuel de', creditAmount, 'crédits (backend désactivé)')
-      const success = await creditStore.addCreditsAfterPayment(creditAmount)
-      console.log('🏦 [MAGASIN] ✅ Succès ajout crédits:', success)
-      console.log('💰 [MAGASIN] Crédits APRÈS ajout:', creditStore.credits)
+
+    // ✅ Ajouter les crédits localement ET dans la base de données
+    if (creditAmount > 0 && creditStore.accountId) {
+      console.log('🏦 [MAGASIN] Ajout de', creditAmount, 'crédits au compte', creditStore.accountId)
+
+      // 1. Persister dans la base de données
+      const dbSuccess = await CreditService.ajouterCredit(creditStore.accountId, creditAmount)
+
+      if (dbSuccess) {
+        console.log('✅ [MAGASIN] Crédits ajoutés dans la BDD')
+        // 2. Mettre à jour le store local
+        await creditStore.refreshForCurrentUser()
+        console.log('💰 [MAGASIN] Crédits APRÈS ajout:', creditStore.credits)
+        alert(`✅ Paiement réussi ! ${creditAmount} crédits ajoutés à votre compte.`)
+      } else {
+        console.error('❌ [MAGASIN] Échec ajout crédits dans la BDD')
+        alert('⚠️ Paiement effectué mais erreur lors de l\'ajout des crédits. Contactez le support.')
+      }
     } else {
-      console.warn('⚠️ [MAGASIN] Aucun crédit calculé pour cette offre')
+      console.warn('⚠️ [MAGASIN] Aucun crédit calculé pour cette offre ou pas de compte ID')
     }
   } catch (e) {
-    console.error('Erreur MyPayGA:', e)
+    console.error('❌ [MAGASIN] Erreur MyPayGA:', e)
+    alert('Erreur lors du paiement. Veuillez réessayer.')
   } finally {
     emit('purchased', payload)
     showPayment.value = false
