@@ -178,6 +178,12 @@ const showAiNotice = ref(false)
 const aiNoticeText = ref('')
 const aiConfirmLoading = ref(false)
 
+// Modale de confirmation de débit de crédit pour recherche intelligente
+const showCreditConfirm = ref(false)
+const creditConfirmAmount = ref(1)
+const creditConfirmCallback = ref<(() => void) | null>(null)
+const creditConfirmResolve = ref<(() => void) | null>(null)
+
 function openAiNotice(text: string) {
   aiNoticeText.value = text
   showAiNotice.value = true
@@ -185,6 +191,29 @@ function openAiNotice(text: string) {
 function closeAiNotice() {
   showAiNotice.value = false
   aiNoticeText.value = ''
+}
+
+// Fonctions pour la confirmation de débit de crédit
+function openCreditConfirm(amount: number, onConfirm: () => void) {
+  creditConfirmAmount.value = amount
+  creditConfirmCallback.value = onConfirm
+  showCreditConfirm.value = true
+}
+function closeCreditConfirm() {
+  showCreditConfirm.value = false
+  creditConfirmCallback.value = null
+  // Résoudre la promesse si l'utilisateur annule (ferme la modale)
+  if (creditConfirmResolve.value) {
+    creditConfirmResolve.value()
+    creditConfirmResolve.value = null
+  }
+}
+function confirmCreditDebit() {
+  if (creditConfirmCallback.value) {
+    creditConfirmCallback.value()
+  }
+  showCreditConfirm.value = false
+  creditConfirmCallback.value = null
 }
 async function onPickAiCandidate(p: any) {
   showAiConfirm.value = false
@@ -838,8 +867,34 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
       openAiNotice(`Crédits insuffisants (solde actuel: ${available}). Veuillez recharger votre compte pour effectuer une réservation intelligente.`)
       return
     }
-    
-    console.log('[AI Flow] Tentative de débit de 1 crédit...')
+
+    // Demander confirmation avant de débiter le crédit
+    console.log('[AI Flow] Demande de confirmation de débit de 1 crédit...')
+
+    // Créer une promesse qui sera résolue quand l'utilisateur confirme ou annule
+    await new Promise<void>((resolve) => {
+      creditConfirmResolve.value = resolve
+      openCreditConfirm(1, async () => {
+        // Callback exécuté après confirmation de l'utilisateur
+        console.log('[AI Flow] Confirmation reçue, tentative de débit de 1 crédit...')
+        await proceedWithCreditDebitAndReservation(product, qty, province, chosen, resolve)
+      })
+    })
+  } catch (err) {
+    console.error('[AI Flow] Error:', err)
+    openAiNotice("Une erreur est survenue pendant la recherche intelligente. Veuillez réessayer.")
+  }
+}
+
+// Fonction helper pour effectuer le débit et la réservation après confirmation
+async function proceedWithCreditDebitAndReservation(
+  product: any,
+  qty: number,
+  province: string,
+  chosen: any,
+  resolvePromise: () => void
+) {
+  try {
     const spentOk = await CreditService.souscrireCredit(creditStore.accountId, 1)
     if (!spentOk) {
       const err = CreditService.getLastError && CreditService.getLastError()
@@ -900,9 +955,15 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
     // Open cart and show a nicer notice instead of alert
     showPanier.value = true
     openAiNotice("Réservation effectuée avec succès. Vous pouvez consulter votre panier.")
+
+    // Résoudre la promesse pour terminer le flux
+    resolvePromise()
   } catch (err) {
     console.error('[AI Flow] Error:', err)
     openAiNotice("Une erreur est survenue pendant la recherche intelligente. Veuillez réessayer.")
+
+    // Résoudre la promesse même en cas d'erreur
+    resolvePromise()
   }
 }
 
@@ -1416,6 +1477,43 @@ const partenaires = [
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" @click="closeAiNotice()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de confirmation de débit de crédit -->
+  <div v-if="showCreditConfirm" class="modal-overlay" @click.self="closeCreditConfirm()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title d-flex align-items-center">
+          <i class="bi bi-credit-card me-2"></i>
+          <span>Confirmation de débit</span>
+        </div>
+        <button class="btn-close" @click="closeCreditConfirm()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <div>
+            Cette action va consommer <strong>{{ creditConfirmAmount }} crédit{{ creditConfirmAmount > 1 ? 's' : '' }}</strong> de votre compte.
+          </div>
+        </div>
+        <p class="mb-2">
+          <strong>Solde actuel :</strong> {{ creditStore.credits }} crédit{{ creditStore.credits > 1 ? 's' : '' }}
+        </p>
+        <p class="mb-2">
+          <strong>Après l'opération :</strong> {{ creditStore.credits - creditConfirmAmount }} crédit{{ (creditStore.credits - creditConfirmAmount) > 1 ? 's' : '' }}
+        </p>
+        <p class="text-muted small">
+          La recherche intelligente utilise des crédits pour accéder aux disponibilités en pharmacie et effectuer la réservation automatiquement.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="closeCreditConfirm()">Annuler</button>
+        <button class="btn btn-primary" @click="confirmCreditDebit()">
+          <i class="bi bi-check-circle me-1"></i>
+          Confirmer et continuer
+        </button>
       </div>
     </div>
   </div>
