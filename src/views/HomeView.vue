@@ -441,51 +441,86 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
       }
     }
   }
-  // city/province detection
+  // Fonction helper pour normaliser (enlever accents, tirets, espaces multiples)
+  const normalize = (s: string) => {
+    return s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Enlever accents
+      .replace(/[-\s]+/g, ' ') // Remplacer tirets et espaces multiples par un seul espace
+      .trim()
+      .toLowerCase()
+  }
+
+  const textNormalized = normalize(text)
+
+  // city/province detection avec normalisation
   const knownPlaces = ['libreville', 'owendo', 'akanda', 'port-gentil', 'franceville', 'oyem', 'moanda']
-  let place: string | null = knownPlaces.find(p => text.includes(p)) || null
+  let place: string | null = null
+
+  // Chercher les villes avec normalisation
+  for (const city of knownPlaces) {
+    const cityNorm = normalize(city)
+    if (textNormalized.includes(cityNorm)) {
+      place = city
+      break
+    }
+  }
+
+  // Chercher les provinces avec normalisation
   if (!place) {
     for (const prov of KNOWN_PROVINCES) {
-      const pLow = prov.toLowerCase()
-      if (text.includes(pLow)) { place = prov; break }
+      const provNorm = normalize(prov)
+      if (textNormalized.includes(provNorm)) {
+        place = prov
+        break
+      }
     }
-    if (!place) {
-      const fuzzy = fuzzyFindProvince(text)
-      if (fuzzy) place = fuzzy
-    }
+  }
+
+  // Fuzzy matching en dernier recours
+  if (!place) {
+    const fuzzy = fuzzyFindProvince(text)
+    if (fuzzy) place = fuzzy
   }
   // product name heuristic: remove numbers and place words, keep words with letters
   const cleaned = tokens.join(' ').replace(/[,.;:!?]/g, ' ')
   let productTokens = cleaned
     .split(/\s+/)
     .filter(w => w && !knownPlaces.includes(w))
+
   // remove common filler words in FR
-  const stop = new Set(['je','veux','j','de','des','du','au','aux','un','une','le','la','les','à','a','en','pour','moi','chez','dans','souhaite','souhaiterais','souhait','acheter','trouve','trouver','svp','s il','s\'il','boite','boites','boîte','boîtes','desire','désire','voudrais','aimerais','me','et','&'])
+  const stop = new Set(['je','veux','j','de','des','du','au','aux','un','une','le','la','les','à','a','en','pour','moi','chez','dans','souhaite','souhaiterais','souhait','acheter','trouve','trouver','svp','s il','s\'il','boite','boites','boîte','boîtes','desire','désire','voudrais','aimerais','me','et','&','estuaire','haut','moyen','bas','ogooue','ntem','lolo','maritime','ivindo','woleu'])
+
   productTokens = productTokens
-    .map(w => w.replace(/^(d'|d’|l'|l’)/i, '')) // enlever les contractions françaises
-    .filter(w => w && !stop.has(w))
-  // retirer les tokens qui correspondent à la province détectée (multi-mots)
-  try {
-    if (place) {
-      const provTokens = tokenizeLetters(place)
-      productTokens = productTokens.filter(w => {
-        const nt = normalizeAscii(w)
-        const wTokens = tokenizeLetters(w)
-        // retirer si l'un des tokens de province est présent comme token ou sous-chaîne
-        if (provTokens.some(pt => wTokens.includes(pt))) return false
-        if (provTokens.some(pt => nt.includes(pt))) return false
-        return true
-      })
-    }
-  } catch {}
-  // retirer également tout token qui appartient à n'importe quelle province connue (au cas où 'place' n'a pas été détectée)
-  try {
-    const allProvTokens = new Set<string>()
-    for (const prov of KNOWN_PROVINCES) {
-      for (const t of tokenizeLetters(prov)) allProvTokens.add(t)
-    }
-    productTokens = productTokens.filter(w => !allProvTokens.has(normalizeAscii(w)))
-  } catch {}
+    .map(w => w.replace(/^(d'|d'|l'|l')/i, '')) // enlever les contractions françaises
+    .filter(w => w && !stop.has(normalize(w))) // Normaliser aussi pour les stopwords
+
+  // retirer les tokens qui correspondent à la province détectée avec normalisation
+  if (place) {
+    const placeNorm = normalize(place)
+    const placeWords = placeNorm.split(' ') // Ex: "moyen ogooue" -> ["moyen", "ogooue"]
+
+    productTokens = productTokens.filter(w => {
+      const wNorm = normalize(w)
+      // Retirer si le mot normalisé est dans les mots de la province
+      if (placeWords.some(pw => pw === wNorm || pw.includes(wNorm) || wNorm.includes(pw))) {
+        return false
+      }
+      return true
+    })
+  }
+
+  // retirer également tout token qui appartient à n'importe quelle province connue
+  const allProvinceWords = new Set<string>()
+  for (const prov of KNOWN_PROVINCES) {
+    const provNorm = normalize(prov)
+    provNorm.split(' ').forEach(word => allProvinceWords.add(word))
+  }
+
+  productTokens = productTokens.filter(w => {
+    const wNorm = normalize(w)
+    return !allProvinceWords.has(wNorm)
+  })
   // si plus aucun token utile après nettoyage, renvoyer productName vide
   const productName = productTokens.join(' ').trim()
   return { productName, quantity, place }
