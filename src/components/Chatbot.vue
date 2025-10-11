@@ -62,6 +62,16 @@
             v-model="messageText"
             @keydown.enter.prevent="sendMessage()"
           />
+          <button
+            v-if="supportsSpeech"
+            class="btn btn-mic"
+            type="button"
+            :class="{ 'btn-recording': isTranscribing }"
+            :title="isTranscribing ? 'Arrêter l\'enregistrement' : 'Reconnaissance vocale'"
+            @click="toggleTranscription()"
+          >
+            <i :class="isTranscribing ? 'bi bi-stop-circle' : 'bi bi-mic'"></i>
+          </button>
           <button class="btn btn-primary btn-send" type="button" :disabled="!messageText.trim()" @click="sendMessage()">
             <i class="bi bi-send"></i>
           </button>
@@ -83,6 +93,11 @@ const showQuick = ref(false)
 const messagesEl = ref<HTMLElement | null>(null)
 const messageText = ref('')
 const isTyping = ref(false)
+
+// Voice recognition (Web Speech API)
+const isTranscribing = ref(false)
+let recognition: any = null
+const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 const quickQuestions = [
   { key: 'signup', label: "Comment s'inscrire ?", icon: 'bi bi-person-plus' },
@@ -275,6 +290,67 @@ function friendlyFallback(query?: string): string {
   `
 }
 
+// Voice recognition functions
+function startTranscription() {
+  if (!supportsSpeech || isTranscribing.value) return
+  try {
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    recognition = new SR()
+    recognition.lang = 'fr-FR'
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
+    recognition.continuous = false
+
+    let interim = ''
+    recognition.onresult = (event: any) => {
+      let finalTranscript = ''
+      interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript
+        } else {
+          interim += transcript
+        }
+      }
+      if (finalTranscript) {
+        messageText.value = finalTranscript
+      } else if (interim) {
+        messageText.value = interim
+      }
+    }
+
+    recognition.onerror = (e: any) => {
+      console.warn('[Chatbot STT] error:', e)
+      isTranscribing.value = false
+    }
+    recognition.onend = () => {
+      isTranscribing.value = false
+    }
+    recognition.start()
+    isTranscribing.value = true
+  } catch (e) {
+    console.warn('[Chatbot STT] failed to start:', e)
+    isTranscribing.value = false
+  }
+}
+
+function stopTranscription() {
+  try {
+    if (recognition && isTranscribing.value) {
+      recognition.stop()
+    }
+  } finally {
+    isTranscribing.value = false
+  }
+}
+
+function toggleTranscription() {
+  if (!supportsSpeech) return
+  if (isTranscribing.value) stopTranscription()
+  else startTranscription()
+}
+
 function getAnswer(key: string): string | null {
   switch (key) {
     case 'signup':
@@ -357,8 +433,38 @@ function getAnswer(key: string): string | null {
 
  /* Round input + button */
  .input-group > .form-control { border-radius: 999px 0 0 999px; }
- .input-group > .btn { border-radius: 0 999px 999px 0; }
+ .input-group > .btn-mic { border-radius: 0; border-left: none; border-right: none; }
+ .input-group > .btn-send { border-radius: 0 999px 999px 0; }
  .btn-send i { vertical-align: middle; }
+
+ /* Microphone button */
+ .btn-mic {
+   background: #fff;
+   border: 1px solid #ced4da;
+   color: #6c757d;
+   padding: 0.375rem 0.75rem;
+   transition: all 0.15s ease;
+ }
+ .btn-mic:hover {
+   background: #f8f9fa;
+   color: #0F7ABB;
+   border-color: #0F7ABB;
+ }
+ .btn-mic.btn-recording {
+   background: #dc3545;
+   color: #fff;
+   border-color: #dc3545;
+   animation: pulse-recording 1.5s ease-in-out infinite;
+ }
+ .btn-mic.btn-recording:hover {
+   background: #c82333;
+   border-color: #bd2130;
+ }
+ @keyframes pulse-recording {
+   0%, 100% { opacity: 1; }
+   50% { opacity: 0.7; }
+ }
+
  /* Quick questions */
  .footer-area { position: relative; }
  .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
