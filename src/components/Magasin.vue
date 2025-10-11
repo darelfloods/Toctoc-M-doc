@@ -207,51 +207,58 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       lastname: user?.name || 'Client',
       email: user?.email || '',
       rate_id,
-      network: payload.method,
-      // 🚫 Paramètre pour désactiver l'auto-crédit backend
-      disable_auto_credit: true,
-      frontend_managed: true
+      network: payload.method
+      // Le backend va gérer automatiquement l'ajout des crédits via le callback
     })
 
     console.log('📦 [MAGASIN] Réponse MyPayGa:', paymentResult)
     console.log('📦 [MAGASIN] request_status:', paymentResult.request_status)
+    console.log('📦 [MAGASIN] request_status TYPE:', typeof paymentResult.request_status)
     console.log('📦 [MAGASIN] message:', paymentResult.message)
 
-    // Vérifier si le paiement a réussi (request_status === 0 ou 200)
-    const paymentSuccess = paymentResult.request_status === 0 || paymentResult.request_status === 200
+    // Vérifier si la requête de paiement a été envoyée avec succès
+    // request_status === 0 : Demande envoyée, attente de confirmation
+    // request_status === 200 : Paiement confirmé immédiatement
+    // IMPORTANT: Convertir en nombre car l'API peut renvoyer une string "0"
+    const status = Number(paymentResult.request_status)
+    const requestSent = status === 0 || status === 200
 
-    if (!paymentSuccess) {
-      console.error('❌ [MAGASIN] Paiement échoué:', paymentResult.message)
+    console.log('✨ [MAGASIN] Status converti en nombre:', status)
+    console.log('✨ [MAGASIN] requestSent:', requestSent)
+
+    if (!requestSent) {
+      console.error('❌❌❌ [MAGASIN] CETTE ALERTE VIENT D\'ICI - Ligne 230 ❌❌❌')
+      console.error('❌ [MAGASIN] Échec de l\'envoi de la demande:', paymentResult.message)
       alert(`Erreur de paiement: ${paymentResult.message || 'Échec du paiement'}`)
       return
     }
 
-    console.log('✅ [MAGASIN] Paiement réussi, ajout des crédits...')
-    console.log('💰 [MAGASIN] Crédits AVANT paiement:', creditStore.credits)
+    console.log('✅✅✅ [MAGASIN] La requête a été envoyée avec succès! ✅✅✅')
 
-    // ✅ Ajouter les crédits localement ET dans la base de données
-    if (creditAmount > 0 && creditStore.accountId) {
-      console.log('🏦 [MAGASIN] Ajout de', creditAmount, 'crédits au compte', creditStore.accountId)
+    // Pour TOUS les statuts (0 ou 200), le backend gère l'ajout des crédits automatiquement via le callback
+    // On informe l'utilisateur et on lui permet de rafraîchir ses crédits après validation
+    console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation sur téléphone')
 
-      // 1. Persister dans la base de données
-      const dbSuccess = await CreditService.ajouterCredit(creditStore.accountId, creditAmount)
+    const confirmed = confirm(
+      `📲 Demande de paiement envoyée !\n\n` +
+      `Vous allez recevoir un SMS/notification sur votre téléphone (${payload.phone}) pour confirmer le paiement avec votre code PIN Mobile Money.\n\n` +
+      `Composez le code affiché sur votre téléphone pour valider le paiement.\n\n` +
+      `Cliquez sur OK après avoir validé le paiement pour voir vos crédits mis à jour.`
+    )
 
-      if (dbSuccess) {
-        console.log('✅ [MAGASIN] Crédits ajoutés dans la BDD')
-        // 2. Mettre à jour le store local
-        await creditStore.refreshForCurrentUser()
-        console.log('💰 [MAGASIN] Crédits APRÈS ajout:', creditStore.credits)
-        alert(`✅ Paiement réussi ! ${creditAmount} crédits ajoutés à votre compte.`)
-      } else {
-        console.error('❌ [MAGASIN] Échec ajout crédits dans la BDD')
-        alert('⚠️ Paiement effectué mais erreur lors de l\'ajout des crédits. Contactez le support.')
-      }
-    } else {
-      console.warn('⚠️ [MAGASIN] Aucun crédit calculé pour cette offre ou pas de compte ID')
+    if (confirmed) {
+      // Rafraîchir les crédits pour voir si le paiement a été confirmé par le backend
+      console.log('🔄 [MAGASIN] Rafraîchissement des crédits...')
+      await creditStore.refreshForCurrentUser()
+      console.log('💰 [MAGASIN] Crédits actuels après rafraîchissement:', creditStore.credits)
+      alert(`✅ Crédits mis à jour ! Vous avez maintenant ${creditStore.credits} crédits.`)
     }
-  } catch (e) {
+
+    return
+  } catch (e: any) {
     console.error('❌ [MAGASIN] Erreur MyPayGA:', e)
-    alert('Erreur lors du paiement. Veuillez réessayer.')
+    const errorMessage = e?.message || e?.data?.message || e?.data || 'Erreur inconnue'
+    alert(`Erreur lors du paiement: ${errorMessage}\n\nVeuillez vérifier:\n- Votre numéro de téléphone\n- Votre solde Mobile Money\n- Votre connexion internet`)
   } finally {
     emit('purchased', payload)
     showPayment.value = false
