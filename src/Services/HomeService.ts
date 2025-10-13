@@ -32,8 +32,8 @@ export class HomeService {
     // Webhook URL n8n (via proxy pour éviter CORS)
     // Dev: Vite proxy | Production: Backend API TTM proxy
     const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook-test/cad9c136-fbeb-4892-b47d-4400da822eea'
-      : 'https://api-ttm.onrender.com/n8n-webhook/webhook-test/cad9c136-fbeb-4892-b47d-4400da822eea'
+      ? '/n8n-webhook/webhook/cad9c136-fbeb-4892-b47d-4400da822eea'
+      : 'https://api-ttm.onrender.com/n8n-webhook/webhook/cad9c136-fbeb-4892-b47d-4400da822eea'
     
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
