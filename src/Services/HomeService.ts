@@ -48,6 +48,8 @@ export class HomeService {
       
       // Essayer plusieurs formats de payload au cas où n8n attend un format spécifique
       const payloads = [
+        // Format correct pour le workflow n8n alternatives (body.prompt)
+        { body: { prompt: message } },
         // Formats les plus courants pour n8n
         { prompt: message },
         { message: message },
@@ -55,7 +57,7 @@ export class HomeService {
         { input: message },
         { query: message },
         { content: message },
-        // Formats spécifiques n8n
+        // Formats spécifiques n8n alternatifs
         { body: { message: message } },
         { data: message },
         // Format simple string
