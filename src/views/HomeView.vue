@@ -561,6 +561,8 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
     // Mots de quantité (seront extraits avant)
     'boite','boites','boîte','boîtes','carton','cartons','paquet','paquets','unite','unites','unité','unités',
     'flacon','flacons','tube','tubes','sachet','sachets','comprime','comprimé','comprimés','comprimes',
+    // Mots génériques pour produits
+    'medicament','médicament','medicaments','médicaments','produit','produits','article','articles',
     // Formules de politesse
     'svp','sil','s\'il','vous','plait','plaît','merci','merci',
     // Mots de liaison province (seront traités séparément)
