@@ -252,6 +252,46 @@ const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' 
 
 // Provinces connues (doit rester cohérent avec normalizeProvinceName)
 const KNOWN_PROVINCES = ['Estuaire','Haut-Ogooué','Moyen-Ogooué','Ngounié','Nyanga','Ogooué-Ivindo','Ogooué-Lolo','Ogooué-Maritime','Woleu-Ntem']
+
+// Alias de provinces pour variations orthographiques et abréviations courantes
+const PROVINCE_ALIASES: Record<string, string> = {
+  'estuaire': 'Estuaire',
+  'estu': 'Estuaire',
+  'haut ogooue': 'Haut-Ogooué',
+  'haut ogoue': 'Haut-Ogooué',
+  'haut-ogooue': 'Haut-Ogooué',
+  'haut-ogoue': 'Haut-Ogooué',
+  'hautogooue': 'Haut-Ogooué',
+  'moyen ogooue': 'Moyen-Ogooué',
+  'moyen ogoue': 'Moyen-Ogooué',
+  'moyen-ogooue': 'Moyen-Ogooué',
+  'moyen-ogoue': 'Moyen-Ogooué',
+  'moyenogooue': 'Moyen-Ogooué',
+  'ngounie': 'Ngounié',
+  'nyanga': 'Nyanga',
+  'ogooue ivindo': 'Ogooué-Ivindo',
+  'ogoue ivindo': 'Ogooué-Ivindo',
+  'ogooue-ivindo': 'Ogooué-Ivindo',
+  'ogoue-ivindo': 'Ogooué-Ivindo',
+  'ogooueivindo': 'Ogooué-Ivindo',
+  'ogooue lolo': 'Ogooué-Lolo',
+  'ogoue lolo': 'Ogooué-Lolo',
+  'ogooue-lolo': 'Ogooué-Lolo',
+  'ogoue-lolo': 'Ogooué-Lolo',
+  'ogoouelo': 'Ogooué-Lolo',
+  'ogooue maritime': 'Ogooué-Maritime',
+  'ogoue maritime': 'Ogooué-Maritime',
+  'ogooue-maritime': 'Ogooué-Maritime',
+  'ogoue-maritime': 'Ogooué-Maritime',
+  'ogoouemaritime': 'Ogooué-Maritime',
+  'woleu ntem': 'Woleu-Ntem',
+  'wouleu ntem': 'Woleu-Ntem',
+  'woleu-ntem': 'Woleu-Ntem',
+  'wouleu-ntem': 'Woleu-Ntem',
+  'woleuntem': 'Woleu-Ntem',
+  'wol ntem': 'Woleu-Ntem'
+}
+
 const isValidProvince = (name: string | null | undefined) => !!name && KNOWN_PROVINCES.includes(String(name))
 
 // Fuzzy matching pour provinces: tolère fautes et prefixes (ex: "estu", "haut ogo", "moyen ogo", "wol ntem")
@@ -296,8 +336,8 @@ function fuzzyFindProvince(input: string): string | null {
     score += Math.min(tinyHits * 2, 6)
     if (!best || score > best.score) best = { name: prov, score }
   }
-  // Seuil raisonnable pour éviter de deviner à tort
-  return best && best.score >= 60 ? best.name : null
+  // Seuil plus tolérant pour accepter les fautes de frappe et variations
+  return best && best.score >= 40 ? best.name : null
 }
 
 // Simple alternatives map (synonyms/brands) for common substitutions
@@ -432,7 +472,9 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
       const next = tokens[i + 1] || ''
       const prev = tokens[i - 1] || ''
       const looksLikeDosage = unitPattern.test(next)
-      const qtyContext = /^(x|boite|boites|boîte|boîtes|paquet|paquets|quantite|quantité|qty)$/i.test(next) || /^(x|pour|qty|quantite|quantité)$/i.test(prev)
+      // Synonymes élargis pour quantités: boîtes, cartons, paquets, unités, flacons, tubes, sachets, comprimés
+      const qtyContext = /^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)
+        || /^(x|pour|qty|quantite|quantité)$/i.test(prev)
       if (!looksLikeDosage && (qtyContext || val <= 20)) { // heuristique simple
         quantity = Math.max(1, val)
         // marquer ce token comme utilisé pour la quantité
@@ -466,6 +508,17 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
     }
   }
 
+  // Chercher d'abord dans les alias de provinces (variations orthographiques)
+  if (!place) {
+    for (const [alias, canonical] of Object.entries(PROVINCE_ALIASES)) {
+      const aliasNorm = normalize(alias)
+      if (textNormalized.includes(aliasNorm)) {
+        place = canonical
+        break
+      }
+    }
+  }
+
   // Chercher les provinces avec normalisation
   if (!place) {
     for (const prov of KNOWN_PROVINCES) {
@@ -485,15 +538,34 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
   // product name heuristic: remove numbers and place words, keep words with letters
   const cleaned = tokens.join(' ').replace(/[,.;:!?]/g, ' ')
 
-  // Retirer les articles contractés AVANT la tokenisation pour éviter "d'efferalgan" -> "'efferalgan"
-  const cleanedNoArticles = cleaned.replace(/(^|\s)(d['']|l[''])\s*/gi, ' ')
+  // Retirer les articles contractés et élisions AVANT la tokenisation
+  // Gère: d'efferalgan, l'aspirine, d'ibuprofène, l'amoxicilline, etc.
+  // Aussi: de l'efferalgan, de la aspirine (cas plus rares)
+  const cleanedNoArticles = cleaned
+    .replace(/\b(d|l|de\s+l|de\s+la|du\s+l|du\s+la)[''\s]+/gi, ' ')
+    .replace(/\s+/g, ' ') // Normaliser les espaces multiples
 
   let productTokens = cleanedNoArticles
     .split(/\s+/)
     .filter(w => w && !knownPlaces.includes(w))
 
-  // remove common filler words in FR
-  const stop = new Set(['je','veux','j','de','des','du','au','aux','un','une','le','la','les','à','a','en','pour','moi','chez','dans','souhaite','souhaiterais','souhait','acheter','trouve','trouver','svp','s il','s\'il','boite','boites','boîte','boîtes','desire','désire','voudrais','aimerais','me','et','&','estuaire','haut','moyen','bas','ogooue','ntem','lolo','maritime','ivindo','woleu'])
+  // remove common filler words in FR + variations de phrases de localisation
+  const stop = new Set([
+    // Pronoms et articles
+    'je','j','me','moi','mon','ma','mes','tu','il','elle','nous','vous','ils','elles',
+    'de','des','du','d','au','aux','un','une','le','la','les','l','à','a','en','pour','dans','chez','sur','avec','sans','par','et','ou','&','mais','donc','car',
+    // Verbes d'action courants
+    'veux','vouloir','voudrais','souhaite','souhaiterais','souhait','desire','désire','désirer','aimerais','aimerait','aimer',
+    'acheter','achète','achete','achat','prendre','prends','obtenir','commander','commande',
+    'trouve','trouver','situe','situer','suis','être','être','habite','habiter','resider','résider','vis','vivre',
+    // Mots de quantité (seront extraits avant)
+    'boite','boites','boîte','boîtes','carton','cartons','paquet','paquets','unite','unites','unité','unités',
+    'flacon','flacons','tube','tubes','sachet','sachets','comprime','comprimé','comprimés','comprimes',
+    // Formules de politesse
+    'svp','sil','s\'il','vous','plait','plaît','merci','merci',
+    // Mots de liaison province (seront traités séparément)
+    'estuaire','haut','moyen','bas','ogooue','ogooué','ntem','lolo','maritime','ivindo','woleu','wouleu'
+  ])
 
   productTokens = productTokens
     .map(w => w.replace(/^[''\s]+|[''\s]+$/g, '')) // Nettoyer apostrophes et espaces en début/fin
@@ -2049,7 +2121,7 @@ const partenaires = [
       </div>
       <div class="ai-body">
         <div class="ai-note mb-3">
-          Exemple : « Je me trouve à l’Estuaire et je souhaite acheter 2 boîtes d’Efferalgan. »
+          Exemples : « Je me situe à l'Estuaire et je veux 2 cartons d'Efferalgan » ou « Je suis dans le haut ogoue, j'ai besoin de 3 boites de paracetamol »
         </div>
         <div class="input-group input-group-sm">
           <button
