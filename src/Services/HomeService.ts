@@ -29,8 +29,11 @@ export class HomeService {
     
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
     
-    // Webhook URL n8n (production - alternatives)
-    const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    // Webhook URL n8n (via proxy pour éviter CORS)
+    // Dev: Vite proxy | Production: Backend API TTM proxy
+    const webhookUrl = import.meta.env.DEV
+      ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+      : 'https://api-ttm.onrender.com/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
     
     // Timeout configuration (5s max as requested)
     const timeoutMs = 5000
