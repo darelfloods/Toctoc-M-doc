@@ -268,9 +268,23 @@ async function sendMessage() {
   let botText: string | null = null
 
   // Timeout configuration
-  const timeoutMs = 30000 // 30 seconds for hosted n8n with AI processing
+  const timeoutMs = 60000 // 60 seconds for hosted n8n with AI processing + cold start
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  // Show "waking up service" message after 5 seconds
+  let slowResponseWarning: number | null = null
+  const warningMsgId = Date.now() + 99999 // Unique ID for warning message
+  slowResponseWarning = window.setTimeout(() => {
+    messages.value.push({
+      id: warningMsgId,
+      role: 'bot',
+      text: '⏳ Le service IA démarre... Cela peut prendre jusqu\'à 30 secondes (service gratuit).'
+    })
+    nextTick(() => {
+      if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+    })
+  }, 5000)
 
   try {
     console.log('[Chatbot] 📤 Sending to webhook:', text)
@@ -292,6 +306,7 @@ async function sendMessage() {
     })
 
     clearTimeout(timeoutId)
+    if (slowResponseWarning) clearTimeout(slowResponseWarning)
 
     if (res && res.ok) {
       console.log('[Chatbot] ✅ Webhook status OK:', res.status)
@@ -355,6 +370,10 @@ async function sendMessage() {
     }
   } catch (e) {
     console.warn('[Chatbot] Webhook send error:', e)
+  } finally {
+    if (slowResponseWarning) clearTimeout(slowResponseWarning)
+    // Remove warning message if it was shown
+    messages.value = messages.value.filter(m => m.id !== warningMsgId)
   }
   // Small typing delay for UX then show either webhook reply or acknowledgement
   await new Promise(r => setTimeout(r, 450))
@@ -584,7 +603,7 @@ function getAnswer(key: string): string | null {
   @media (max-width: 380px) { .quick-grid { grid-template-columns: 1fr; } }
 
  /* Consistent styling for answer content */
- .answer-title { font-weight: 600; color: #0F7ABB; }
+ .answer-title { font-weight: 600 !important; color: #0F7ABB !important; }
  .step-list { counter-reset: step; }
  .step-list > li { margin-bottom: 6px; }
  .note { color: #4b5563; background: #f8fafc; border: 1px solid rgba(0,0,0,.06); padding: 6px 10px; border-radius: 8px; }

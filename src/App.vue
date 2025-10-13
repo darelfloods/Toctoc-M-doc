@@ -28,8 +28,8 @@ onMounted(() => {
   // Send initial ping on app load
   sendWakeupPing()
 
-  // Send ping every 10 minutes to keep n8n awake
-  const keepAliveInterval = setInterval(sendWakeupPing, 10 * 60 * 1000) // 10 min
+  // Send ping every 5 minutes to keep n8n awake (free tier sleeps after 15min)
+  const keepAliveInterval = setInterval(sendWakeupPing, 5 * 60 * 1000) // 5 min
 
   // Cleanup interval on unmount
   return () => clearInterval(keepAliveInterval)
