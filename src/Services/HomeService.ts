@@ -88,7 +88,9 @@ export class HomeService {
           if (testResponse.ok) {
             // Vérifier si la réponse contient du contenu valide
             const testText = await testResponse.clone().text()
-            console.log(`[HomeService] 📥 Response ${i + 1} preview:`, testText.substring(0, 100))
+            console.log(`[HomeService] 📥 Response ${i + 1} preview:`, testText.substring(0, 200))
+            console.log(`[HomeService] 📊 Response ${i + 1} full length:`, testText.length, 'chars')
+            console.log(`[HomeService] 🔍 Response ${i + 1} content-type:`, testResponse.headers.get('content-type'))
             
             // Critères plus intelligents pour détecter une vraie réponse
             const hasContent = testText && testText.trim()
@@ -130,20 +132,28 @@ export class HomeService {
         try {
           const data = await response.json()
           console.log('[HomeService] 📥 Webhook JSON response:', data)
-          
+
+          // Si la réponse est un tableau, prendre le premier élément
+          let responseData = data
+          if (Array.isArray(data) && data.length > 0) {
+            responseData = data[0]
+            console.log('[HomeService] 📦 Response is array, using first item:', responseData)
+          }
+
           // Try multiple response field names
           const responseFields = ['alternative', 'reply', 'text', 'message', 'output', 'content', 'answer', 'result', 'response']
           for (const field of responseFields) {
-            const value = (data as any)?.[field]
+            const value = (responseData as any)?.[field]
             if (typeof value === 'string' && value.trim()) {
               webhookResponse = value
+              console.log(`[HomeService] ✅ Found response in field '${field}':`, value)
               break
             }
           }
-          
+
           // Check nested structures
           if (!webhookResponse) {
-            const nested = (data as any)?.data?.alternative || (data as any)?.result?.text || (data as any)?.choices?.[0]?.message?.content
+            const nested = (responseData as any)?.data?.alternative || (responseData as any)?.result?.text || (responseData as any)?.choices?.[0]?.message?.content
             if (typeof nested === 'string' && nested.trim()) {
               webhookResponse = nested
             }
