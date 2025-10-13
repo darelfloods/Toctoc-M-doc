@@ -30,10 +30,11 @@ export class HomeService {
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
     
     // Webhook URL n8n (via proxy pour éviter CORS)
-    // Dev: Vite proxy | Production: Backend API TTM proxy
+    // TEMPORAIRE: Utilise webhook-test car webhook prod retourne vide
+    // TODO: Fixer la config n8n du workflow prod puis remettre /webhook/
     const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
-      : 'https://api-ttm.onrender.com/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+      ? '/n8n-webhook/webhook-test/659daf74-ca15-40e2-a52c-54054db41de6'
+      : 'https://api-ttm.onrender.com/n8n-webhook/webhook-test/659daf74-ca15-40e2-a52c-54054db41de6'
     
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
