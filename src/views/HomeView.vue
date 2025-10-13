@@ -1006,6 +1006,12 @@ async function proceedWithCreditDebitAndReservation(
   resolvePromise: () => void
 ) {
   try {
+    if (!creditStore.accountId) {
+      console.error('[AI Flow] Aucun accountId disponible')
+      openAiNotice("Impossible de débiter les crédits. Veuillez vous reconnecter.")
+      return
+    }
+
     const spentOk = await CreditService.souscrireCredit(creditStore.accountId, 1)
     if (!spentOk) {
       const err = CreditService.getLastError && CreditService.getLastError()
