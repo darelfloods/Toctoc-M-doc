@@ -2127,7 +2127,7 @@ const partenaires = [
       </div>
       <div class="ai-body">
         <div class="ai-note mb-3">
-          Exemple : « Je me situe à l'Estuaire et je souhaite acheter 2 boîtes d'Efferalgan »
+          Exemple : « Je me situe à l'Estuaire et je souhaite acheter 2 boîtes du médicament EFFERALGAN »
         </div>
         <div class="input-group input-group-sm">
           <button
