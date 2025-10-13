@@ -35,8 +35,8 @@ export class HomeService {
       ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
       : 'https://api-ttm.onrender.com/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
     
-    // Timeout configuration (30s pour laisser le temps à l'IA de répondre)
-    const timeoutMs = 30000
+    // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
+    const timeoutMs = 60000
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
     
