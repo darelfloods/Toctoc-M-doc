@@ -259,8 +259,11 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook test
-  const webhookUrl = 'https://n8n-workflows-cktx.onrender.com/webhook-test/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Free-text: POST to n8n webhook via proxy
+  // Dev: Vite proxy | Production: Backend API TTM proxy
+  const webhookUrl = import.meta.env.DEV
+    ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+    : 'https://api-ttm.onrender.com/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
 
@@ -520,7 +523,7 @@ function getAnswer(key: string): string | null {
  .chat-messages { height: 330px; overflow: auto; background: #fff; border: 1px solid rgba(0,0,0,.06); border-radius: 8px; }
  .chat-row { display: flex; }
  .bubble { max-width: 100%; padding: 10px 12px; border-radius: 12px; font-size: .925rem; line-height: 1.35; }
-  .bubble.bot { background: #f8f9fa; color: #111827; border: 1px solid rgba(0,0,0,.06); }
+  .bubble.bot { background: #fff; color: #111827; border: 1px solid rgba(0,0,0,.12); }
   .bubble.user { background: #0F7ABB; color: #fff; margin-left: auto; }
 
  /* Smooth message entrance */
