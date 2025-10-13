@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch } from 'vue'
 const open = ref(false)
 
 type Role = 'user' | 'bot'
@@ -105,6 +105,25 @@ const quickQuestions = [
   { key: 'reserve', label: 'Comment faire une réservation ?', icon: 'bi bi-calendar-check' },
   { key: 'credits', label: 'Comment recharger des crédits ?', icon: 'bi bi-wallet2' },
 ]
+
+// Wakeup ping when user opens chatbot
+let hasSentChatbotPing = false
+watch(open, (isOpen) => {
+  if (isOpen && !hasSentChatbotPing) {
+    hasSentChatbotPing = true
+    const webhookUrl = import.meta.env.DEV
+      ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+      : 'https://api-ttm.onrender.com/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '__chatbot_wakeup__', source: 'chatbot-open' })
+    }).catch(() => {
+      console.log('[Chatbot] Wakeup ping sent on chatbot open')
+    })
+  }
+})
 
 function answer(key: string) {
   const content = getAnswer(key)
