@@ -44,7 +44,7 @@ onMounted(() => {
     const stored = getStoredUser()
     console.log('[Navbar] currentUser from store:', authStore.currentUser)
     console.log('[Navbar] user from localStorage:', stored)
-  } catch {}
+  } catch { }
 })
 
 const products = ref<any[]>([])
@@ -237,7 +237,7 @@ watch(aiText, () => {
     aiConfirmLoading.value = false
   }
   // Cancel any ongoing backend search for AI when user edits text
-  try { homeService.cancelSearch() } catch {}
+  try { homeService.cancelSearch() } catch { }
   // Also ensure parsing spinner stops if user is editing
   aiIsParsing.value = false
 })
@@ -251,7 +251,7 @@ let recognition: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 // Provinces connues (doit rester cohérent avec normalizeProvinceName)
-const KNOWN_PROVINCES = ['Estuaire','Haut-Ogooué','Moyen-Ogooué','Ngounié','Nyanga','Ogooué-Ivindo','Ogooué-Lolo','Ogooué-Maritime','Woleu-Ntem']
+const KNOWN_PROVINCES = ['Estuaire', 'Haut-Ogooué', 'Moyen-Ogooué', 'Ngounié', 'Nyanga', 'Ogooué-Ivindo', 'Ogooué-Lolo', 'Ogooué-Maritime', 'Woleu-Ntem']
 
 // Alias de provinces pour variations orthographiques et abréviations courantes
 const PROVINCE_ALIASES: Record<string, string> = {
@@ -552,21 +552,21 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
   // remove common filler words in FR + variations de phrases de localisation
   const stop = new Set([
     // Pronoms et articles
-    'je','j','me','moi','mon','ma','mes','tu','il','elle','nous','vous','ils','elles',
-    'de','des','du','d','au','aux','un','une','le','la','les','l','à','a','en','pour','dans','chez','sur','avec','sans','par','et','ou','&','mais','donc','car',
+    'je', 'j', 'me', 'moi', 'mon', 'ma', 'mes', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
+    'de', 'des', 'du', 'd', 'au', 'aux', 'un', 'une', 'le', 'la', 'les', 'l', 'à', 'a', 'en', 'pour', 'dans', 'chez', 'sur', 'avec', 'sans', 'par', 'et', 'ou', '&', 'mais', 'donc', 'car',
     // Verbes d'action courants
-    'veux','vouloir','voudrais','souhaite','souhaiterais','souhait','desire','désire','désirer','aimerais','aimerait','aimer',
-    'acheter','achète','achete','achat','prendre','prends','obtenir','commander','commande',
-    'trouve','trouver','situe','situer','suis','être','être','habite','habiter','resider','résider','vis','vivre',
+    'veux', 'vouloir', 'voudrais', 'souhaite', 'souhaiterais', 'souhait', 'desire', 'désire', 'désirer', 'aimerais', 'aimerait', 'aimer',
+    'acheter', 'achète', 'achete', 'achat', 'prendre', 'prends', 'obtenir', 'commander', 'commande',
+    'trouve', 'trouver', 'situe', 'situer', 'suis', 'être', 'être', 'habite', 'habiter', 'resider', 'résider', 'vis', 'vivre',
     // Mots de quantité (seront extraits avant)
-    'boite','boites','boîte','boîtes','carton','cartons','paquet','paquets','unite','unites','unité','unités',
-    'flacon','flacons','tube','tubes','sachet','sachets','comprime','comprimé','comprimés','comprimes',
+    'boite', 'boites', 'boîte', 'boîtes', 'carton', 'cartons', 'paquet', 'paquets', 'unite', 'unites', 'unité', 'unités',
+    'flacon', 'flacons', 'tube', 'tubes', 'sachet', 'sachets', 'comprime', 'comprimé', 'comprimés', 'comprimes',
     // Mots génériques pour produits
-    'medicament','médicament','medicaments','médicaments','produit','produits','article','articles',
+    'medicament', 'médicament', 'medicaments', 'médicaments', 'produit', 'produits', 'article', 'articles',
     // Formules de politesse
-    'svp','sil','s\'il','vous','plait','plaît','merci','merci',
+    'svp', 'sil', 's\'il', 'vous', 'plait', 'plaît', 'merci', 'merci',
     // Mots de liaison province (seront traités séparément)
-    'estuaire','haut','moyen','bas','ogooue','ogooué','ntem','lolo','maritime','ivindo','woleu','wouleu'
+    'estuaire', 'haut', 'moyen', 'bas', 'ogooue', 'ogooué', 'ntem', 'lolo', 'maritime', 'ivindo', 'woleu', 'wouleu'
   ])
 
   productTokens = productTokens
@@ -707,7 +707,7 @@ async function runAiSearch(): Promise<void> {
       }
       if (bestCount >= 0) primaryName = bestTok
     }
-  } catch {}
+  } catch { }
   const primaryNameNorm = primaryName
 
   // Ouvrir la modale de confirmation en mode chargement si une confirmation est probable
@@ -803,7 +803,7 @@ async function runAiSearch(): Promise<void> {
     if (place && typeof onSelectProvince === 'function') {
       onSelectProvince(place)
     }
-  } catch {}
+  } catch { }
 
   showAISearchPanel.value = false
   aiIsParsing.value = false
@@ -879,15 +879,15 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
             openAiNotice(`Le produit n'est pas disponible dans ${provinceKey}.\n${alt.libelle}`)
             return
           }
-        } catch {}
+        } catch { }
         // 2) Demander des suggestions textuelles à n8n avec loading et les afficher avec le préfixe requis
         console.log('[AI Flow] 🔍 Searching alternatives via n8n webhook...')
-        const n8nMsg = await homeService.askN8nAlternatives({ 
-          productName: product.libelle, 
-          province: provinceKey, 
-          cip: product.cip 
+        const n8nMsg = await homeService.askN8nAlternatives({
+          productName: product.libelle,
+          province: provinceKey,
+          cip: product.cip
         })
-        
+
         const header = `Le produit n'est pas disponible dans ${provinceKey}.`
         if (n8nMsg) {
           console.log('[AI Flow] ✅ Alternative found via webhook')
@@ -926,13 +926,13 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
 
     if (!candidates.length) {
       console.log('[AI Flow] 🔍 No pharmacies found, searching alternatives via n8n webhook...')
-      
-      const n8nMsg = await homeService.askN8nAlternatives({ 
-        productName: product?.libelle, 
-        province: province || selectedProvince.value || undefined, 
-        cip: product?.cip 
+
+      const n8nMsg = await homeService.askN8nAlternatives({
+        productName: product?.libelle,
+        province: province || selectedProvince.value || undefined,
+        cip: product?.cip
       })
-      
+
       const header = `Le produit n'est pas disponible dans votre zone pour le moment.`
       if (n8nMsg) {
         console.log('[AI Flow] ✅ Alternative suggestion received from webhook')
@@ -966,14 +966,14 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
     const availableRaw: any = creditStore.credits
     const available = Number.isFinite(Number(availableRaw)) ? Math.trunc(Number(availableRaw)) : 0
     console.log('[AI Flow] Solde disponible:', available, 'Account ID:', creditStore.accountId)
-    
+
     if (!creditStore.accountId) {
       console.error('[AI Flow] Account ID manquant')
       showConnexion.value = true
       openAiNotice("Erreur d'authentification. Veuillez vous reconnecter.")
       return
     }
-    
+
     if (available < 1) {
       console.log('[AI Flow] Crédits insuffisants:', available)
       showMagasin.value = true
@@ -1018,11 +1018,11 @@ async function proceedWithCreditDebitAndReservation(
     if (!spentOk) {
       const err = CreditService.getLastError && CreditService.getLastError()
       console.error('[AI Flow] Échec du débit:', err)
-      
+
       // Mode fallback en développement : permettre la réservation malgré l'échec du débit
       const isDev = import.meta.env.DEV
       const isEndpointNotFound = err && /HTTP\s+404/i.test(err)
-      
+
       if (isDev && isEndpointNotFound) {
         console.warn('[AI Flow] 🚧 Mode développement: bypass du débit de crédits pour endpoint 404')
         openAiNotice("⚠️ Mode développement: réservation autorisée sans débit de crédit (API en cours de développement)")
@@ -1032,7 +1032,7 @@ async function proceedWithCreditDebitAndReservation(
         let userMessage = ''
         let shouldShowLogin = false
         let shouldShowShop = false
-        
+
         if (err) {
           if (/HTTP\s+(401|403)/i.test(err)) {
             userMessage = "Session expirée. Veuillez vous reconnecter."
@@ -1054,13 +1054,13 @@ async function proceedWithCreditDebitAndReservation(
           userMessage = "Erreur technique lors de la vérification des crédits. Veuillez réessayer."
           shouldShowShop = true
         }
-        
+
         if (shouldShowLogin) {
           showConnexion.value = true
         } else if (shouldShowShop) {
           showMagasin.value = true
         }
-        
+
         openAiNotice(userMessage)
         return
       }
@@ -1170,11 +1170,11 @@ function getStoredUser(): any | null {
   try {
     const a = localStorage.getItem('auth_user')
     if (a) return JSON.parse(a)
-  } catch {}
+  } catch { }
   try {
     const b = localStorage.getItem('user_connected')
     if (b) return JSON.parse(b)
-  } catch {}
+  } catch { }
   return null
 }
 
@@ -1220,11 +1220,11 @@ async function loadAllProduct() {
   productsErrorMessage.value = ''
   try {
     console.log('📦 [PRODUCTS] Chargement des produits...')
-    
+
     // Charger un échantillon plus large pour avoir plus de choix
     const data = await homeService.getAllProduct(1, 100)
     initialProducts.value = data || []
-    
+
     if (data && data.length > 0) {
       console.log('✅ [PRODUCTS] Affichage des produits')
       products.value = data.slice(0, visibleCount.value)
@@ -1274,7 +1274,7 @@ async function onSearchInput(e: Event) {
     products.value = (initialProducts.value || []).slice(0, visibleCount.value)
     return
   }
-  
+
   // Filtrage local instantané pour une meilleure UX
   const local = (initialProducts.value || []).filter((p: any) => {
     const name = (p?.libelle || '').toString().toLowerCase()
@@ -1336,7 +1336,7 @@ async function performSearch(q: string) {
     }
     isSearching.value = true
     const searchId = ++currentSearchId
-    
+
     // Délai minimum pour voir l'animation (UX)
     const [apiResults] = await Promise.all([
       homeService.searchProducts(q),
@@ -1465,27 +1465,27 @@ function onPharmacySelected(ph: any) {
 function onMultiplePharmaciesSelected(pharmacies: any[]) {
   const product = appStore.selectedProduct
   const province = selectedProvince.value || ''
-  
+
   if (product && pharmacies.length > 0) {
     // Ajouter chaque pharmacie au panier avec quantité par défaut de 1
     pharmacies.forEach(pharmacy => {
-      cart.addReservation({ 
-        product, 
-        quantite: 1, 
-        pharmacy, 
-        province, 
-        reservedAt: new Date().toISOString() 
+      cart.addReservation({
+        product,
+        quantite: 1,
+        pharmacy,
+        province,
+        reservedAt: new Date().toISOString()
       })
     })
-    
+
     // Notification de succès
     const count = pharmacies.length
     const productName = product.libelle || 'Produit'
     alert(`✅ ${count} réservation${count > 1 ? 's' : ''} ajoutée${count > 1 ? 's' : ''} au panier pour "${productName}"`)
-    
+
     // Fermer la modal
     showSelectPharmacy.value = false
-    
+
     // Optionnellement, afficher le panier
     // showPanier.value = true
   }
@@ -1537,16 +1537,6 @@ async function onPurchased(payload: any) {
   await creditStore.refreshForCurrentUser()
 }
 
-// Ajout des partenaires demandés pour la section "Nos pharmacies partenaires"
-const partenaires = [
-  "AYITEBE",
-  "AKEWA",
-  "SOS BIBIKI",
-  "MARIE LAMLET",
-  "LIBWE",
-  "EL RAPHA",
-  "MANIEVA"
-]
 </script>
 
 <template>
@@ -1554,29 +1544,28 @@ const partenaires = [
   <DisponibiliteMedoc :visible="showDisponibilite" :groupedPharmacies="groupedDisponibility"
     :loading="appStore.isLoadingDisponibilite" @close="showDisponibilite = false" @selectProvince="onSelectProvince"
     @confirmSelection="onConfirmProvince" />
-  <SelectPharmacy :visible="showSelectPharmacy" :province="selectedProvince" :pharmacies="pharmaciesInSelectedProvince" :product="appStore.selectedProduct"
-    @close="showSelectPharmacy = false" @select="onPharmacySelected" @selectMultiple="onMultiplePharmaciesSelected" />
-  <Reservation :visible="showReservation" :province="selectedProvince" :pharmacy="selectedPharmacy" :product="appStore.selectedProduct"
-    @close="showReservation = false" @confirm="onReservationConfirm" />
+  <SelectPharmacy :visible="showSelectPharmacy" :province="selectedProvince" :pharmacies="pharmaciesInSelectedProvince"
+    :product="appStore.selectedProduct" @close="showSelectPharmacy = false" @select="onPharmacySelected"
+    @selectMultiple="onMultiplePharmaciesSelected" />
+  <Reservation :visible="showReservation" :province="selectedProvince" :pharmacy="selectedPharmacy"
+    :product="appStore.selectedProduct" @close="showReservation = false" @confirm="onReservationConfirm" />
   <Panier :visible="showPanier" @close="showPanier = false" />
   <DonneesPerso :visible="showDonneesPerso" @close="showDonneesPerso = false" />
-  <Connexion v-if="showConnexion" :visible="showConnexion" @close="showConnexion = false"
-    @loginSuccess="onLoginSuccess"
+  <Connexion v-if="showConnexion" :visible="showConnexion" @close="showConnexion = false" @loginSuccess="onLoginSuccess"
     @openInscription="showConnexion = false; showInscription = true"
     @forgotPassword="showConnexion = false; showForgotPassword = true" />
-  <Inscription v-if="showInscription" :visible="showInscription"
-    @close="showInscription = false"
-    @openConnexion="showInscription = false; showConnexion = true"
-    @registerSuccess="onLoginSuccess" />
+  <Inscription v-if="showInscription" :visible="showInscription" @close="showInscription = false"
+    @openConnexion="showInscription = false; showConnexion = true" @registerSuccess="onLoginSuccess" />
   <ForgotPassword :visible="showForgotPassword" @close="showForgotPassword = false" />
-  <ChangePassword :visible="showChangePassword" @close="showChangePassword = false" @updated="showChangePassword = false" />
+  <ChangePassword :visible="showChangePassword" @close="showChangePassword = false"
+    @updated="showChangePassword = false" />
   <EditProfile :visible="showEditProfile" @close="showEditProfile = false" @updated="showEditProfile = false" />
   <Parametre :visible="showParametre" @logout="onLogout" @close="showParametre = false"
     @openStore="showMagasin = true; showParametre = false"
     @changePassword="showParametre = false; showChangePassword = true"
     @editProfile="showParametre = false; showEditProfile = true" />
-  <RecherchePharmacie :visible="showRecherche" :results="products" :query="searchTerm" :loading="isSearching" @close="showRecherche = false"
-    @select="disponibilite" @queryChange="onModalQueryChange" />
+  <RecherchePharmacie :visible="showRecherche" :results="products" :query="searchTerm" :loading="isSearching"
+    @close="showRecherche = false" @select="disponibilite" @queryChange="onModalQueryChange" />
   <Magasin :visible="showMagasin" @close="showMagasin = false" @purchased="onPurchased" />
   <Pharmacies :visible="showPharmacies" @close="showPharmacies = false" />
 
@@ -1614,17 +1603,20 @@ const partenaires = [
         <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           <div>
-            Cette action va consommer <strong>{{ creditConfirmAmount }} crédit{{ creditConfirmAmount > 1 ? 's' : '' }}</strong> de votre compte.
+            Cette action va consommer <strong>{{ creditConfirmAmount }} crédit{{ creditConfirmAmount > 1 ? 's' : ''
+              }}</strong> de votre compte.
           </div>
         </div>
         <p class="mb-2">
           <strong>Solde actuel :</strong> {{ creditStore.credits }} crédit{{ creditStore.credits > 1 ? 's' : '' }}
         </p>
         <p class="mb-2">
-          <strong>Après l'opération :</strong> {{ creditStore.credits - creditConfirmAmount }} crédit{{ (creditStore.credits - creditConfirmAmount) > 1 ? 's' : '' }}
+          <strong>Après l'opération :</strong> {{ creditStore.credits - creditConfirmAmount }} crédit{{
+            (creditStore.credits - creditConfirmAmount) > 1 ? 's' : '' }}
         </p>
         <p class="text-muted small">
-          La recherche intelligente utilise des crédits pour accéder aux disponibilités en pharmacie et effectuer la réservation automatiquement.
+          La recherche intelligente utilise des crédits pour accéder aux disponibilités en pharmacie et effectuer la
+          réservation automatiquement.
         </p>
       </div>
       <div class="modal-footer">
@@ -1638,14 +1630,14 @@ const partenaires = [
   </div>
 
   <!-- AI Confirm Modal for fuzzy product matches -->
-  <div v-if="showAiConfirm" class="modal-overlay" @click.self="showAiConfirm=false">
+  <div v-if="showAiConfirm" class="modal-overlay" @click.self="showAiConfirm = false">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title d-flex align-items-center">
           <i class="bi bi-capsule me-2"></i>
           <span>Confirmer le médicament</span>
         </div>
-        <button class="btn-close" @click="showAiConfirm=false"></button>
+        <button class="btn-close" @click="showAiConfirm = false"></button>
       </div>
       <div class="modal-body">
         <p class="mb-2">Vous avez demandé: <strong>{{ aiOriginalQuery }}</strong></p>
@@ -1660,7 +1652,9 @@ const partenaires = [
         <template v-else>
           <p class="text-muted">Sélectionnez le produit correspondant ci-dessous:</p>
           <div class="list-group">
-            <button v-for="(c, idx) in aiCandidates" :key="idx" type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" @click="onPickAiCandidate(c)">
+            <button v-for="(c, idx) in aiCandidates" :key="idx" type="button"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+              @click="onPickAiCandidate(c)">
               <span>{{ c.libelle }}</span>
               <i class="bi bi-arrow-right-short fs-4"></i>
             </button>
@@ -1668,7 +1662,7 @@ const partenaires = [
         </template>
       </div>
       <div class="modal-footer d-flex justify-content-between">
-        <button class="btn btn-secondary" @click="showAiConfirm=false">Annuler</button>
+        <button class="btn btn-secondary" @click="showAiConfirm = false">Annuler</button>
         <button class="btn btn-outline-primary" @click="onChangeAiQuery()">Changer ma requête</button>
       </div>
     </div>
@@ -1682,7 +1676,8 @@ const partenaires = [
           <img src="/assets/Fichier 12.svg" width="100" alt="Logo_Ttm" />
         </div>
         <!-- Centered welcome text -->
-        <div class="position-absolute top-50 start-50 translate-middle fw-semibold" style="color:#0F7ABB; white-space: nowrap;">
+        <div class="position-absolute top-50 start-50 translate-middle fw-semibold"
+          style="color:#0F7ABB; white-space: nowrap;">
           {{ welcomeText }}
         </div>
         <!-- Desktop actions -->
@@ -1694,7 +1689,7 @@ const partenaires = [
               </span>
             </button>
             <div class="credit-badge ms-3" @click="showMagasin = true">
-              <i class="fa-solid fa-crown icon"></i>
+              <i class="bi bi-coin"></i>
               <span class="text">{{ creditStore.credits }} crédits</span>
             </div>
             <!-- Bouton Pharmacies -->
@@ -1705,7 +1700,9 @@ const partenaires = [
             <button style="border: none;" @click="showPanier = true">
               <span class="badge bg-success p-2 position-relative" style="border-radius: 50px;">
                 <i class="bi bi-cart4" style="font-size:25px"></i>
-                <span v-if="hasCartItems" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 11px;">
+                <span v-if="hasCartItems"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size: 11px;">
                   {{ cartItemCount }}
                 </span>
               </span>
@@ -1727,10 +1724,8 @@ const partenaires = [
             </button>
           </template>
           <template v-else>
-            <button type="button"
-                    class="btn fw-bold text-white"
-                    style="border-radius: 15px; background-color: #3AB24F;"
-                    @click="showConnexion = true">
+            <button type="button" class="btn fw-bold text-white" style="border-radius: 15px; background-color: #3AB24F;"
+              @click="showConnexion = true">
               Se connecter
             </button>
           </template>
@@ -1753,7 +1748,8 @@ const partenaires = [
           <button class="list-group-item list-group-item-action" @click="showParametre = true; toggleMobileMenu()">
             <i class="bi bi-gear me-2"></i> Paramètres
           </button>
-          <button class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" @click="showPanier = true; toggleMobileMenu()">
+          <button class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
+            @click="showPanier = true; toggleMobileMenu()">
             <span><i class="bi bi-cart4 me-2"></i> Panier</span>
             <span v-if="hasCartItems" class="badge rounded-pill bg-danger">{{ cartItemCount }}</span>
           </button>
@@ -1774,7 +1770,7 @@ const partenaires = [
       <div class="mobile-credits" v-if="isUserLoggedIn" @click="showMagasin = true; toggleMobileMenu()">
         <div class="credit-badge w-100 d-flex align-items-center justify-content-between">
           <span class="d-flex align-items-center">
-            <i class="fa-solid fa-crown icon me-2"></i>
+            <i class="bi bi-coin icon me-2"></i>
             <span class="text">{{ creditStore.credits }} crédits</span>
           </span>
           <i class="bi bi-chevron-right"></i>
@@ -1803,7 +1799,8 @@ const partenaires = [
           </div>
         </div>
         <div class="col-lg-6 col-md-12 text-center pt-5 mt-lg-0 order-2 order-md-2">
-          <img class="hero-user-img img-fluid pt-5 ps-5 ms-5" style="margin-top: 70px;" src="/assets/user.png" alt="user" />
+          <img class="hero-user-img img-fluid pt-5 ps-5 ms-5" style="margin-top: 70px;" src="/assets/user.png"
+            alt="user" />
         </div>
       </div>
     </div>
@@ -1840,17 +1837,20 @@ const partenaires = [
       <div class="search-container mb-5">
         <div class="search-input-wrapper">
           <input type="text" class="search-input" :value="searchTerm" @input="onSearchInput"
-            @keyup.enter.prevent="triggerImmediateSearch(true)" @blur="triggerImmediateSearch(false)" placeholder="Rechercher un médicament..." />
+            @keyup.enter.prevent="triggerImmediateSearch(true)" @blur="triggerImmediateSearch(false)"
+            placeholder="Rechercher un médicament..." />
         </div>
         <div class="search-actions">
           <button class="icon-btn" type="button" @click="triggerImmediateSearch(true)" title="Rechercher">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
           </button>
           <button class="icon-btn" type="button" @click="onAISearchClick()" title="Recherche intelligente (IA)">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M5 3l1.5 3L10 7.5 6.5 9 5 12 3.5 9 0 7.5 3.5 6 5 3zm10 1l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2zm-4 6l1.2 2.4L15.5 13 12.2 14.6 11 17l-1.2-2.4L6.5 13l3.3-1.6L11 10z" />
+              <path
+                d="M5 3l1.5 3L10 7.5 6.5 9 5 12 3.5 9 0 7.5 3.5 6 5 3zm10 1l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2zm-4 6l1.2 2.4L15.5 13 12.2 14.6 11 17l-1.2-2.4L6.5 13l3.3-1.6L11 10z" />
             </svg>
           </button>
         </div>
@@ -1889,18 +1889,10 @@ const partenaires = [
       </div>
       <!-- Actions liste produits: Voir plus / Réduire -->
       <div v-if="!isLoadingProducts && searchTerm.trim().length === 0" class="text-center mt-3">
-        <button
-          v-if="products.length < Math.min(2000, initialProducts.length)"
-          class="btn btn-primary px-4 py-2"
-          style="border-radius: 12px;"
-          @click="loadMore"
-        >Voir plus</button>
-        <button
-          v-else-if="initialProducts.length > 8"
-          class="btn btn-outline-secondary px-4 py-2 ms-2"
-          style="border-radius: 12px;"
-          @click="reduceList"
-        >Réduire</button>
+        <button v-if="products.length < Math.min(2000, initialProducts.length)" class="btn btn-primary px-4 py-2"
+          style="border-radius: 12px;" @click="loadMore">Voir plus</button>
+        <button v-else-if="initialProducts.length > 8" class="btn btn-outline-secondary px-4 py-2 ms-2"
+          style="border-radius: 12px;" @click="reduceList">Réduire</button>
       </div>
     </div>
   </section>
@@ -1922,85 +1914,117 @@ const partenaires = [
               <div class="partner-icon">
                 <i class="bi bi-building"></i>
               </div>
-              <h6 class="partner-name">PHARMACIE CENTRALE</h6>
+              <h6 class="partner-name">PHARMACIE CENTRALE DE MOANDA</h6>
             </div>
 
-            <div class="partner-card">
-              <div class="partner-icon">
-                <i class="bi bi-hospital"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE MODERNE</h6>
-            </div>
-
-            <div class="partner-card">
-              <div class="partner-icon">
-                <i class="bi bi-heart-pulse"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE SANTÉ</h6>
-            </div>
-
-            <!-- Nouvelles pharmacies dynamiques -->
-            <div
-              v-for="(pharma, idx) in partenaires"
-              :key="pharma + idx"
-              class="partner-card"
-            >
-              <div class="partner-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE {{ pharma }}</h6>
-            </div>
-
-            <!-- Pharmacies supplémentaires avec icônes variées -->
-            <div class="partner-card">
-              <div class="partner-icon">
-                <i class="bi bi-capsule"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE LA MANUFAC</h6>
-            </div>
-
-            <div class="partner-card">
-              <div class="partner-icon">
-                <i class="bi bi-plus-circle-fill"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE BON REMÈDE</h6>
-            </div>
-
-            <div class="partner-card">
-              <div class="partner-icon">
-                <i class="bi bi-shield-heart"></i>
-              </div>
-              <h6 class="partner-name">PHARMACIE NOTRE DAME</h6>
-            </div>
-
-            <!-- Duplication pour effet infini seamless -->
             <div class="partner-card">
               <div class="partner-icon">
                 <i class="bi bi-building"></i>
               </div>
-              <h6 class="partner-name">PHARMACIE CENTRALE</h6>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE ZENITH</h6>
             </div>
 
             <div class="partner-card">
               <div class="partner-icon">
-                <i class="bi bi-hospital"></i>
+                <i class="bi bi-building"></i>
               </div>
-              <h6 class="partner-name">PHARMACIE MODERNE</h6>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE SAINTE MONIQUE</h6>
             </div>
 
-            <!-- Duplication des nouvelles pharmacies -->
-            <div
-              v-for="(pharma, idx) in partenaires"
-              :key="'dup-' + pharma + idx"
-              class="partner-card"
-            >
+            <div class="partner-card">
+              <div class="logo">
+                <img src="..\assets\avoile.png" width="150" alt="Pharmacy" class="partner-image pb-3"/>
+              </div>
+              <h6 class="partner-name">PHARMACIE AVOILENZAME</h6>
+            </div>
+
+            <div class="partner-card">
               <div class="partner-icon">
                 <i class="bi bi-building"></i>
               </div>
-              <h6 class="partner-name">PHARMACIE {{ pharma }}</h6>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE MARIE-LAMLET</h6>
             </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE SANTE POUR TOUS</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE EL RAPHA</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE MANIEVA</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE AKEWA</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE ANTOINE AYATSOU</h6>
+            </div>
+
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE LIBWE</h6>
+            </div>
+
+            <div class="partner-card">
+            <div class="partner-icon">
+              <i class="bi bi-building"></i>
+            </div>
+            <h6 class="partner-name">DEPOT PHARMACEUTIQUE AYITEBE</h6>
+          </div>
+
+          <div class="partner-card">
+            <div class="partner-icon">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <h6 class="partner-name">NOTRE PHARMACIE</h6>
+          </div>
+
+          <!-- Pharmacies supplémentaires avec icônes variées -->
+          <div class="partner-card">
+            <div class="partner-icon">
+              <img src="../assets/logo_manufac.png" width="70" alt="Pharmacy" class="partner-image" />
+            </div>
+            <h6 class="partner-name">DEPOT MEDICAL LA MANUFAC-MEDIC</h6>
+          </div>
+
+          <div class="partner-card">
+            <div class="partner-icon">
+              <i class="bi bi-plus-circle-fill"></i>
+            </div>
+            <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU BON REMÈDE</h6>
+          </div>
+
+          <div class="partner-card">
+            <div class="partner-icon">
+              <i class="bi bi-shield-heart"></i>
+            </div>
+            <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU ROSAIRE</h6>
+          </div>
 
           </div>
+
         </div>
       </div>
     </div>
@@ -2116,12 +2140,12 @@ const partenaires = [
     </div>
   </footer>
 
-  
+
   <!-- Floating Chatbot -->
   <Chatbot />
 
   <!-- AI Search Panel -->
-  <div v-if="showAISearchPanel" class="ai-overlay" @click.self="showAISearchPanel=false">
+  <div v-if="showAISearchPanel" class="ai-overlay" @click.self="showAISearchPanel = false">
     <div class="ai-panel">
       <div class="ai-header">
         <strong>Recherche intelligente (IA)</strong>
@@ -2132,36 +2156,19 @@ const partenaires = [
           Exemple : « Je me situe à l'Estuaire et je souhaite acheter 2 boîtes du médicament EFFERALGAN »
         </div>
         <div class="input-group input-group-sm">
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            v-if="supportsSpeech"
-            :class="{ 'btn-danger': isTranscribing }"
-            :aria-pressed="isTranscribing ? 'true' : 'false'"
-            :disabled="aiIsParsing"
-            @click="toggleTranscription()"
-            title="Transcription vocale gratuite"
-          >
+          <button class="btn btn-outline-secondary" type="button" v-if="supportsSpeech"
+            :class="{ 'btn-danger': isTranscribing }" :aria-pressed="isTranscribing ? 'true' : 'false'"
+            :disabled="aiIsParsing" @click="toggleTranscription()" title="Transcription vocale gratuite">
             <i :class="isTranscribing ? 'bi bi-stop-circle' : 'bi bi-mic'" style="font-size: 1rem;"></i>
             <span class="ms-1 d-none d-md-inline">{{ isTranscribing ? 'Stop' : 'Transcrire' }}</span>
           </button>
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            v-else
-            disabled
-            title="La transcription vocale n'est pas supportée par ce navigateur"
-          >
+          <button class="btn btn-outline-secondary" type="button" v-else disabled
+            title="La transcription vocale n'est pas supportée par ce navigateur">
             <i class="bi bi-mic-mute"></i>
           </button>
-          <input
-            type="text"
-            class="form-control ai-input"
-            placeholder="Décrivez votre besoin (produit, ville, quantité)..."
-            v-model="aiText"
-            :disabled="aiIsParsing"
-            @keydown.enter.prevent="runAiSearch()"
-          />
+          <input type="text" class="form-control ai-input"
+            placeholder="Décrivez votre besoin (produit, ville, quantité)..." v-model="aiText" :disabled="aiIsParsing"
+            @keydown.enter.prevent="runAiSearch()" />
           <button class="btn ai-send" type="button" :disabled="!aiText.trim() || aiIsParsing" @click="runAiSearch()">
             <span v-if="!aiIsParsing">Rechercher</span>
             <span v-else>Analyse…</span>
@@ -2238,6 +2245,7 @@ body {
 }
 
 @keyframes shimmer {
+
   0%,
   100% {
     transform: translateX(-100%);
@@ -2267,6 +2275,7 @@ body {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -2430,13 +2439,21 @@ body {
   width: 64px;
   height: 64px;
   animation: hourglass-spin 1.2s linear infinite;
-  filter: drop-shadow(0 6px 18px rgba(15,122,187,0.25));
+  filter: drop-shadow(0 6px 18px rgba(15, 122, 187, 0.25));
 }
 
 @keyframes hourglass-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.06); }
-  100% { transform: rotate(360deg) scale(1); }
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.06);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 .hourglass-spinner:before {
@@ -2453,21 +2470,31 @@ body {
 }
 
 @keyframes hourglass-rotate {
-  0% { transform: rotate(0deg); }
-  50% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes hourglass-sand {
-  0% { 
+  0% {
     opacity: 0;
     transform: translate(-50%, -80%) scale(0.3);
   }
-  50% { 
+
+  50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
-  100% { 
+
+  100% {
     opacity: 0;
     transform: translate(-50%, -20%) scale(0.3);
   }
@@ -2478,6 +2505,7 @@ body {
   width: 84px;
   height: 84px;
 }
+
 .ring-text {
   margin-top: 10px;
   text-align: center;
@@ -2485,11 +2513,13 @@ body {
   color: #0F7ABB;
   letter-spacing: 2px;
 }
+
 .ring-seg {
   position: absolute;
   inset: 0;
   transform: rotate(calc((var(--i) - 1) * 30deg));
 }
+
 .ring-seg::before {
   content: '';
   position: absolute;
@@ -2508,26 +2538,49 @@ body {
 
 @keyframes ring-pulse {
 
-  0% { opacity: .25; transform: translateY(6px) scale(.85); }
-  50% { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: .25; transform: translateY(6px) scale(.85); }
+  0% {
+    opacity: .25;
+    transform: translateY(6px) scale(.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: .25;
+    transform: translateY(6px) scale(.85);
+  }
 }
 
 .hourglass-gray {
   width: 80px;
   height: 80px;
   animation: hourglass-flip 1.4s ease-in-out infinite;
-  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.12));
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.12));
 }
 
 @keyframes hourglass-flip {
-  0% { transform: rotate(0deg) scale(1); opacity: 0.85; }
-  50% { transform: rotate(180deg) scale(1.03); opacity: 1; }
-  100% { transform: rotate(360deg) scale(1); opacity: 0.85; }
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.85;
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.03);
+    opacity: 1;
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.85;
+  }
 }
 
 .products-loader {
-  min-height: 220px; /* crée une zone suffisante pour centrer verticalement */
+  min-height: 220px;
+  /* crée une zone suffisante pour centrer verticalement */
 }
 
 .search-input:focus {
@@ -2559,21 +2612,84 @@ body {
   color: var(--primary-color);
   box-shadow: none;
 }
-.icon-btn:hover { background: rgba(15, 122, 187, 0.08); }
+
+.icon-btn:hover {
+  background: rgba(15, 122, 187, 0.08);
+}
 
 /* AI Search Panel (chat-like, centered) */
-.ai-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.ai-panel { width: 560px; max-width: 94vw; max-height: 78vh; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 20px 50px rgba(0,0,0,.25); display: flex; flex-direction: column; }
-.ai-header { display:flex; align-items:center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,.08); background: #f8fafc; }
-.ai-body { padding: 14px; overflow: auto; }
-.ai-note { color: #4b5563; background: #f8fafc; border: 1px solid rgba(0,0,0,.06); padding: 8px 10px; border-radius: 8px; font-size: .9rem; }
-.ai-input { border-radius: 999px 0 0 999px; }
-.ai-send { border-radius: 0 999px 999px 0; background: var(--gradient-primary); color: #fff; border: none; }
-.ai-send:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
-.ai-send:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .35);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ai-panel {
+  width: 560px;
+  max-width: 94vw;
+  max-height: 78vh;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, .06);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, .08);
+  background: #f8fafc;
+}
+
+.ai-body {
+  padding: 14px;
+  overflow: auto;
+}
+
+.ai-note {
+  color: #4b5563;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, .06);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: .9rem;
+}
+
+.ai-input {
+  border-radius: 999px 0 0 999px;
+}
+
+.ai-send {
+  border-radius: 0 999px 999px 0;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+}
+
+.ai-send:hover {
+  box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4);
+}
+
+.ai-send:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(15, 122, 187, .25);
+}
 
 @media (max-width: 480px) {
-  .ai-panel { width: 100%; max-height: 86vh; }
+  .ai-panel {
+    width: 100%;
+    max-height: 86vh;
+  }
 }
 
 /* Cards modernes pour les produits */
@@ -2815,6 +2931,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -2878,10 +2995,12 @@ body {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
-  padding: 14px; /* petites cases */
+  padding: 14px;
+  /* petites cases */
   text-align: center;
   transition: all 0.3s ease;
-  height: 120px; /* petites cases */
+  height: 120px;
+  /* petites cases */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2893,28 +3012,35 @@ body {
 }
 
 .stat-number {
-  font-size: 2rem; /* plus compact */
+  font-size: 2rem;
+  /* plus compact */
   font-weight: 800;
   margin-bottom: 10px;
 }
 
 .stat-label {
-  font-size: 0.9rem; /* plus compact */
+  font-size: 0.9rem;
+  /* plus compact */
   opacity: 0.9;
 }
 
 /* Disposer les cartes en petites cases visibles sans scroll (retour à la ligne) */
 .stats-section .row {
   display: flex;
-  flex-wrap: wrap; /* wrap par défaut pour petits écrans */
-  gap: 0; /* utiliser uniquement les gutters Bootstrap (g-4) pour éviter le dépassement */
-  overflow-x: visible; /* pas de scroll horizontal */
+  flex-wrap: wrap;
+  /* wrap par défaut pour petits écrans */
+  gap: 0;
+  /* utiliser uniquement les gutters Bootstrap (g-4) pour éviter le dépassement */
+  overflow-x: visible;
+  /* pas de scroll horizontal */
 }
 
-.stats-section .row> [class^='col-'],
-.stats-section .row> [class*=' col-'] {
-  flex: 0 0 auto; /* conserver la largeur fixe des petites cases */
-  min-width: 150px; /* légèrement réduit pour tenir à 5 par ligne */
+.stats-section .row>[class^='col-'],
+.stats-section .row>[class*=' col-'] {
+  flex: 0 0 auto;
+  /* conserver la largeur fixe des petites cases */
+  min-width: 150px;
+  /* légèrement réduit pour tenir à 5 par ligne */
   max-width: 170px;
 }
 
@@ -2999,7 +3125,10 @@ body {
 }
 
 /* Neutraliser les textes grisés pour qu'ils soient noirs et opaques */
-.text-muted { color: #000 !important; opacity: 1 !important; }
+.text-muted {
+  color: #000 !important;
+  opacity: 1 !important;
+}
 
 /* Responsive */
 @media (max-width: 992px) {
@@ -3060,19 +3189,23 @@ body {
 
   /* Réduire l'espace entre les boutons et l'image utilisateur en mobile */
   .hero-subtitle {
-    margin-bottom: 16px; /* moins d'espace sous le texte */
+    margin-bottom: 16px;
+    /* moins d'espace sous le texte */
   }
 
   .hero-actions {
-    margin-bottom: 8px; /* rapprocher davantage de l'image */
+    margin-bottom: 8px;
+    /* rapprocher davantage de l'image */
   }
 
   .hero-user-img {
     padding-left: 0 !important;
     margin-left: 0 !important;
     max-width: 70%;
-    margin-top: 8px !important; /* annule le margin-top inline important */
-    padding-top: 0 !important;  /* annule le pt-5 sur le conteneur */
+    margin-top: 8px !important;
+    /* annule le margin-top inline important */
+    padding-top: 0 !important;
+    /* annule le pt-5 sur le conteneur */
   }
 
   /* Smaller buttons on mobile */
@@ -3210,7 +3343,7 @@ body {
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1100;
   display: flex;
   justify-content: flex-end;
@@ -3235,42 +3368,75 @@ body {
 }
 
 @keyframes slideIn {
-  from { transform: translateX(20px); opacity: .6; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(20px);
+    opacity: .6;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* AI Modal Styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1200;
 }
+
 .modal-card {
   width: min(520px, 92vw);
   background: #fff;
   border-radius: 14px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,.06);
+  border: 1px solid rgba(0, 0, 0, .06);
 }
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(0,0,0,.08);
+  border-bottom: 1px solid rgba(0, 0, 0, .08);
   background: #f8fafc;
 }
-.modal-title { font-weight: 600; color: #0F7ABB; }
-.modal-body { padding: 14px; }
-.modal-footer { padding: 12px 14px; border-top: 1px solid rgba(0,0,0,.08); background: #fff; }
-.btn-close { background: transparent; border: 0; font-size: 1.1rem; }
+
+.modal-title {
+  font-weight: 600;
+  color: #0F7ABB;
+}
+
+.modal-body {
+  padding: 14px;
+}
+
+.modal-footer {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(0, 0, 0, .08);
+  background: #fff;
+}
+
+.btn-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.1rem;
+}
 
 /* List aesthetics for candidates */
-.list-group-item { border: 1px solid rgba(0,0,0,.08); margin-bottom: 6px; border-radius: 10px; }
-.list-group-item:hover { background: #f8fafc; }
+.list-group-item {
+  border: 1px solid rgba(0, 0, 0, .08);
+  margin-bottom: 6px;
+  border-radius: 10px;
+}
+
+.list-group-item:hover {
+  background: #f8fafc;
+}
 </style>

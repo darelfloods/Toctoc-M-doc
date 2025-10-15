@@ -10,7 +10,7 @@
                 <i class="bi bi-hospital"></i>
               </div>
               <div class="header-text">
-                <h1 class="modal-title" id="pharmaciesLabel">
+                <h1 class="modal-title text-white" id="pharmaciesLabel">
                   Nos Pharmacies Partenaires
                 </h1>
                 <p class="header-subtitle">
@@ -135,7 +135,7 @@
               <span>Données mises à jour en temps réel</span>
             </div>
             <button type="button" class="btn btn-primary modern-btn" @click="$emit('close')">
-              <i class="bi bi-check-lg"></i>
+              <i class="bi bi-x"></i>
               Fermer
             </button>
           </div>

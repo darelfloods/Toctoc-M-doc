@@ -5,7 +5,7 @@
         <div class="modal-content custom-modal-content">
           <div class="modal-header border-0">
             <h1 class="modal-title d-flex align-items-center" id="magasinLabel">
-              <i class="fas fa-coins me-3" style="color: var(--accent-color);"></i>
+              <i class="bi bi-coin me-3" style="color: var(--accent-color);"></i>
               Magasin de Crédits
             </h1>
             <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
@@ -32,7 +32,7 @@
                   </div>
                   <div class="price">{{ offer.price }}</div>
                   <button class="buy-btn" @click="openConfirm(offer)">
-                    <i class="fas fa-shopping-cart me-2"></i>
+                    <i class="bi bi-cart-check me-2"></i>
                     Acheter
                   </button>
                 </div>
@@ -42,11 +42,11 @@
 
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-outline-secondary footer-btn" @click="$emit('close')">
-              <i class="fas fa-times me-2"></i>
+              <i class="bi bi-x me-2"></i>
               Fermer
             </button>
             <button type="button" class="btn btn-primary footer-btn">
-              <i class="fas fa-info-circle me-2"></i>
+              <i class="bi bi-info-circle me-2"></i>
               Aide
             </button>
           </div>
