@@ -10,7 +10,7 @@ const API_CONFIG = {
     // Authentification
     AUTH: {
       LOGIN: '/auth/login',
-      REGISTER: '/user/add',
+      REGISTER: '/user/add_debug',
       PROFILE: '/auth/me',
       LOGOUT: '/auth/logout',
       RECOVERY_PASSWORD: (email: string) => `/user/recovery_password/${email}`,

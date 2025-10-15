@@ -173,12 +173,17 @@ async function register() {
   try {
     isLoading.value = true
 
+    // Séparer le nom en firstname et lastname pour le backend TTM
+    const nameParts = name.value.trim().split(/\s+/)
+    const firstname = nameParts[0] || ''
+    const lastname = nameParts.slice(1).join(' ') || nameParts[0] || ''
+
     // Utilise l'API existante via AuthService.register
     await AuthService.register({
-      name: name.value,
+      firstname,
+      lastname,
       email: email.value,
       password: password.value,
-      password_confirmation: passwordConfirmation.value,
       phone: phone.value || undefined,
     })
 
