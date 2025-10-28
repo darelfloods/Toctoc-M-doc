@@ -40,67 +40,72 @@
         </div>
         <!-- Floating Quick Questions Popover -->
         <div v-if="showQuick" class="quick-popover">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="fw-semibold">Guide d'utilisation</div>
-            <button type="button" class="btn btn-sm btn-light" @click="showQuick = false">
-              <i class="bi bi-x"></i>
+          <!-- Header with close button -->
+          <div class="popover-header">
+            <div class="popover-title">
+              <span class="category-emoji">{{ currentCategory.emoji }}</span>
+              <span>{{ currentCategory.name }}</span>
+            </div>
+            <button type="button" class="btn-close-popover" @click="showQuick = false">
+              <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <div class="quick-categories">
-            <div class="category-section">
-              <div class="category-title">👤 Compte</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'account')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
+
+          <!-- Category navigation tabs -->
+          <div class="category-tabs">
+            <button
+              v-for="(cat, idx) in categories"
+              :key="cat.id"
+              type="button"
+              class="category-tab"
+              :class="{ active: idx === currentCategoryIndex }"
+              @click="goToCategory(idx)"
+            >
+              <span class="tab-emoji">{{ cat.emoji }}</span>
+            </button>
+          </div>
+
+          <!-- Questions grid -->
+          <div class="questions-container">
+            <transition name="fade" mode="out-in">
+              <div :key="currentCategoryIndex" class="quick-grid-modern">
+                <button
+                  v-for="q in currentQuestions"
+                  :key="q.key"
+                  type="button"
+                  class="quick-chip-modern"
+                  @click="answer(q.key); showQuick = false"
+                >
+                  <i :class="q.icon" class="chip-icon"></i>
+                  <span class="chip-label">{{ q.label }}</span>
                 </button>
               </div>
+            </transition>
+          </div>
+
+          <!-- Navigation arrows -->
+          <div class="popover-nav">
+            <button
+              type="button"
+              class="nav-arrow"
+              :class="{ disabled: currentCategoryIndex === 0 }"
+              :disabled="currentCategoryIndex === 0"
+              @click="prevCategory"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="nav-indicator">
+              {{ currentCategoryIndex + 1 }} / {{ categories.length }}
             </div>
-            <div class="category-section">
-              <div class="category-title">🔍 Recherche</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'search')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
-                </button>
-              </div>
-            </div>
-            <div class="category-section">
-              <div class="category-title">🛒 Commandes</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'orders')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
-                </button>
-              </div>
-            </div>
-            <div class="category-section">
-              <div class="category-title">🏥 Pharmacies</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'pharmacy')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
-                </button>
-              </div>
-            </div>
-            <div class="category-section">
-              <div class="category-title">💳 Crédits</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'payment')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
-                </button>
-              </div>
-            </div>
-            <div class="category-section">
-              <div class="category-title">💬 Aide</div>
-              <div class="quick-grid">
-                <button v-for="q in quickQuestions.filter(q => q.category === 'help')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-                  <i :class="q.icon" class="me-1"></i>
-                  <span>{{ q.label }}</span>
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              class="nav-arrow"
+              :class="{ disabled: currentCategoryIndex === categories.length - 1 }"
+              :disabled="currentCategoryIndex === categories.length - 1"
+              @click="nextCategory"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
         <div class="input-group input-group-sm">
@@ -133,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed } from 'vue'
 const open = ref(false)
 
 type Role = 'user' | 'bot'
@@ -144,6 +149,17 @@ const showQuick = ref(false)
 const messagesEl = ref<HTMLElement | null>(null)
 const messageText = ref('')
 const isTyping = ref(false)
+
+// Pagination for quick questions
+const currentCategoryIndex = ref(0)
+const categories = [
+  { id: 'account', name: '👤 Compte', emoji: '👤' },
+  { id: 'search', name: '🔍 Recherche', emoji: '🔍' },
+  { id: 'orders', name: '🛒 Commandes', emoji: '🛒' },
+  { id: 'pharmacy', name: '🏥 Pharmacies', emoji: '🏥' },
+  { id: 'payment', name: '💳 Crédits', emoji: '💳' },
+  { id: 'help', name: '💬 Aide', emoji: '💬' },
+]
 
 // Voice recognition (Web Speech API) - Chatbot instance
 const isTranscribing = ref(false)
@@ -219,6 +235,26 @@ function answer(key: string) {
 function clearMessages() {
   messages.value = []
   showQuick.value = false
+}
+
+// Pagination functions
+const currentCategory = computed(() => categories[currentCategoryIndex.value])
+const currentQuestions = computed(() => quickQuestions.filter(q => q.category === currentCategory.value.id))
+
+function nextCategory() {
+  if (currentCategoryIndex.value < categories.length - 1) {
+    currentCategoryIndex.value++
+  }
+}
+
+function prevCategory() {
+  if (currentCategoryIndex.value > 0) {
+    currentCategoryIndex.value--
+  }
+}
+
+function goToCategory(index: number) {
+  currentCategoryIndex.value = index
 }
 
 function escapeHtml(t: string): string {
@@ -1003,27 +1039,211 @@ function getAnswer(key: string): string | null {
    }
  }
 
- /* Quick questions */
+ /* Quick questions - Modern Redesign */
  .footer-area { position: relative; }
- .quick-popover { position: absolute; left: 8px; right: 8px; bottom: 44px; background: #fff; border: 1px solid rgba(0,0,0,.1); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 12px; z-index: 5; max-height: 400px; overflow-y: auto; }
+ .quick-popover {
+   position: absolute;
+   left: 8px;
+   right: 8px;
+   bottom: 44px;
+   background: #fff;
+   border: 1px solid rgba(0,0,0,.08);
+   border-radius: 16px;
+   box-shadow: 0 12px 40px rgba(0,0,0,.18);
+   z-index: 5;
+   overflow: hidden;
+   animation: popoverSlideUp 0.3s ease-out;
+ }
 
-  /* Scrollbar styling for popover */
-  .quick-popover::-webkit-scrollbar { width: 6px; }
-  .quick-popover::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-  .quick-popover::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-  .quick-popover::-webkit-scrollbar-thumb:hover { background: #555; }
+ @keyframes popoverSlideUp {
+   from { opacity: 0; transform: translateY(10px); }
+   to { opacity: 1; transform: translateY(0); }
+ }
 
-  .quick-categories { display: flex; flex-direction: column; gap: 12px; }
-  .category-section { margin-bottom: 4px; }
-  .category-title { font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: 6px; padding-left: 4px; }
-  .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .quick-chip { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(0,0,0,.12); background: #fff; color: #111827; font-size: .8rem; line-height: 1.2; transition: all .15s ease; cursor: pointer; }
-  .quick-chip:hover { background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%); border-color: #0F7ABB; color: #fff; box-shadow: 0 2px 8px rgba(15, 122, 187, 0.3); transform: translateY(-1px); }
-  .quick-chip:active { transform: translateY(0); }
-  .quick-toggle { padding: 4px 10px; background: var(--gradient-primary); color: #fff; border: none; }
-  .quick-toggle:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
-  .quick-toggle:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
-  @media (max-width: 380px) { .quick-grid { grid-template-columns: 1fr; } }
+ /* Popover Header */
+ .popover-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding: 12px 14px;
+   background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
+   color: #fff;
+ }
+
+ .popover-title {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   font-weight: 600;
+   font-size: .95rem;
+ }
+
+ .category-emoji {
+   font-size: 1.2rem;
+ }
+
+ .btn-close-popover {
+   background: rgba(255, 255, 255, 0.2);
+   border: none;
+   color: #fff;
+   width: 28px;
+   height: 28px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s ease;
+ }
+
+ .btn-close-popover:hover {
+   background: rgba(255, 255, 255, 0.3);
+   transform: scale(1.1);
+ }
+
+ /* Category Tabs */
+ .category-tabs {
+   display: flex;
+   justify-content: space-around;
+   padding: 10px 8px 8px 8px;
+   background: #f8fafc;
+   border-bottom: 1px solid rgba(0,0,0,.06);
+ }
+
+ .category-tab {
+   background: transparent;
+   border: none;
+   padding: 8px 12px;
+   border-radius: 10px;
+   cursor: pointer;
+   transition: all 0.2s ease;
+   font-size: 1.3rem;
+   opacity: 0.5;
+ }
+
+ .category-tab:hover {
+   background: rgba(15, 122, 187, 0.1);
+   opacity: 0.8;
+   transform: scale(1.1);
+ }
+
+ .category-tab.active {
+   background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
+   opacity: 1;
+   box-shadow: 0 2px 8px rgba(15, 122, 187, 0.3);
+ }
+
+ .tab-emoji {
+   display: block;
+ }
+
+ /* Questions Container */
+ .questions-container {
+   padding: 14px;
+   min-height: 180px;
+ }
+
+ .quick-grid-modern {
+   display: grid;
+   grid-template-columns: repeat(2, 1fr);
+   gap: 8px;
+ }
+
+ .quick-chip-modern {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 12px 14px;
+   background: #fff;
+   border: 1.5px solid rgba(0,0,0,.1);
+   border-radius: 12px;
+   cursor: pointer;
+   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+   text-align: left;
+ }
+
+ .quick-chip-modern:hover {
+   background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
+   border-color: #0F7ABB;
+   color: #fff;
+   box-shadow: 0 4px 12px rgba(15, 122, 187, 0.3);
+   transform: translateY(-2px);
+ }
+
+ .quick-chip-modern:active {
+   transform: translateY(0);
+ }
+
+ .chip-icon {
+   font-size: 1.1rem;
+   flex-shrink: 0;
+ }
+
+ .chip-label {
+   font-size: .85rem;
+   font-weight: 500;
+   line-height: 1.3;
+ }
+
+ /* Fade transition for category change */
+ .fade-enter-active, .fade-leave-active {
+   transition: opacity 0.2s ease;
+ }
+ .fade-enter-from, .fade-leave-to {
+   opacity: 0;
+ }
+
+ /* Navigation Arrows */
+ .popover-nav {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding: 10px 14px;
+   background: #f8fafc;
+   border-top: 1px solid rgba(0,0,0,.06);
+ }
+
+ .nav-arrow {
+   background: #fff;
+   border: 1px solid rgba(0,0,0,.12);
+   width: 36px;
+   height: 36px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s ease;
+   font-size: 1rem;
+   color: #374151;
+ }
+
+ .nav-arrow:hover:not(.disabled) {
+   background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
+   border-color: #0F7ABB;
+   color: #fff;
+   box-shadow: 0 2px 8px rgba(15, 122, 187, 0.3);
+ }
+
+ .nav-arrow.disabled {
+   opacity: 0.3;
+   cursor: not-allowed;
+ }
+
+ .nav-indicator {
+   font-size: .85rem;
+   font-weight: 600;
+   color: #6b7280;
+ }
+
+ .quick-toggle { padding: 4px 10px; background: var(--gradient-primary); color: #fff; border: none; }
+ .quick-toggle:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
+ .quick-toggle:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
+
+ @media (max-width: 380px) {
+   .quick-grid-modern { grid-template-columns: 1fr; }
+   .category-tabs { flex-wrap: wrap; gap: 6px; }
+ }
 
  /* Consistent styling for answer content */
  .answer-title { font-weight: 600 !important; color: #0F7ABB !important; }
