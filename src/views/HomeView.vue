@@ -567,30 +567,8 @@ function onAISearchClick() {
 
 function parseAiQuery(input: string): { productName: string; quantity: number; place: string | null } {
   const text = (input || '').toString().toLowerCase()
-  // quantity: prendre un nombre qui N'EST PAS un dosage (mg/ml/g/µg) et qui est contextuellement une quantité
-  const unitPattern = /(mg|ml|g|µg|mcg|mg\/ml|%)/i
-  const tokens = text.split(/\s+/)
-  let quantity = 1
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i]
-    const m = t.match(/^([0-9]{1,3})$/)
-    if (m) {
-      const val = parseInt(m[1], 10)
-      const next = tokens[i + 1] || ''
-      const prev = tokens[i - 1] || ''
-      const looksLikeDosage = unitPattern.test(next)
-      // Synonymes élargis pour quantités: boîtes, cartons, paquets, unités, flacons, tubes, sachets, comprimés
-      const qtyContext = /^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)
-        || /^(x|pour|qty|quantite|quantité)$/i.test(prev)
-      if (!looksLikeDosage && (qtyContext || val <= 20)) { // heuristique simple
-        quantity = Math.max(1, val)
-        // marquer ce token comme utilisé pour la quantité
-        tokens[i] = ''
-        break
-      }
-    }
-  }
-  // Fonction helper pour normaliser (enlever accents, tirets, espaces multiples)
+
+  // === HELPER: Normalisation (enlever accents, tirets, espaces multiples) ===
   const normalize = (s: string) => {
     return s
       .normalize('NFD')
@@ -601,113 +579,157 @@ function parseAiQuery(input: string): { productName: string; quantity: number; p
   }
 
   const textNormalized = normalize(text)
+  const tokens = text.split(/\s+/)
 
-  // city/province detection avec normalisation
+  // === ÉTAPE 1: EXTRACTION DU LIEU (priorité haute - détection en premier) ===
   const knownPlaces = ['libreville', 'owendo', 'akanda', 'port-gentil', 'franceville', 'oyem', 'moanda']
   let place: string | null = null
+  let placeTokens: string[] = [] // Tokens utilisés par le lieu détecté
 
-  // Chercher les villes avec normalisation
+  // 1.1) Chercher les villes avec normalisation
   for (const city of knownPlaces) {
     const cityNorm = normalize(city)
     if (textNormalized.includes(cityNorm)) {
       place = city
+      placeTokens = cityNorm.split(' ')
       break
     }
   }
 
-  // Chercher d'abord dans les alias de provinces (variations orthographiques)
+  // 1.2) Chercher dans les alias de provinces (variations orthographiques)
   if (!place) {
     for (const [alias, canonical] of Object.entries(PROVINCE_ALIASES)) {
       const aliasNorm = normalize(alias)
       if (textNormalized.includes(aliasNorm)) {
         place = canonical
+        placeTokens = aliasNorm.split(' ')
         break
       }
     }
   }
 
-  // Chercher les provinces avec normalisation
+  // 1.3) Chercher les provinces avec normalisation
   if (!place) {
     for (const prov of KNOWN_PROVINCES) {
       const provNorm = normalize(prov)
       if (textNormalized.includes(provNorm)) {
         place = prov
+        placeTokens = provNorm.split(' ')
         break
       }
     }
   }
 
-  // Fuzzy matching en dernier recours
+  // 1.4) Fuzzy matching en dernier recours
   if (!place) {
     const fuzzy = fuzzyFindProvince(text)
-    if (fuzzy) place = fuzzy
+    if (fuzzy) {
+      place = fuzzy
+      placeTokens = normalize(fuzzy).split(' ')
+    }
   }
-  // product name heuristic: remove numbers and place words, keep words with letters
+
+  // === ÉTAPE 2: EXTRACTION DE LA QUANTITÉ ===
+  const unitPattern = /(mg|ml|g|µg|mcg|mg\/ml|%)/i
+  let quantity = 1
+  let quantityIndex = -1
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]
+    const m = t.match(/^([0-9]{1,3})$/)
+    if (m) {
+      const val = parseInt(m[1], 10)
+      const next = tokens[i + 1] || ''
+      const prev = tokens[i - 1] || ''
+      const looksLikeDosage = unitPattern.test(next)
+
+      // Contextes de quantité élargis
+      const qtyContext = /^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)
+        || /^(x|pour|qty|quantite|quantité)$/i.test(prev)
+
+      if (!looksLikeDosage && (qtyContext || val <= 20)) {
+        quantity = Math.max(1, val)
+        quantityIndex = i
+        tokens[i] = '' // Marquer comme utilisé
+        // Supprimer aussi le mot de contexte suivant si présent
+        if (/^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)) {
+          tokens[i + 1] = ''
+        }
+        break
+      }
+    }
+  }
+  // === ÉTAPE 3: EXTRACTION DU PRODUIT (tout ce qui reste après lieu + quantité) ===
+  // Nettoyer la ponctuation
   const cleaned = tokens.join(' ').replace(/[,.;:!?]/g, ' ')
 
-  // Retirer les articles contractés et élisions AVANT la tokenisation
-  // Gère: d'efferalgan, l'aspirine, d'ibuprofène, l'amoxicilline, etc.
-  // Aussi: de l'efferalgan, de la aspirine (cas plus rares)
+  // Retirer les articles contractés et élisions (d'efferalgan, l'aspirine, etc.)
   const cleanedNoArticles = cleaned
     .replace(/\b(d|l|de\s+l|de\s+la|du\s+l|du\s+la)[''\s]+/gi, ' ')
-    .replace(/\s+/g, ' ') // Normaliser les espaces multiples
+    .replace(/\s+/g, ' ')
 
+  // Tokeniser à nouveau après nettoyage
   let productTokens = cleanedNoArticles
     .split(/\s+/)
-    .filter(w => w && !knownPlaces.includes(w))
+    .filter(w => w && w.trim().length > 0)
 
-  // remove common filler words in FR + variations de phrases de localisation
+  // Stopwords français enrichis
   const stop = new Set([
     // Pronoms et articles
     'je', 'j', 'me', 'moi', 'mon', 'ma', 'mes', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
     'de', 'des', 'du', 'd', 'au', 'aux', 'un', 'une', 'le', 'la', 'les', 'l', 'à', 'a', 'en', 'pour', 'dans', 'chez', 'sur', 'avec', 'sans', 'par', 'et', 'ou', '&', 'mais', 'donc', 'car',
     // Verbes d'action courants
     'veux', 'vouloir', 'voudrais', 'souhaite', 'souhaiterais', 'souhait', 'desire', 'désire', 'désirer', 'aimerais', 'aimerait', 'aimer',
-    'acheter', 'achète', 'achete', 'achat', 'prendre', 'prends', 'obtenir', 'commander', 'commande',
+    'acheter', 'achète', 'achete', 'achat', 'prendre', 'prends', 'obtenir', 'commander', 'commande', 'cherche', 'chercher',
     'trouve', 'trouver', 'situe', 'situer', 'suis', 'être', 'être', 'habite', 'habiter', 'resider', 'résider', 'vis', 'vivre',
-    // Mots de quantité (seront extraits avant)
+    // Mots de quantité déjà extraits
     'boite', 'boites', 'boîte', 'boîtes', 'carton', 'cartons', 'paquet', 'paquets', 'unite', 'unites', 'unité', 'unités',
     'flacon', 'flacons', 'tube', 'tubes', 'sachet', 'sachets', 'comprime', 'comprimé', 'comprimés', 'comprimes',
     // Mots génériques pour produits
     'medicament', 'médicament', 'medicaments', 'médicaments', 'produit', 'produits', 'article', 'articles',
     // Formules de politesse
-    'svp', 'sil', 's\'il', 'vous', 'plait', 'plaît', 'merci', 'merci',
-    // Mots de liaison province (seront traités séparément)
-    'estuaire', 'haut', 'moyen', 'bas', 'ogooue', 'ogooué', 'ntem', 'lolo', 'maritime', 'ivindo', 'woleu', 'wouleu'
+    'svp', 'sil', 's\'il', 'vous', 'plait', 'plaît', 'merci',
+    // Mots de liaison locaux (déjà traités par placeTokens)
+    'vers', 'cote', 'côté', 'region', 'région', 'province'
   ])
 
-  productTokens = productTokens
-    .map(w => w.replace(/^[''\s]+|[''\s]+$/g, '')) // Nettoyer apostrophes et espaces en début/fin
-    .filter(w => w && !stop.has(normalize(w))) // Normaliser aussi pour les stopwords
+  // Construire l'ensemble des tokens de lieu à supprimer
+  const placeTokensSet = new Set(placeTokens.map(t => normalize(t)))
 
-  // retirer les tokens qui correspondent à la province détectée avec normalisation
-  if (place) {
-    const placeNorm = normalize(place)
-    const placeWords = placeNorm.split(' ') // Ex: "moyen ogooue" -> ["moyen", "ogooue"]
-
-    productTokens = productTokens.filter(w => {
-      const wNorm = normalize(w)
-      // Retirer si le mot normalisé est dans les mots de la province
-      if (placeWords.some(pw => pw === wNorm || pw.includes(wNorm) || wNorm.includes(pw))) {
-        return false
-      }
-      return true
-    })
-  }
-
-  // retirer également tout token qui appartient à n'importe quelle province connue
+  // Ajouter tous les mots de toutes les provinces connues
   const allProvinceWords = new Set<string>()
   for (const prov of KNOWN_PROVINCES) {
     const provNorm = normalize(prov)
     provNorm.split(' ').forEach(word => allProvinceWords.add(word))
   }
+  // Ajouter les villes connues
+  for (const city of knownPlaces) {
+    const cityNorm = normalize(city)
+    cityNorm.split(' ').forEach(word => allProvinceWords.add(word))
+  }
 
-  productTokens = productTokens.filter(w => {
-    const wNorm = normalize(w)
-    return !allProvinceWords.has(wNorm)
-  })
-  // si plus aucun token utile après nettoyage, renvoyer productName vide
+  // Filtrer les tokens du produit
+  productTokens = productTokens
+    .map(w => w.replace(/^[''\s]+|[''\s]+$/g, '').trim())
+    .filter(w => {
+      if (!w || w.length === 0) return false
+      const wNorm = normalize(w)
+
+      // Retirer les stopwords
+      if (stop.has(wNorm)) return false
+
+      // Retirer les tokens du lieu détecté
+      if (placeTokensSet.has(wNorm)) return false
+
+      // Retirer tout mot appartenant à une province/ville connue
+      if (allProvinceWords.has(wNorm)) return false
+
+      return true
+    })
+
+  // Assembler le nom du produit
   const productName = productTokens.join(' ').trim()
+
   return { productName, quantity, place }
 }
 
