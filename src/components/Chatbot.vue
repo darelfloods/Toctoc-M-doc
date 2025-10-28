@@ -66,11 +66,12 @@
             v-if="supportsSpeech"
             class="btn btn-mic"
             type="button"
-            :class="{ 'btn-recording': isTranscribing }"
+            :class="{ 'btn-recording': isTranscribing, 'btn-listening': isListening }"
             :title="isTranscribing ? 'Arrêter l\'enregistrement' : 'Reconnaissance vocale'"
             @click="toggleTranscription()"
           >
             <i :class="isTranscribing ? 'bi bi-stop-circle' : 'bi bi-mic'"></i>
+            <span v-if="isListening" class="listening-pulse"></span>
           </button>
           <button class="btn btn-primary btn-send" type="button" :disabled="!messageText.trim()" @click="sendMessage()">
             <i class="bi bi-send"></i>
@@ -96,7 +97,9 @@ const isTyping = ref(false)
 
 // Voice recognition (Web Speech API) - Chatbot instance
 const isTranscribing = ref(false)
+const isListening = ref(false) // Visual indicator for active listening
 let chatbotRecognition: any = null
+let autoRestartTimeout: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 const quickQuestions = [
@@ -439,6 +442,12 @@ function friendlyFallback(query?: string): string {
 function startTranscription() {
   if (!supportsSpeech || isTranscribing.value) return
 
+  // Clear any pending auto-restart
+  if (autoRestartTimeout) {
+    clearTimeout(autoRestartTimeout)
+    autoRestartTimeout = null
+  }
+
   // Stop any existing recognition first
   if (chatbotRecognition) {
     try {
@@ -450,57 +459,136 @@ function startTranscription() {
   try {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     chatbotRecognition = new SR()
+
+    // Enhanced configuration for better recognition
     chatbotRecognition.lang = 'fr-FR'
     chatbotRecognition.interimResults = true
-    chatbotRecognition.maxAlternatives = 1
-    chatbotRecognition.continuous = false
+    chatbotRecognition.maxAlternatives = 3 // Consider multiple alternatives
+    chatbotRecognition.continuous = true // Keep listening continuously
 
-    let interim = ''
+    let fullTranscript = ''
+    let lastSpeechTime = Date.now()
+    const SILENCE_TIMEOUT = 2000 // Stop after 2 seconds of silence
+
+    chatbotRecognition.onstart = () => {
+      console.log('[Chatbot STT] Started listening')
+      isListening.value = true
+    }
+
+    chatbotRecognition.onspeechstart = () => {
+      console.log('[Chatbot STT] Speech detected')
+      lastSpeechTime = Date.now()
+      isListening.value = true
+    }
+
+    chatbotRecognition.onspeechend = () => {
+      console.log('[Chatbot STT] Speech ended')
+      isListening.value = false
+    }
+
     chatbotRecognition.onresult = (event: any) => {
-      let finalTranscript = ''
-      interim = ''
+      lastSpeechTime = Date.now()
+      let interimTranscript = ''
+
+      // Process all results
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript
+        const result = event.results[i]
+        const transcript = result[0].transcript
+
+        if (result.isFinal) {
+          fullTranscript += transcript + ' '
+          console.log('[Chatbot STT] Final:', transcript)
         } else {
-          interim += transcript
+          interimTranscript += transcript
+          console.log('[Chatbot STT] Interim:', transcript)
         }
       }
-      if (finalTranscript) {
-        messageText.value = finalTranscript
-      } else if (interim) {
-        messageText.value = interim
-      }
+
+      // Update UI with full + interim
+      const display = (fullTranscript + interimTranscript).trim()
+      messageText.value = display
+
+      // Auto-stop after silence
+      if (autoRestartTimeout) clearTimeout(autoRestartTimeout)
+      autoRestartTimeout = setTimeout(() => {
+        if (Date.now() - lastSpeechTime >= SILENCE_TIMEOUT && isTranscribing.value) {
+          console.log('[Chatbot STT] Silence detected, stopping')
+          stopTranscription()
+        }
+      }, SILENCE_TIMEOUT)
     }
 
     chatbotRecognition.onerror = (e: any) => {
-      console.warn('[Chatbot STT] error:', e)
-      isTranscribing.value = false
-      chatbotRecognition = null
+      console.warn('[Chatbot STT] error:', e.error, e)
+
+      // Don't stop on common errors, try to recover
+      if (e.error === 'no-speech' || e.error === 'audio-capture') {
+        console.log('[Chatbot STT] Recoverable error, continuing...')
+        return
+      }
+
+      // Only stop on fatal errors
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        console.error('[Chatbot STT] Permission denied')
+        isTranscribing.value = false
+        isListening.value = false
+        chatbotRecognition = null
+      }
     }
+
     chatbotRecognition.onend = () => {
-      isTranscribing.value = false
-      chatbotRecognition = null
+      console.log('[Chatbot STT] Recognition ended')
+      isListening.value = false
+
+      // Only auto-restart if still supposed to be transcribing
+      if (isTranscribing.value && fullTranscript.trim()) {
+        // Had speech, stopped naturally - don't restart
+        isTranscribing.value = false
+        chatbotRecognition = null
+        if (autoRestartTimeout) clearTimeout(autoRestartTimeout)
+      } else if (isTranscribing.value) {
+        // Stopped without speech - might be an error, try restart
+        console.log('[Chatbot STT] Auto-restarting...')
+        setTimeout(() => {
+          if (isTranscribing.value && chatbotRecognition) {
+            try {
+              chatbotRecognition.start()
+            } catch (e) {
+              console.warn('[Chatbot STT] Restart failed:', e)
+              isTranscribing.value = false
+              chatbotRecognition = null
+            }
+          }
+        }, 100)
+      }
     }
+
     chatbotRecognition.start()
     isTranscribing.value = true
+    fullTranscript = '' // Reset on new session
   } catch (e) {
     console.warn('[Chatbot STT] failed to start:', e)
     isTranscribing.value = false
+    isListening.value = false
     chatbotRecognition = null
   }
 }
 
 function stopTranscription() {
+  console.log('[Chatbot STT] Stopping transcription')
   try {
-    if (chatbotRecognition && isTranscribing.value) {
+    if (autoRestartTimeout) {
+      clearTimeout(autoRestartTimeout)
+      autoRestartTimeout = null
+    }
+    if (chatbotRecognition) {
       chatbotRecognition.stop()
     }
   } catch (e) {
     console.warn('[Chatbot STT] stop error:', e)
   } finally {
     isTranscribing.value = false
+    isListening.value = false
     chatbotRecognition = null
   }
 }
@@ -615,14 +703,43 @@ function getAnswer(key: string): string | null {
    color: #fff;
    border-color: #dc3545;
    animation: pulse-recording 1.5s ease-in-out infinite;
+   position: relative;
  }
  .btn-mic.btn-recording:hover {
    background: #c82333;
    border-color: #bd2130;
  }
+ .btn-mic.btn-listening {
+   background: #28a745 !important;
+   border-color: #28a745 !important;
+ }
  @keyframes pulse-recording {
    0%, 100% { opacity: 1; }
    50% { opacity: 0.7; }
+ }
+
+ /* Listening pulse indicator */
+ .listening-pulse {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   width: 100%;
+   height: 100%;
+   border-radius: 50%;
+   border: 2px solid rgba(255, 255, 255, 0.8);
+   animation: pulse-wave 1.5s ease-out infinite;
+   pointer-events: none;
+ }
+ @keyframes pulse-wave {
+   0% {
+     transform: translate(-50%, -50%) scale(0.8);
+     opacity: 1;
+   }
+   100% {
+     transform: translate(-50%, -50%) scale(1.5);
+     opacity: 0;
+   }
  }
 
  /* Quick questions */

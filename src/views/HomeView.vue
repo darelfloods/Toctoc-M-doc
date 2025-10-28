@@ -247,7 +247,9 @@ const SEARCH_DEBOUNCE_MS = 1200 // Recherche plus fluide (1.2s au lieu de 5s)
 
 // Speech-to-Text (Web Speech API) for free transcription - Smart Search instance
 const isTranscribing = ref(false)
+const isListening = ref(false) // Visual indicator for active listening
 let smartSearchRecognition: any = null
+let smartSearchAutoRestartTimeout: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 // Provinces connues (doit rester cohérent avec normalizeProvinceName)
@@ -396,6 +398,12 @@ function pClone(p: any) {
 function startTranscription() {
   if (!supportsSpeech || isTranscribing.value) return
 
+  // Clear any pending auto-restart
+  if (smartSearchAutoRestartTimeout) {
+    clearTimeout(smartSearchAutoRestartTimeout)
+    smartSearchAutoRestartTimeout = null
+  }
+
   // Stop any existing recognition first
   if (smartSearchRecognition) {
     try {
@@ -407,66 +415,142 @@ function startTranscription() {
   try {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     smartSearchRecognition = new SR()
+
+    // Enhanced configuration for better recognition
     smartSearchRecognition.lang = 'fr-FR'
     smartSearchRecognition.interimResults = true
-    smartSearchRecognition.maxAlternatives = 1
-    // For short queries we can keep it non-continuous
-    smartSearchRecognition.continuous = false
+    smartSearchRecognition.maxAlternatives = 3 // Consider multiple alternatives
+    smartSearchRecognition.continuous = true // Keep listening continuously
 
     // Sauvegarder le texte initial pour éviter les répétitions
     const initialText = aiText.value.trim()
+    let fullTranscript = ''
+    let lastSpeechTime = Date.now()
+    const SILENCE_TIMEOUT = 2000 // Stop after 2 seconds of silence
+
+    smartSearchRecognition.onstart = () => {
+      console.log('[SmartSearch STT] Started listening')
+      isListening.value = true
+    }
+
+    smartSearchRecognition.onspeechstart = () => {
+      console.log('[SmartSearch STT] Speech detected')
+      lastSpeechTime = Date.now()
+      isListening.value = true
+    }
+
+    smartSearchRecognition.onspeechend = () => {
+      console.log('[SmartSearch STT] Speech ended')
+      isListening.value = false
+    }
 
     smartSearchRecognition.onresult = (event: any) => {
-      let finalTranscript = ''
+      lastSpeechTime = Date.now()
       let interimTranscript = ''
 
       // Collecter tous les résultats depuis le début
-      for (let i = 0; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + ' '
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        const transcript = result[0].transcript
+
+        if (result.isFinal) {
+          fullTranscript += transcript + ' '
+          console.log('[SmartSearch STT] Final:', transcript)
         } else {
           interimTranscript += transcript
+          console.log('[SmartSearch STT] Interim:', transcript)
         }
       }
 
       // Mettre à jour avec le texte initial + nouvelle transcription
-      const newText = finalTranscript.trim() || interimTranscript.trim()
+      const newText = (fullTranscript + interimTranscript).trim()
       if (initialText && newText) {
         aiText.value = initialText + ' ' + newText
       } else {
         aiText.value = newText || initialText
       }
+
+      // Auto-stop after silence
+      if (smartSearchAutoRestartTimeout) clearTimeout(smartSearchAutoRestartTimeout)
+      smartSearchAutoRestartTimeout = setTimeout(() => {
+        if (Date.now() - lastSpeechTime >= SILENCE_TIMEOUT && isTranscribing.value) {
+          console.log('[SmartSearch STT] Silence detected, stopping')
+          stopTranscription()
+        }
+      }, SILENCE_TIMEOUT)
     }
 
     smartSearchRecognition.onerror = (e: any) => {
-      console.warn('[SmartSearch STT] error:', e)
-      isTranscribing.value = false
-      smartSearchRecognition = null
+      console.warn('[SmartSearch STT] error:', e.error, e)
+
+      // Don't stop on common errors, try to recover
+      if (e.error === 'no-speech' || e.error === 'audio-capture') {
+        console.log('[SmartSearch STT] Recoverable error, continuing...')
+        return
+      }
+
+      // Only stop on fatal errors
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        console.error('[SmartSearch STT] Permission denied')
+        isTranscribing.value = false
+        isListening.value = false
+        smartSearchRecognition = null
+      }
     }
+
     smartSearchRecognition.onend = () => {
-      // End after one utterance
-      isTranscribing.value = false
-      smartSearchRecognition = null
+      console.log('[SmartSearch STT] Recognition ended')
+      isListening.value = false
+
+      // Only auto-restart if still supposed to be transcribing
+      if (isTranscribing.value && fullTranscript.trim()) {
+        // Had speech, stopped naturally - don't restart
+        isTranscribing.value = false
+        smartSearchRecognition = null
+        if (smartSearchAutoRestartTimeout) clearTimeout(smartSearchAutoRestartTimeout)
+      } else if (isTranscribing.value) {
+        // Stopped without speech - might be an error, try restart
+        console.log('[SmartSearch STT] Auto-restarting...')
+        setTimeout(() => {
+          if (isTranscribing.value && smartSearchRecognition) {
+            try {
+              smartSearchRecognition.start()
+            } catch (e) {
+              console.warn('[SmartSearch STT] Restart failed:', e)
+              isTranscribing.value = false
+              smartSearchRecognition = null
+            }
+          }
+        }, 100)
+      }
     }
+
     smartSearchRecognition.start()
     isTranscribing.value = true
+    fullTranscript = '' // Reset on new session
   } catch (e) {
     console.warn('[SmartSearch STT] failed to start:', e)
     isTranscribing.value = false
+    isListening.value = false
     smartSearchRecognition = null
   }
 }
 
 function stopTranscription() {
+  console.log('[SmartSearch STT] Stopping transcription')
   try {
-    if (smartSearchRecognition && isTranscribing.value) {
+    if (smartSearchAutoRestartTimeout) {
+      clearTimeout(smartSearchAutoRestartTimeout)
+      smartSearchAutoRestartTimeout = null
+    }
+    if (smartSearchRecognition) {
       smartSearchRecognition.stop()
     }
   } catch (e) {
     console.warn('[SmartSearch STT] stop error:', e)
   } finally {
     isTranscribing.value = false
+    isListening.value = false
     smartSearchRecognition = null
   }
 }
@@ -2179,11 +2263,12 @@ async function onPurchased(payload: any) {
           Exemple : « Je me situe à l'Estuaire et je souhaite acheter 2 boîtes du médicament EFFERALGAN »
         </div>
         <div class="input-group input-group-sm">
-          <button class="btn btn-outline-secondary" type="button" v-if="supportsSpeech"
-            :class="{ 'btn-danger': isTranscribing }" :aria-pressed="isTranscribing ? 'true' : 'false'"
+          <button class="btn btn-outline-secondary ai-mic-btn" type="button" v-if="supportsSpeech"
+            :class="{ 'btn-danger': isTranscribing, 'btn-success': isListening }" :aria-pressed="isTranscribing ? 'true' : 'false'"
             :disabled="aiIsParsing" @click="toggleTranscription()" title="Transcription vocale gratuite">
             <i :class="isTranscribing ? 'bi bi-stop-circle' : 'bi bi-mic'" style="font-size: 1rem;"></i>
             <span class="ms-1 d-none d-md-inline">{{ isTranscribing ? 'Stop' : 'Transcrire' }}</span>
+            <span v-if="isListening" class="ai-listening-pulse"></span>
           </button>
           <button class="btn btn-outline-secondary" type="button" v-else disabled
             title="La transcription vocale n'est pas supportée par ce navigateur">
@@ -2706,6 +2791,43 @@ body {
 .ai-send:focus {
   outline: none;
   box-shadow: 0 0 0 0.2rem rgba(15, 122, 187, .25);
+}
+
+/* AI Mic button enhanced styles */
+.ai-mic-btn {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ai-mic-btn.btn-success {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: white !important;
+}
+
+/* AI Listening pulse indicator */
+.ai-listening-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  animation: ai-pulse-wave 1.5s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ai-pulse-wave {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
 }
 
 @media (max-width: 480px) {
