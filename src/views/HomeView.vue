@@ -2260,7 +2260,7 @@ async function onPurchased(payload: any) {
       </div>
       <div class="ai-body">
         <div class="ai-note mb-3">
-          Exemple : « Je me situe à l'Estuaire et je souhaite acheter 2 boîtes du médicament EFFERALGAN »
+          <strong>Exemple :</strong> « Je me situe à <em>l'Estuaire</em> et je souhaite acheter <em>2 boîtes</em> du médicament <em>EFFERALGAN</em> »
         </div>
         <div class="input-group input-group-sm">
           <button class="btn btn-outline-secondary ai-mic-btn" type="button" v-if="supportsSpeech"
@@ -2275,7 +2275,7 @@ async function onPurchased(payload: any) {
             <i class="bi bi-mic-mute"></i>
           </button>
           <input type="text" class="form-control ai-input"
-            placeholder="Décrivez votre besoin (produit, ville, quantité)..." v-model="aiText" :disabled="aiIsParsing"
+            placeholder="Ex: Je suis à l'Estuaire et veux 2 EFFERALGAN..." v-model="aiText" :disabled="aiIsParsing"
             @keydown.enter.prevent="runAiSearch()" />
           <button class="btn ai-send" type="button" :disabled="!aiText.trim() || aiIsParsing" @click="runAiSearch()">
             <span v-if="!aiIsParsing">Rechercher</span>
