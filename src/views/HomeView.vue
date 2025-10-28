@@ -1870,12 +1870,12 @@ async function onPurchased(payload: any) {
                 d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
           </button>
-          <!-- <button class="icon-btn" type="button" @click="onAISearchClick()" title="Recherche intelligente (IA)">
+          <button class="icon-btn" type="button" @click="onAISearchClick()" title="Recherche intelligente (IA)">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path
                 d="M5 3l1.5 3L10 7.5 6.5 9 5 12 3.5 9 0 7.5 3.5 6 5 3zm10 1l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2zm-4 6l1.2 2.4L15.5 13 12.2 14.6 11 17l-1.2-2.4L6.5 13l3.3-1.6L11 10z" />
             </svg>
-          </button> -->
+          </button>
         </div>
       </div>
       <div v-if="isLoadingProducts" class="text-center text-muted my-4">
@@ -2165,7 +2165,7 @@ async function onPurchased(payload: any) {
 
 
   <!-- Floating Chatbot -->
-  <!-- <Chatbot /> -->
+  <Chatbot />
 
   <!-- AI Search Panel -->
   <div v-if="showAISearchPanel" class="ai-overlay" @click.self="showAISearchPanel = false">
