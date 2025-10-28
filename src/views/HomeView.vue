@@ -16,6 +16,7 @@ import TestAuth from '../components/TestAuth.vue'
 import TestAuthDirect from '../components/TestAuthDirect.vue'
 import TestSimple from '../components/TestSimple.vue'
 import { HomeService } from '../Services/HomeService'
+import { GroqService } from '../Services/GroqService'
 import { useAuthStore } from '../stores/auth'
 import { useAppStore } from '../stores/app'
 import { useCartStore } from '../stores/cart'
@@ -565,7 +566,20 @@ function onAISearchClick() {
   showAISearchPanel.value = true
 }
 
-function parseAiQuery(input: string): { productName: string; quantity: number; place: string | null } {
+async function parseAiQuery(input: string): Promise<{ productName: string; quantity: number; place: string | null }> {
+  // Utiliser l'API Groq pour un parsing intelligent avec IA
+  try {
+    const result = await GroqService.parseQuery(input)
+    console.log('[AI Parse] 🤖 Groq parsing result:', result)
+    return result
+  } catch (e) {
+    console.error('[AI Parse] ❌ Groq parsing failed, using fallback:', e)
+    // Fallback vers le parsing local si Groq échoue
+    return parseAiQueryFallback(input)
+  }
+}
+
+function parseAiQueryFallback(input: string): { productName: string; quantity: number; place: string | null } {
   const text = (input || '').toString().toLowerCase()
 
   // === HELPER: Normalisation (enlever accents, tirets, espaces multiples) ===
@@ -745,7 +759,7 @@ async function runAiSearch(): Promise<void> {
   aiPendingQty.value = 1
   selectedProvince.value = null
 
-  const { productName, quantity, place } = parseAiQuery(q)
+  const { productName, quantity, place } = await parseAiQuery(q)
 
   // find best matching product (consider both loaded products and initialProducts to widen pool)
   // Exiger un nom de médicament propre; ne jamais retomber sur la phrase brute q
