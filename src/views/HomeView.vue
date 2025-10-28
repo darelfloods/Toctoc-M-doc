@@ -245,9 +245,9 @@ watch(aiText, () => {
 // Debounce delay for API search (ms). Adjust to 10000 for ~10s if desired.
 const SEARCH_DEBOUNCE_MS = 1200 // Recherche plus fluide (1.2s au lieu de 5s)
 
-// Speech-to-Text (Web Speech API) for free transcription
+// Speech-to-Text (Web Speech API) for free transcription - Smart Search instance
 const isTranscribing = ref(false)
-let recognition: any = null
+let smartSearchRecognition: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 // Provinces connues (doit rester cohérent avec normalizeProvinceName)
@@ -395,18 +395,28 @@ function pClone(p: any) {
 
 function startTranscription() {
   if (!supportsSpeech || isTranscribing.value) return
+
+  // Stop any existing recognition first
+  if (smartSearchRecognition) {
+    try {
+      smartSearchRecognition.stop()
+    } catch {}
+    smartSearchRecognition = null
+  }
+
   try {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    recognition = new SR()
-    recognition.lang = 'fr-FR'
-    recognition.interimResults = true
-    recognition.maxAlternatives = 1
-    recognition.continuous = false
+    smartSearchRecognition = new SR()
+    smartSearchRecognition.lang = 'fr-FR'
+    smartSearchRecognition.interimResults = true
+    smartSearchRecognition.maxAlternatives = 1
+    // For short queries we can keep it non-continuous
+    smartSearchRecognition.continuous = false
 
     // Sauvegarder le texte initial pour éviter les répétitions
     const initialText = aiText.value.trim()
 
-    recognition.onresult = (event: any) => {
+    smartSearchRecognition.onresult = (event: any) => {
       let finalTranscript = ''
       let interimTranscript = ''
 
@@ -429,29 +439,35 @@ function startTranscription() {
       }
     }
 
-    recognition.onerror = (e: any) => {
-      console.warn('[STT] error:', e)
+    smartSearchRecognition.onerror = (e: any) => {
+      console.warn('[SmartSearch STT] error:', e)
       isTranscribing.value = false
+      smartSearchRecognition = null
     }
-    recognition.onend = () => {
+    smartSearchRecognition.onend = () => {
       // End after one utterance
       isTranscribing.value = false
+      smartSearchRecognition = null
     }
-    recognition.start()
+    smartSearchRecognition.start()
     isTranscribing.value = true
   } catch (e) {
-    console.warn('[STT] failed to start:', e)
+    console.warn('[SmartSearch STT] failed to start:', e)
     isTranscribing.value = false
+    smartSearchRecognition = null
   }
 }
 
 function stopTranscription() {
   try {
-    if (recognition && isTranscribing.value) {
-      recognition.stop()
+    if (smartSearchRecognition && isTranscribing.value) {
+      smartSearchRecognition.stop()
     }
+  } catch (e) {
+    console.warn('[SmartSearch STT] stop error:', e)
   } finally {
     isTranscribing.value = false
+    smartSearchRecognition = null
   }
 }
 

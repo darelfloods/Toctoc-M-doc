@@ -94,9 +94,9 @@ const messagesEl = ref<HTMLElement | null>(null)
 const messageText = ref('')
 const isTyping = ref(false)
 
-// Voice recognition (Web Speech API)
+// Voice recognition (Web Speech API) - Chatbot instance
 const isTranscribing = ref(false)
-let recognition: any = null
+let chatbotRecognition: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 const quickQuestions = [
@@ -435,19 +435,28 @@ function friendlyFallback(query?: string): string {
   `
 }
 
-// Voice recognition functions
+// Voice recognition functions - Chatbot isolated instance
 function startTranscription() {
   if (!supportsSpeech || isTranscribing.value) return
+
+  // Stop any existing recognition first
+  if (chatbotRecognition) {
+    try {
+      chatbotRecognition.stop()
+    } catch {}
+    chatbotRecognition = null
+  }
+
   try {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    recognition = new SR()
-    recognition.lang = 'fr-FR'
-    recognition.interimResults = true
-    recognition.maxAlternatives = 1
-    recognition.continuous = false
+    chatbotRecognition = new SR()
+    chatbotRecognition.lang = 'fr-FR'
+    chatbotRecognition.interimResults = true
+    chatbotRecognition.maxAlternatives = 1
+    chatbotRecognition.continuous = false
 
     let interim = ''
-    recognition.onresult = (event: any) => {
+    chatbotRecognition.onresult = (event: any) => {
       let finalTranscript = ''
       interim = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -465,28 +474,34 @@ function startTranscription() {
       }
     }
 
-    recognition.onerror = (e: any) => {
+    chatbotRecognition.onerror = (e: any) => {
       console.warn('[Chatbot STT] error:', e)
       isTranscribing.value = false
+      chatbotRecognition = null
     }
-    recognition.onend = () => {
+    chatbotRecognition.onend = () => {
       isTranscribing.value = false
+      chatbotRecognition = null
     }
-    recognition.start()
+    chatbotRecognition.start()
     isTranscribing.value = true
   } catch (e) {
     console.warn('[Chatbot STT] failed to start:', e)
     isTranscribing.value = false
+    chatbotRecognition = null
   }
 }
 
 function stopTranscription() {
   try {
-    if (recognition && isTranscribing.value) {
-      recognition.stop()
+    if (chatbotRecognition && isTranscribing.value) {
+      chatbotRecognition.stop()
     }
+  } catch (e) {
+    console.warn('[Chatbot STT] stop error:', e)
   } finally {
     isTranscribing.value = false
+    chatbotRecognition = null
   }
 }
 
