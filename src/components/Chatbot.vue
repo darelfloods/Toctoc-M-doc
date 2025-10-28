@@ -43,7 +43,7 @@
           <!-- Header with close button -->
           <div class="popover-header">
             <div class="popover-title">
-              <span class="category-emoji">{{ currentCategory.emoji }}</span>
+              <i :class="currentCategory.icon" class="header-icon"></i>
               <span>{{ currentCategory.name }}</span>
             </div>
             <button type="button" class="btn-close-popover" @click="showQuick = false">
@@ -60,8 +60,10 @@
               class="category-tab"
               :class="{ active: idx === currentCategoryIndex }"
               @click="goToCategory(idx)"
+              :style="{ '--tab-color': cat.color }"
             >
-              <span class="tab-emoji">{{ cat.emoji }}</span>
+              <i :class="cat.icon" class="tab-icon"></i>
+              <span class="tab-label">{{ cat.name }}</span>
             </button>
           </div>
 
@@ -153,12 +155,12 @@ const isTyping = ref(false)
 // Pagination for quick questions
 const currentCategoryIndex = ref(0)
 const categories = [
-  { id: 'account', name: '👤 Compte', emoji: '👤' },
-  { id: 'search', name: '🔍 Recherche', emoji: '🔍' },
-  { id: 'orders', name: '🛒 Commandes', emoji: '🛒' },
-  { id: 'pharmacy', name: '🏥 Pharmacies', emoji: '🏥' },
-  { id: 'payment', name: '💳 Crédits', emoji: '💳' },
-  { id: 'help', name: '💬 Aide', emoji: '💬' },
+  { id: 'account', name: 'Compte', icon: 'bi-person-circle', color: '#8b5cf6' },
+  { id: 'search', name: 'Recherche', icon: 'bi-search', color: '#3b82f6' },
+  { id: 'orders', name: 'Commandes', icon: 'bi-bag-check', color: '#10b981' },
+  { id: 'pharmacy', name: 'Pharmacies', icon: 'bi-hospital', color: '#ef4444' },
+  { id: 'payment', name: 'Crédits', icon: 'bi-credit-card-2-front', color: '#f59e0b' },
+  { id: 'help', name: 'Aide', icon: 'bi-question-circle', color: '#6366f1' },
 ]
 
 // Voice recognition (Web Speech API) - Chatbot instance
@@ -1065,76 +1067,125 @@ function getAnswer(key: string): string | null {
    display: flex;
    justify-content: space-between;
    align-items: center;
-   padding: 12px 14px;
+   padding: 14px 16px;
    background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
    color: #fff;
+   box-shadow: 0 2px 8px rgba(0,0,0,.1);
  }
 
  .popover-title {
    display: flex;
    align-items: center;
-   gap: 8px;
+   gap: 10px;
    font-weight: 600;
-   font-size: .95rem;
+   font-size: 1rem;
  }
 
- .category-emoji {
-   font-size: 1.2rem;
+ .header-icon {
+   font-size: 1.3rem;
+   opacity: 0.95;
  }
 
  .btn-close-popover {
    background: rgba(255, 255, 255, 0.2);
    border: none;
    color: #fff;
-   width: 28px;
-   height: 28px;
-   border-radius: 50%;
+   width: 30px;
+   height: 30px;
+   border-radius: 8px;
    display: flex;
    align-items: center;
    justify-content: center;
    cursor: pointer;
    transition: all 0.2s ease;
+   font-size: .85rem;
  }
 
  .btn-close-popover:hover {
    background: rgba(255, 255, 255, 0.3);
-   transform: scale(1.1);
+   transform: rotate(90deg);
  }
 
- /* Category Tabs */
+ /* Category Tabs - Professional Design */
  .category-tabs {
-   display: flex;
-   justify-content: space-around;
-   padding: 10px 8px 8px 8px;
-   background: #f8fafc;
-   border-bottom: 1px solid rgba(0,0,0,.06);
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 8px;
+   padding: 12px;
+   background: #fff;
+   border-bottom: 1px solid rgba(0,0,0,.08);
  }
 
  .category-tab {
-   background: transparent;
-   border: none;
-   padding: 8px 12px;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 4px;
+   background: #f8fafc;
+   border: 1.5px solid #e5e7eb;
+   padding: 10px 8px;
    border-radius: 10px;
    cursor: pointer;
-   transition: all 0.2s ease;
-   font-size: 1.3rem;
-   opacity: 0.5;
+   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+   position: relative;
+   overflow: hidden;
+ }
+
+ .category-tab::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   height: 3px;
+   background: var(--tab-color);
+   transform: scaleX(0);
+   transition: transform 0.3s ease;
+ }
+
+ .category-tab:hover::before {
+   transform: scaleX(1);
  }
 
  .category-tab:hover {
-   background: rgba(15, 122, 187, 0.1);
-   opacity: 0.8;
-   transform: scale(1.1);
+   background: #fff;
+   border-color: var(--tab-color);
+   box-shadow: 0 2px 8px rgba(0,0,0,.08);
+   transform: translateY(-2px);
  }
 
  .category-tab.active {
-   background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
-   opacity: 1;
-   box-shadow: 0 2px 8px rgba(15, 122, 187, 0.3);
+   background: #fff;
+   border-color: var(--tab-color);
+   box-shadow: 0 3px 12px rgba(0,0,0,.12);
  }
 
- .tab-emoji {
-   display: block;
+ .category-tab.active::before {
+   transform: scaleX(1);
+ }
+
+ .category-tab.active .tab-icon {
+   color: var(--tab-color);
+   transform: scale(1.1);
+ }
+
+ .category-tab.active .tab-label {
+   color: var(--tab-color);
+   font-weight: 600;
+ }
+
+ .tab-icon {
+   font-size: 1.2rem;
+   color: #6b7280;
+   transition: all 0.2s ease;
+ }
+
+ .tab-label {
+   font-size: .75rem;
+   color: #6b7280;
+   font-weight: 500;
+   transition: all 0.2s ease;
+   text-align: center;
  }
 
  /* Questions Container */
@@ -1242,7 +1293,10 @@ function getAnswer(key: string): string | null {
 
  @media (max-width: 380px) {
    .quick-grid-modern { grid-template-columns: 1fr; }
-   .category-tabs { flex-wrap: wrap; gap: 6px; }
+   .category-tabs { grid-template-columns: repeat(2, 1fr); }
+   .tab-label { font-size: .7rem; }
+   .popover-header { padding: 12px 14px; }
+   .popover-title { font-size: .9rem; }
  }
 
  /* Consistent styling for answer content */
