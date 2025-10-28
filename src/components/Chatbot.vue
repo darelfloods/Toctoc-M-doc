@@ -41,16 +41,66 @@
         <!-- Floating Quick Questions Popover -->
         <div v-if="showQuick" class="quick-popover">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="fw-semibold">Questions rapides</div>
+            <div class="fw-semibold">Guide d'utilisation</div>
             <button type="button" class="btn btn-sm btn-light" @click="showQuick = false">
               <i class="bi bi-x"></i>
             </button>
           </div>
-          <div class="quick-grid">
-            <button v-for="q in quickQuestions" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
-              <i :class="q.icon" class="me-1"></i>
-              <span>{{ q.label }}</span>
-            </button>
+          <div class="quick-categories">
+            <div class="category-section">
+              <div class="category-title">👤 Compte</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'account')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="category-section">
+              <div class="category-title">🔍 Recherche</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'search')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="category-section">
+              <div class="category-title">🛒 Commandes</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'orders')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="category-section">
+              <div class="category-title">🏥 Pharmacies</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'pharmacy')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="category-section">
+              <div class="category-title">💳 Crédits</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'payment')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="category-section">
+              <div class="category-title">💬 Aide</div>
+              <div class="quick-grid">
+                <button v-for="q in quickQuestions.filter(q => q.category === 'help')" :key="q.key" type="button" class="quick-chip" @click="answer(q.key)">
+                  <i :class="q.icon" class="me-1"></i>
+                  <span>{{ q.label }}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="input-group input-group-sm">
@@ -103,10 +153,36 @@ let autoRestartTimeout: any = null
 const supportsSpeech = typeof (window as any).SpeechRecognition !== 'undefined' || typeof (window as any).webkitSpeechRecognition !== 'undefined'
 
 const quickQuestions = [
-  { key: 'signup', label: "Comment s'inscrire ?", icon: 'bi bi-person-plus' },
-  { key: 'login', label: 'Comment se connecter ?', icon: 'bi bi-box-arrow-in-right' },
-  { key: 'reserve', label: 'Comment faire une réservation ?', icon: 'bi bi-calendar-check' },
-  { key: 'credits', label: 'Comment recharger des crédits ?', icon: 'bi bi-wallet2' },
+  // Compte & Authentification
+  { key: 'signup', label: "Comment s'inscrire ?", icon: 'bi bi-person-plus', category: 'account' },
+  { key: 'login', label: 'Comment se connecter ?', icon: 'bi bi-box-arrow-in-right', category: 'account' },
+  { key: 'profile', label: 'Modifier mon profil', icon: 'bi bi-person-gear', category: 'account' },
+  { key: 'password', label: 'Changer mon mot de passe', icon: 'bi bi-key', category: 'account' },
+  { key: 'logout', label: 'Comment me déconnecter ?', icon: 'bi bi-box-arrow-right', category: 'account' },
+
+  // Recherche & Navigation
+  { key: 'search', label: 'Rechercher un médicament', icon: 'bi bi-search', category: 'search' },
+  { key: 'ai-search', label: 'Recherche intelligente (IA)', icon: 'bi bi-stars', category: 'search' },
+  { key: 'filter', label: 'Filtrer par province', icon: 'bi bi-geo-alt', category: 'search' },
+  { key: 'details', label: 'Voir détails produit', icon: 'bi bi-info-circle', category: 'search' },
+
+  // Réservations & Commandes
+  { key: 'reserve', label: 'Faire une réservation', icon: 'bi bi-calendar-check', category: 'orders' },
+  { key: 'cart', label: 'Gérer mon panier', icon: 'bi bi-cart3', category: 'orders' },
+  { key: 'validate', label: 'Valider une commande', icon: 'bi bi-check-circle', category: 'orders' },
+  { key: 'track', label: 'Suivre mes commandes', icon: 'bi bi-truck', category: 'orders' },
+
+  // Pharmacies & Disponibilité
+  { key: 'availability', label: 'Vérifier disponibilité', icon: 'bi bi-clipboard-check', category: 'pharmacy' },
+  { key: 'pharmacy', label: 'Choisir une pharmacie', icon: 'bi bi-building', category: 'pharmacy' },
+
+  // Crédits & Paiement
+  { key: 'credits', label: 'Recharger des crédits', icon: 'bi bi-wallet2', category: 'payment' },
+  { key: 'what-credits', label: 'Que sont les crédits ?', icon: 'bi bi-question-circle', category: 'payment' },
+
+  // Support & Aide
+  { key: 'support', label: 'Contacter le support', icon: 'bi bi-headset', category: 'help' },
+  { key: 'about', label: 'À propos d\'E-Pharma', icon: 'bi bi-info-square', category: 'help' },
 ]
 
 // Wakeup ping when user opens chatbot
@@ -649,6 +725,191 @@ function getAnswer(key: string): string | null {
         </ol>
         <div class="note small">Après validation, votre solde se met à jour automatiquement.</div>
       </div>`
+    case 'profile':
+      return `<div>
+        <div class="answer-title mb-1">Modifier mon profil</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Connectez-vous à votre compte.</li>
+          <li>Cliquez sur <span class="chip">Paramètres</span> (icône engrenage) dans la barre du haut.</li>
+          <li>Sélectionnez <span class="chip chip-primary">Modifier mon profil</span>.</li>
+          <li>Modifiez vos informations : <strong>Nom</strong>, <strong>Email</strong>, <strong>Téléphone</strong>.</li>
+          <li>Cliquez sur <span class="chip chip-primary">Enregistrer</span> pour sauvegarder vos modifications.</li>
+        </ol>
+        <div class="note small">Note : certaines modifications peuvent nécessiter une reconnexion.</div>
+      </div>`
+    case 'password':
+      return `<div>
+        <div class="answer-title mb-1">Changer mon mot de passe</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Connectez-vous à votre compte.</li>
+          <li>Cliquez sur <span class="chip">Paramètres</span> puis <span class="chip chip-primary">Changer mot de passe</span>.</li>
+          <li>Saisissez votre <strong>Ancien mot de passe</strong>.</li>
+          <li>Entrez votre <strong>Nouveau mot de passe</strong> (min. 8 caractères).</li>
+          <li>Confirmez le nouveau mot de passe et cliquez sur <span class="chip chip-primary">Modifier</span>.</li>
+        </ol>
+        <div class="note small">Mot de passe oublié ? Utilisez "Mot de passe oublié" sur la page de connexion.</div>
+      </div>`
+    case 'logout':
+      return `<div>
+        <div class="answer-title mb-1">Comment me déconnecter ?</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Cliquez sur <span class="chip">Paramètres</span> (icône engrenage) en haut à droite.</li>
+          <li>Sélectionnez <span class="chip chip-primary">Déconnexion</span> en bas du menu.</li>
+          <li>Confirmez la déconnexion si demandé.</li>
+          <li>Vous serez redirigé vers la page d'accueil.</li>
+        </ol>
+        <div class="note small">Vos données de panier sont sauvegardées et disponibles à votre prochaine connexion.</div>
+      </div>`
+    case 'search':
+      return `<div>
+        <div class="answer-title mb-1">Rechercher un médicament</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Sur la page d'accueil, utilisez la <strong>barre de recherche</strong> en haut.</li>
+          <li>Tapez le nom du médicament (ex: "Doliprane", "Paracétamol").</li>
+          <li>Les résultats apparaissent automatiquement pendant que vous tapez.</li>
+          <li>Cliquez sur un produit pour voir ses détails et disponibilités.</li>
+        </ol>
+        <div class="note small">Astuce : la recherche fonctionne avec les noms commerciaux et les principes actifs.</div>
+      </div>`
+    case 'ai-search':
+      return `<div>
+        <div class="answer-title mb-1">Recherche intelligente (IA)</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Cliquez sur l'icône <span class="chip">✨ Recherche Intelligente</span> dans la barre de recherche.</li>
+          <li>Décrivez votre besoin en langage naturel : <em>"Je me situe à l'Estuaire et je souhaite acheter 2 boîtes d'EFFERALGAN"</em></li>
+          <li>Utilisez le bouton <strong>microphone</strong> pour dicter votre recherche.</li>
+          <li>L'IA trouve automatiquement le produit, la pharmacie et ajoute au panier.</li>
+        </ol>
+        <div class="note small">⚠️ Cette fonctionnalité consomme 1 crédit par recherche.</div>
+      </div>`
+    case 'filter':
+      return `<div>
+        <div class="answer-title mb-1">Filtrer par province</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Après avoir recherché un médicament, cliquez sur <span class="chip chip-primary">Vérifier la disponibilité</span>.</li>
+          <li>Dans la fenêtre Disponibilité, sélectionnez votre <strong>Province</strong> dans le menu déroulant.</li>
+          <li>Les pharmacies de votre province s'affichent avec le stock disponible.</li>
+          <li>Choisissez une pharmacie et ajoutez au panier.</li>
+        </ol>
+        <div class="note small">Provinces disponibles : Estuaire, Haut-Ogooué, Moyen-Ogooué, Ngounié, Nyanga, Ogooué-Ivindo, Ogooué-Lolo, Ogooué-Maritime, Woleu-Ntem.</div>
+      </div>`
+    case 'details':
+      return `<div>
+        <div class="answer-title mb-1">Voir les détails d'un produit</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Depuis les résultats de recherche, cliquez sur la <strong>carte du produit</strong>.</li>
+          <li>Consultez : <strong>Nom</strong>, <strong>Dosage</strong>, <strong>Présentation</strong>, <strong>Prix</strong>.</li>
+          <li>Cliquez sur <span class="chip chip-primary">Vérifier la disponibilité</span> pour voir les pharmacies.</li>
+        </ol>
+        <div class="note small">Tous les prix affichés sont TTC (Toutes Taxes Comprises).</div>
+      </div>`
+    case 'cart':
+      return `<div>
+        <div class="answer-title mb-1">Gérer mon panier</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Cliquez sur l'icône <span class="chip">🛒 Panier</span> en haut à droite.</li>
+          <li>Consultez vos réservations : <strong>Produit</strong>, <strong>Pharmacie</strong>, <strong>Quantité</strong>, <strong>Prix</strong>.</li>
+          <li>Utilisez les boutons <strong>+</strong> et <strong>-</strong> pour modifier les quantités.</li>
+          <li>Cliquez sur l'icône <strong>🗑️</strong> pour supprimer un article.</li>
+          <li>Le total se met à jour automatiquement.</li>
+        </ol>
+        <div class="note small">Votre panier est sauvegardé même après déconnexion.</div>
+      </div>`
+    case 'validate':
+      return `<div>
+        <div class="answer-title mb-1">Valider une commande</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Ouvrez votre <span class="chip">Panier</span> et vérifiez vos articles.</li>
+          <li>Cliquez sur <span class="chip chip-primary">Commander</span> en bas du panier.</li>
+          <li>Vérifiez les informations de retrait : <strong>Pharmacie</strong>, <strong>Adresse</strong>.</li>
+          <li>Confirmez la commande.</li>
+          <li>Vous recevrez un <strong>SMS de confirmation</strong> avec les détails.</li>
+        </ol>
+        <div class="note small">Vous avez 48h pour retirer votre commande en pharmacie.</div>
+      </div>`
+    case 'track':
+      return `<div>
+        <div class="answer-title mb-1">Suivre mes commandes</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Connectez-vous à votre compte.</li>
+          <li>Cliquez sur <span class="chip">Paramètres</span> puis <span class="chip chip-primary">Mes commandes</span>.</li>
+          <li>Consultez l'historique : <strong>Date</strong>, <strong>Statut</strong>, <strong>Pharmacie</strong>, <strong>Montant</strong>.</li>
+          <li>Cliquez sur une commande pour voir les détails.</li>
+        </ol>
+        <div class="note small">Statuts possibles : En attente, Prête, Retirée, Annulée.</div>
+      </div>`
+    case 'availability':
+      return `<div>
+        <div class="answer-title mb-1">Vérifier la disponibilité</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Sélectionnez un produit depuis la recherche.</li>
+          <li>Cliquez sur <span class="chip chip-primary">Vérifier la disponibilité</span>.</li>
+          <li>Choisissez votre <strong>Province</strong> dans le menu déroulant.</li>
+          <li>La liste des pharmacies avec le stock disponible s'affiche.</li>
+          <li>Le stock est indiqué en temps réel pour chaque pharmacie.</li>
+        </ol>
+        <div class="note small">⚠️ Cette vérification consomme 1 crédit par recherche.</div>
+      </div>`
+    case 'pharmacy':
+      return `<div>
+        <div class="answer-title mb-1">Choisir une pharmacie</div>
+        <ol class="step-list mb-2 ps-3">
+          <li>Après avoir vérifié la disponibilité, consultez la liste des pharmacies.</li>
+          <li>Pour chaque pharmacie, vous voyez : <strong>Nom</strong>, <strong>Adresse</strong>, <strong>Stock disponible</strong>.</li>
+          <li>Cliquez sur la pharmacie de votre choix.</li>
+          <li>Ajustez la quantité et ajoutez au panier.</li>
+        </ol>
+        <div class="note small">Conseil : choisissez une pharmacie proche de chez vous pour faciliter le retrait.</div>
+      </div>`
+    case 'what-credits':
+      return `<div>
+        <div class="answer-title mb-1">Que sont les crédits ?</div>
+        <div class="mb-2">Les crédits sont la monnaie virtuelle d'E-Pharma qui vous permet d'accéder à certaines fonctionnalités premium :</div>
+        <ul class="bot-list mb-2 ps-3">
+          <li><strong>Vérification de disponibilité</strong> : 1 crédit par recherche</li>
+          <li><strong>Recherche intelligente (IA)</strong> : 1 crédit par recherche</li>
+          <li><strong>Accès aux pharmacies</strong> : consulter le stock en temps réel</li>
+        </ul>
+        <div class="mb-2"><strong>Offres disponibles :</strong></div>
+        <ul class="bot-list mb-2 ps-3">
+          <li>Pack Starter : 10 crédits</li>
+          <li>Pack Pro : 50 crédits</li>
+          <li>Pack Premium : 100 crédits</li>
+        </ul>
+        <div class="note small">💡 Les crédits n'ont pas de date d'expiration et sont utilisables à tout moment.</div>
+      </div>`
+    case 'support':
+      return `<div>
+        <div class="answer-title mb-1">Contacter le support</div>
+        <div class="mb-2">Plusieurs moyens de nous contacter :</div>
+        <ul class="bot-list mb-2 ps-3">
+          <li><strong>📧 Email</strong> : contact@e-pharma.ga</li>
+          <li><strong>📱 WhatsApp</strong> : +241 XX XX XX XX</li>
+          <li><strong>🕐 Horaires</strong> : Lun-Ven 8h-18h, Sam 9h-13h</li>
+          <li><strong>📍 Adresse</strong> : Coworking SING SA Bureau 2, Rue Pecqueur, Centre-Ville, Libreville</li>
+        </ul>
+        <div class="note small">Notre équipe vous répond sous 24h maximum.</div>
+      </div>`
+    case 'about':
+      return `<div>
+        <div class="answer-title mb-1">À propos d'E-Pharma</div>
+        <div class="mb-2">E-Pharma est la première plateforme de réservation de médicaments en ligne au Gabon.</div>
+        <div class="mb-2"><strong>Notre mission :</strong></div>
+        <ul class="bot-list mb-2 ps-3">
+          <li>Faciliter l'accès aux médicaments</li>
+          <li>Vérifier la disponibilité en temps réel</li>
+          <li>Gagner du temps avec la réservation en ligne</li>
+          <li>Garantir la qualité et l'authenticité des produits</li>
+        </ul>
+        <div class="mb-2"><strong>🏆 Nos atouts :</strong></div>
+        <ul class="bot-list mb-2 ps-3">
+          <li>Réseau de + de 50 pharmacies partenaires</li>
+          <li>Stock en temps réel</li>
+          <li>Recherche intelligente par IA</li>
+          <li>Paiement mobile sécurisé</li>
+        </ul>
+        <div class="note small">Développé avec ❤️ par l'équipe E-Pharma</div>
+      </div>`
     default:
       return null
   }
@@ -744,10 +1005,21 @@ function getAnswer(key: string): string | null {
 
  /* Quick questions */
  .footer-area { position: relative; }
- .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
- .quick-chip { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(0,0,0,.12); background: #fff; color: #111827; font-size: .85rem; line-height: 1.2; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
-  .quick-chip:hover { background: #f8f9fa; border-color: rgba(0,0,0,.18); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .quick-popover { position: absolute; left: 8px; right: 8px; bottom: 44px; background: #fff; border: 1px solid rgba(0,0,0,.1); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 10px; z-index: 5; }
+ .quick-popover { position: absolute; left: 8px; right: 8px; bottom: 44px; background: #fff; border: 1px solid rgba(0,0,0,.1); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 12px; z-index: 5; max-height: 400px; overflow-y: auto; }
+
+  /* Scrollbar styling for popover */
+  .quick-popover::-webkit-scrollbar { width: 6px; }
+  .quick-popover::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+  .quick-popover::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+  .quick-popover::-webkit-scrollbar-thumb:hover { background: #555; }
+
+  .quick-categories { display: flex; flex-direction: column; gap: 12px; }
+  .category-section { margin-bottom: 4px; }
+  .category-title { font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: 6px; padding-left: 4px; }
+  .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .quick-chip { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(0,0,0,.12); background: #fff; color: #111827; font-size: .8rem; line-height: 1.2; transition: all .15s ease; cursor: pointer; }
+  .quick-chip:hover { background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%); border-color: #0F7ABB; color: #fff; box-shadow: 0 2px 8px rgba(15, 122, 187, 0.3); transform: translateY(-1px); }
+  .quick-chip:active { transform: translateY(0); }
   .quick-toggle { padding: 4px 10px; background: var(--gradient-primary); color: #fff; border: none; }
   .quick-toggle:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
   .quick-toggle:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
