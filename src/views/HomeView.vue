@@ -571,6 +571,13 @@ async function parseAiQuery(input: string): Promise<{ productName: string; quant
   try {
     const result = await GroqService.parseQuery(input)
     console.log('[AI Parse] 🤖 Groq parsing result:', result)
+
+    // Validation : si le productName est vide ou trop court, utiliser le fallback
+    if (!result.productName || result.productName.trim().length < 2) {
+      console.warn('[AI Parse] ⚠️ Groq returned empty/invalid productName, using fallback')
+      return parseAiQueryFallback(input)
+    }
+
     return result
   } catch (e) {
     console.error('[AI Parse] ❌ Groq parsing failed, using fallback:', e)

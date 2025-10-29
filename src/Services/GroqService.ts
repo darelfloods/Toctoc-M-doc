@@ -99,10 +99,13 @@ Réponds UNIQUEMENT avec le JSON, sans explication.`
       }
 
       const data = await response.json()
+      console.log('[GroqService] 📦 Full API response:', JSON.stringify(data, null, 2))
+
       const content = data?.choices?.[0]?.message?.content?.trim()
 
       if (!content) {
         console.warn('[GroqService] ⚠️ Réponse vide de Groq')
+        console.warn('[GroqService] 🔍 Data received:', data)
         return this.fallbackParsing(userQuery)
       }
 
