@@ -32,20 +32,29 @@ PROVINCES VALIDES: Estuaire, Haut-Ogooué, Moyen-Ogooué, Ngounié, Nyanga, Ogoo
 VILLES CONNUES: Libreville, Owendo, Akanda, Port-Gentil, Franceville, Oyem, Moanda
 
 Ta tâche: Extraire 3 informations d'une phrase en langage naturel:
-1. **productName**: Le nom du médicament (garde la casse originale EXACTEMENT comme écrite par l'utilisateur)
+1. **productName**: UNIQUEMENT le nom du médicament (sans verbes, articles ou mots de liaison)
 2. **quantity**: La quantité demandée (nombre entier, défaut: 1)
 3. **place**: La province ou ville mentionnée (orthographe exacte, null si absent)
 
-RÈGLES STRICTES:
-- Garde le nom du produit EXACTEMENT comme écrit (ne change PAS la casse)
-- Ne confonds JAMAIS les dosages (500mg, 100ml) avec les quantités
+RÈGLES STRICTES POUR productName:
+- Extrais SEULEMENT le nom du médicament (ex: "Paracetamol", "Efferalgan", "Aspirine")
+- NE PAS inclure: verbes (veux, avoir, cherche), articles (de, du, le, la), prépositions (à, de, dans)
+- NE PAS inclure: "boîtes", "unités", "flacons" ou autres mots de quantité
+- NE PAS inclure les dosages dans le nom (500mg, 100ml sont séparés du nom)
+- Garde la casse EXACTEMENT comme écrite par l'utilisateur
+
+RÈGLES POUR quantity:
+- Ne confonds JAMAIS les dosages (500mg, 100ml) avec les quantités de boîtes/unités
 - Si aucune quantité n'est mentionnée, utilise 1
-- Si aucun lieu n'est mentionné, utilise null
-- Réponds UNIQUEMENT en JSON valide, format: {"productName":"produit","quantity":N,"place":"Lieu"}
+
+Format JSON: {"productName":"NomMedicament","quantity":N,"place":"Lieu"}
 
 EXEMPLES:
 Input: "Je suis à l'Estuaire et veux 2 EFFERALGAN"
 Output: {"productName":"EFFERALGAN","quantity":2,"place":"Estuaire"}
+
+Input: "Je voudrais avoir 2 boîtes de Paracetamol à l'Estuaire"
+Output: {"productName":"Paracetamol","quantity":2,"place":"Estuaire"}
 
 Input: "2 efferalgan à l'Estuaire"
 Output: {"productName":"efferalgan","quantity":2,"place":"Estuaire"}
@@ -61,6 +70,9 @@ Output: {"productName":"aspirine","quantity":1,"place":null}
 
 Input: "2 boîtes d'Aspirine à Libreville"
 Output: {"productName":"Aspirine","quantity":2,"place":"Libreville"}
+
+Input: "Je veux acheter de l'ibuprofène"
+Output: {"productName":"ibuprofène","quantity":1,"place":null}
 
 Réponds UNIQUEMENT avec le JSON, sans explication.`
 
