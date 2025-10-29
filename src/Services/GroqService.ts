@@ -32,32 +32,35 @@ PROVINCES VALIDES: Estuaire, Haut-Ogooué, Moyen-Ogooué, Ngounié, Nyanga, Ogoo
 VILLES CONNUES: Libreville, Owendo, Akanda, Port-Gentil, Franceville, Oyem, Moanda
 
 Ta tâche: Extraire 3 informations d'une phrase en langage naturel:
-1. **productName**: Le nom du médicament (TOUJOURS EN MAJUSCULES)
+1. **productName**: Le nom du médicament (garde la casse originale EXACTEMENT comme écrite par l'utilisateur)
 2. **quantity**: La quantité demandée (nombre entier, défaut: 1)
 3. **place**: La province ou ville mentionnée (orthographe exacte, null si absent)
 
 RÈGLES STRICTES:
-- Le nom du produit doit être en MAJUSCULES
+- Garde le nom du produit EXACTEMENT comme écrit (ne change PAS la casse)
 - Ne confonds JAMAIS les dosages (500mg, 100ml) avec les quantités
 - Si aucune quantité n'est mentionnée, utilise 1
 - Si aucun lieu n'est mentionné, utilise null
-- Réponds UNIQUEMENT en JSON valide, format: {"productName":"PRODUIT","quantity":N,"place":"Lieu"}
+- Réponds UNIQUEMENT en JSON valide, format: {"productName":"produit","quantity":N,"place":"Lieu"}
 
 EXEMPLES:
 Input: "Je suis à l'Estuaire et veux 2 EFFERALGAN"
 Output: {"productName":"EFFERALGAN","quantity":2,"place":"Estuaire"}
 
-Input: "2 EFFERALGAN à l'Estuaire"
-Output: {"productName":"EFFERALGAN","quantity":2,"place":"Estuaire"}
+Input: "2 efferalgan à l'Estuaire"
+Output: {"productName":"efferalgan","quantity":2,"place":"Estuaire"}
+
+Input: "Efferalgan dans l'Estuaire 2 boîtes"
+Output: {"productName":"Efferalgan","quantity":2,"place":"Estuaire"}
 
 Input: "PARACETAMOL 500mg vers Haut-Ogooué, j'en veux 3"
 Output: {"productName":"PARACETAMOL","quantity":3,"place":"Haut-Ogooué"}
 
 Input: "Je cherche de l'aspirine"
-Output: {"productName":"ASPIRINE","quantity":1,"place":null}
+Output: {"productName":"aspirine","quantity":1,"place":null}
 
-Input: "EFFERALGAN dans l'Estuaire 2 boîtes"
-Output: {"productName":"EFFERALGAN","quantity":2,"place":"Estuaire"}
+Input: "2 boîtes d'Aspirine à Libreville"
+Output: {"productName":"Aspirine","quantity":2,"place":"Libreville"}
 
 Réponds UNIQUEMENT avec le JSON, sans explication.`
 
@@ -116,9 +119,9 @@ Réponds UNIQUEMENT avec le JSON, sans explication.`
         return this.fallbackParsing(userQuery)
       }
 
-      // Validation et normalisation
+      // Validation (on garde la casse originale pour le productName)
       const result: ParsedQuery = {
-        productName: (parsed.productName || '').toString().toUpperCase().trim(),
+        productName: (parsed.productName || '').toString().trim(),
         quantity: Math.max(1, parseInt(String(parsed.quantity || 1), 10)),
         place: parsed.place ? String(parsed.place).trim() : null
       }
