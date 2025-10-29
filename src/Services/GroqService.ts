@@ -134,9 +134,21 @@ Réponds UNIQUEMENT avec le JSON, sans explication.`
         return this.fallbackParsing(userQuery)
       }
 
-      // Validation (on garde la casse originale pour le productName)
+      // Validation et nettoyage du productName
+      let cleanedProductName = (parsed.productName || '').toString().trim()
+
+      // Post-processing: Supprimer les verbes et articles courants qui peuvent polluer le nom
+      const verbsToRemove = /^(avoir|veux|vouloir|voudrais|cherche|chercher|acheter|achète|prendre|obtenir|besoin)\s+/i
+      cleanedProductName = cleanedProductName.replace(verbsToRemove, '')
+
+      // Supprimer les articles en début de nom
+      const articlesToRemove = /^(de|du|de la|de l'|d'|le|la|l'|les|un|une)\s+/i
+      cleanedProductName = cleanedProductName.replace(articlesToRemove, '').trim()
+
+      console.log('[GroqService] 🧹 Product name after cleaning:', cleanedProductName)
+
       const result: ParsedQuery = {
-        productName: (parsed.productName || '').toString().trim(),
+        productName: cleanedProductName,
         quantity: Math.max(1, parseInt(String(parsed.quantity || 1), 10)),
         place: parsed.place ? String(parsed.place).trim() : null
       }
