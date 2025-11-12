@@ -1043,12 +1043,15 @@ function getAnswer(key: string): string | null {
    left: 8px;
    right: 8px;
    bottom: 44px;
+   max-height: min(480px, calc(100vh - 200px));
    background: #fff;
    border: 1px solid rgba(0,0,0,.08);
    border-radius: 16px;
    box-shadow: 0 12px 40px rgba(0,0,0,.18);
    z-index: 5;
    overflow: hidden;
+   display: flex;
+   flex-direction: column;
    animation: popoverSlideUp 0.3s ease-out;
  }
 
@@ -1066,6 +1069,7 @@ function getAnswer(key: string): string | null {
    background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
    color: #fff;
    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+   flex-shrink: 0;
  }
 
  .popover-title {
@@ -1109,6 +1113,7 @@ function getAnswer(key: string): string | null {
    padding: 12px;
    background: #fff;
    border-bottom: 1px solid rgba(0,0,0,.08);
+   flex-shrink: 0;
  }
 
  .category-tab {
@@ -1187,6 +1192,9 @@ function getAnswer(key: string): string | null {
  .questions-container {
    padding: 14px;
    min-height: 180px;
+   flex: 1;
+   overflow-y: auto;
+   overflow-x: hidden;
  }
 
  .quick-grid-modern {
@@ -1247,6 +1255,7 @@ function getAnswer(key: string): string | null {
    padding: 10px 14px;
    background: #f8fafc;
    border-top: 1px solid rgba(0,0,0,.06);
+   flex-shrink: 0;
  }
 
  .nav-arrow {
@@ -1286,12 +1295,104 @@ function getAnswer(key: string): string | null {
  .quick-toggle:hover { box-shadow: 0 5px 15px rgba(15, 122, 187, 0.4); }
  .quick-toggle:focus { outline: none; box-shadow: 0 0 0 0.2rem rgba(15,122,187,.25); }
 
+ /* Mobile optimizations for iPhone 11 and similar (375px-414px) */
+ @media (max-width: 480px) {
+   .chatbot-panel {
+     right: 10px;
+     bottom: 80px;
+     width: calc(100vw - 20px);
+     max-height: 70vh;
+   }
+
+   .chat-messages {
+     height: 280px;
+   }
+
+   .bubble {
+     font-size: .875rem;
+     padding: 8px 10px;
+     max-width: 85%;
+   }
+
+   .quick-popover {
+     left: 4px;
+     right: 4px;
+     max-height: min(400px, calc(100vh - 180px));
+   }
+
+   .quick-grid-modern {
+     grid-template-columns: 1fr;
+     gap: 6px;
+   }
+
+   .quick-chip-modern {
+     padding: 10px 12px;
+     font-size: .8rem;
+   }
+
+   .category-tabs {
+     grid-template-columns: repeat(2, 1fr);
+     gap: 6px;
+     padding: 10px;
+   }
+
+   .category-tab {
+     padding: 8px 6px;
+   }
+
+   .tab-label {
+     font-size: .7rem;
+   }
+
+   .tab-icon {
+     font-size: 1rem;
+   }
+
+   .popover-header {
+     padding: 10px 12px;
+   }
+
+   .popover-title {
+     font-size: .9rem;
+   }
+
+   .header-icon {
+     font-size: 1.1rem;
+   }
+
+   .btn-close-popover {
+     width: 26px;
+     height: 26px;
+   }
+
+   .questions-container {
+     padding: 10px;
+   }
+
+   .input-group {
+     flex-wrap: nowrap;
+   }
+
+   .input-group > .form-control {
+     font-size: .875rem;
+   }
+
+   .btn-mic, .btn-send {
+     padding: 0.5rem;
+   }
+ }
+
  @media (max-width: 380px) {
+   .chatbot-panel {
+     right: 5px;
+     width: calc(100vw - 10px);
+   }
+
    .quick-grid-modern { grid-template-columns: 1fr; }
    .category-tabs { grid-template-columns: repeat(2, 1fr); }
-   .tab-label { font-size: .7rem; }
-   .popover-header { padding: 12px 14px; }
-   .popover-title { font-size: .9rem; }
+   .tab-label { font-size: .65rem; }
+   .popover-header { padding: 8px 10px; }
+   .popover-title { font-size: .85rem; }
  }
 
  /* Consistent styling for answer content */

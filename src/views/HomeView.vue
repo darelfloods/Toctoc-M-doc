@@ -589,6 +589,35 @@ async function parseAiQuery(input: string): Promise<{ productName: string; quant
   }
 }
 
+// Helper: Convertir nombres en lettres vers chiffres
+function wordToNumber(word: string): number | null {
+  const numberWords: { [key: string]: number } = {
+    'un': 1, 'une': 1,
+    'deux': 2,
+    'trois': 3,
+    'quatre': 4,
+    'cinq': 5,
+    'six': 6,
+    'sept': 7,
+    'huit': 8,
+    'neuf': 9,
+    'dix': 10,
+    'onze': 11,
+    'douze': 12,
+    'treize': 13,
+    'quatorze': 14,
+    'quinze': 15,
+    'seize': 16,
+    'vingt': 20,
+    'trente': 30,
+    'quarante': 40,
+    'cinquante': 50
+  }
+
+  const normalized = word.toLowerCase().trim()
+  return numberWords[normalized] ?? null
+}
+
 function parseAiQueryFallback(input: string): { productName: string; quantity: number; place: string | null } {
   const text = (input || '').toString().toLowerCase()
 
@@ -660,6 +689,31 @@ function parseAiQueryFallback(input: string): { productName: string; quantity: n
 
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i]
+
+    // Vérifier d'abord si c'est un nombre en lettres (ex: "deux", "trois")
+    const wordNum = wordToNumber(t)
+    if (wordNum !== null) {
+      const next = tokens[i + 1] || ''
+      const prev = tokens[i - 1] || ''
+      const looksLikeDosage = unitPattern.test(next)
+
+      // Contextes de quantité élargis
+      const qtyContext = /^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)
+        || /^(x|pour|qty|quantite|quantité)$/i.test(prev)
+
+      if (!looksLikeDosage && (qtyContext || wordNum <= 20)) {
+        quantity = Math.max(1, wordNum)
+        quantityIndex = i
+        tokens[i] = '' // Marquer comme utilisé
+        // Supprimer aussi le mot de contexte suivant si présent
+        if (/^(x|boite|boites|boîte|boîtes|carton|cartons|paquet|paquets|unite|unites|unité|unités|flacon|flacons|tube|tubes|sachet|sachets|comprime|comprimé|comprimés|comprimes|quantite|quantité|qty)$/i.test(next)) {
+          tokens[i + 1] = ''
+        }
+        break
+      }
+    }
+
+    // Sinon, vérifier si c'est un nombre en chiffres
     const m = t.match(/^([0-9]{1,3})$/)
     if (m) {
       const val = parseInt(m[1], 10)
@@ -3869,6 +3923,76 @@ body {
   .btn-notice-primary {
     padding: 10px 20px;
     font-size: 14px;
+  }
+}
+
+/* Mobile responsiveness for medicine selection modal (iPhone 11 and similar) */
+@media (max-width: 480px) {
+  .modal-overlay-modern {
+    padding: 10px;
+  }
+
+  .modal-overlay-modern .modal-content {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 16px;
+  }
+
+  .modal-overlay-modern .modal-header {
+    padding: 16px;
+  }
+
+  .modal-overlay-modern .modal-title {
+    font-size: 1.1rem;
+  }
+
+  .modal-overlay-modern .modal-body {
+    padding: 16px;
+    max-height: calc(100vh - 240px);
+    overflow-y: auto;
+  }
+
+  .modal-overlay-modern .modal-body p {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+
+  .modal-overlay-modern .list-group-item {
+    padding: 14px 12px;
+    font-size: 0.9rem;
+  }
+
+  .modal-overlay-modern .list-group-item span {
+    flex: 1;
+    word-wrap: break-word;
+    line-height: 1.4;
+  }
+
+  .modal-overlay-modern .list-group-item i {
+    font-size: 1.5rem;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  .modal-overlay-modern .modal-footer {
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-overlay-modern .modal-footer .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .modal-overlay-modern .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .modal-overlay-modern .text-muted {
+    font-size: 0.85rem;
   }
 }
 </style>
