@@ -208,9 +208,7 @@ let hasSentChatbotPing = false
 watch(open, (isOpen) => {
   if (isOpen && !hasSentChatbotPing) {
     hasSentChatbotPing = true
-    const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
-      : 'https://api-ttm.onrender.com/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+    const webhookUrl = '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
 
     fetch(webhookUrl, {
       method: 'POST',
@@ -395,11 +393,8 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook via proxy
-  // Dev: Vite proxy | Production: Backend API TTM proxy
-  const webhookUrl = import.meta.env.DEV
-    ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
-    : 'https://api-ttm.onrender.com/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Free-text: POST to n8n webhook via Vite proxy (production URL)
+  const webhookUrl = '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
 

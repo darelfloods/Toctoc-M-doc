@@ -177,6 +177,7 @@ const aiPendingPlace = ref<string | null>(null)
 const aiPendingQty = ref<number>(1)
 const showAiNotice = ref(false)
 const aiNoticeText = ref('')
+const aiNoticeType = ref<'success' | 'alternative' | 'info'>('info') // Type de notification
 const aiConfirmLoading = ref(false)
 
 // Modale de confirmation de débit de crédit pour recherche intelligente
@@ -185,13 +186,15 @@ const creditConfirmAmount = ref(1)
 const creditConfirmCallback = ref<(() => void) | null>(null)
 const creditConfirmResolve = ref<(() => void) | null>(null)
 
-function openAiNotice(text: string) {
+function openAiNotice(text: string, type: 'success' | 'alternative' | 'info' = 'info') {
   aiNoticeText.value = text
+  aiNoticeType.value = type
   showAiNotice.value = true
 }
 function closeAiNotice() {
   showAiNotice.value = false
   aiNoticeText.value = ''
+  aiNoticeType.value = 'info'
 }
 
 // Fonctions pour la confirmation de débit de crédit
@@ -1026,7 +1029,7 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
             query: product.libelle
           })
           if (alt && alt.libelle) {
-            openAiNotice(`Le produit n'est pas disponible dans ${provinceKey}.\n${alt.libelle}`)
+            openAiNotice(`Le produit n'est pas disponible dans ${provinceKey}.\n${alt.libelle}`, 'alternative')
             return
           }
         } catch { }
@@ -1041,10 +1044,10 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
         const header = `Le produit n'est pas disponible dans ${provinceKey}.`
         if (n8nMsg) {
           console.log('[AI Flow] ✅ Alternative found via webhook')
-          openAiNotice(`${header}\n\n${n8nMsg}`)
+          openAiNotice(`${header}\n\n${n8nMsg}`, 'alternative')
         } else {
           console.log('[AI Flow] ❌ No alternative found via webhook')
-          openAiNotice(`${header}\n\nAucune alternative trouvée pour le moment.`)
+          openAiNotice(`${header}\n\nAucune alternative trouvée pour le moment.`, 'alternative')
         }
         return
       }
@@ -1086,10 +1089,10 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
       const header = `Le produit n'est pas disponible dans votre zone pour le moment.`
       if (n8nMsg) {
         console.log('[AI Flow] ✅ Alternative suggestion received from webhook')
-        openAiNotice(`${header}\n\n${n8nMsg}`)
+        openAiNotice(`${header}\n\n${n8nMsg}`, 'alternative')
       } else {
         console.log('[AI Flow] ❌ No alternative received from webhook')
-        openAiNotice(`${header}\n\nNous recherchons des alternatives pour vous...`)
+        openAiNotice(`${header}\n\nNous recherchons des alternatives pour vous...`, 'alternative')
       }
       return
     }
@@ -1223,7 +1226,7 @@ async function proceedWithCreditDebitAndReservation(
 
     // Open cart and show a nicer notice instead of alert
     showPanier.value = true
-    openAiNotice("Réservation effectuée avec succès. Vous pouvez consulter votre panier.")
+    openAiNotice("Réservation effectuée avec succès. Vous pouvez consulter votre panier.", 'success')
 
     // Résoudre la promesse pour terminer le flux
     resolvePromise()
@@ -1720,22 +1723,53 @@ async function onPurchased(payload: any) {
   <Pharmacies :visible="showPharmacies" @close="showPharmacies = false" />
 
 
-  <!-- AI Notice Modal (better design instead of alert) -->
-  <div v-if="showAiNotice" class="modal-overlay" @click.self="closeAiNotice()">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title d-flex align-items-center">
-          <i class="bi bi-info-circle me-2"></i>
-          <span>Information</span>
+  <!-- AI Notice Modal - Modern Design (Dynamic based on type) -->
+  <div v-if="showAiNotice" class="modal-overlay-modern" @click.self="closeAiNotice()">
+    <div class="notice-card-modern">
+      <!-- Icon Header - Dynamic based on type -->
+      <div class="notice-icon-wrapper">
+        <div class="notice-icon-circle" :class="{
+          'notice-icon-success': aiNoticeType === 'success',
+          'notice-icon-alternative': aiNoticeType === 'alternative',
+          'notice-icon-info': aiNoticeType === 'info'
+        }">
+          <i class="bi" :class="{
+            'bi-check-circle-fill': aiNoticeType === 'success',
+            'bi-lightbulb-fill': aiNoticeType === 'alternative',
+            'bi-info-circle-fill': aiNoticeType === 'info'
+          }"></i>
         </div>
-        <button class="btn-close" @click="closeAiNotice()"></button>
       </div>
-      <div class="modal-body">
-        <p style="white-space: pre-line;">{{ aiNoticeText }}</p>
+
+      <!-- Content -->
+      <div class="notice-content">
+        <h3 class="notice-heading">
+          {{ aiNoticeType === 'success' ? 'Réservation effectuée' :
+             aiNoticeType === 'alternative' ? 'Alternative disponible' :
+             'Information' }}
+        </h3>
+        <p class="notice-message">{{ aiNoticeText }}</p>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" @click="closeAiNotice()">OK</button>
+
+      <!-- Actions -->
+      <div class="notice-actions">
+        <button class="btn-notice-primary" @click="closeAiNotice()"
+          :class="{
+            'btn-notice-success': aiNoticeType === 'success',
+            'btn-notice-alternative': aiNoticeType === 'alternative'
+          }">
+          {{ aiNoticeType === 'success' ? 'Voir mon panier' : 'J\'ai compris' }}
+          <i class="bi ms-2" :class="{
+            'bi-cart3': aiNoticeType === 'success',
+            'bi-arrow-right': aiNoticeType !== 'success'
+          }"></i>
+        </button>
       </div>
+
+      <!-- Close button -->
+      <button class="btn-notice-close" @click="closeAiNotice()" aria-label="Fermer">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
   </div>
 
@@ -3626,5 +3660,215 @@ body {
 
 .list-group-item:hover {
   background: #f8fafc;
+}
+
+/* Modern Notice Modal - Inspired by Stripe/Vercel/Linear */
+.modal-overlay-modern {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.notice-card-modern {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notice-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.notice-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: all 0.3s ease;
+}
+
+/* Success variant - Green gradient with checkmark */
+.notice-icon-success {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Alternative variant - Yellow gradient with lightbulb */
+.notice-icon-alternative {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+/* Info variant - Blue gradient with info icon */
+.notice-icon-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.notice-content {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.notice-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.01em;
+}
+
+.notice-message {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #6b7280;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.notice-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-notice-primary {
+  flex: 1;
+  max-width: 280px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #0F7ABB 0%, #1e88c9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(15, 122, 187, 0.2);
+}
+
+.btn-notice-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 122, 187, 0.3);
+}
+
+.btn-notice-primary:active {
+  transform: translateY(0);
+}
+
+/* Success button variant - Green gradient */
+.btn-notice-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.btn-notice-success:hover {
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Alternative button variant - Orange gradient */
+.btn-notice-alternative {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-notice-alternative:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35) !important;
+}
+
+.btn-notice-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-size: 14px;
+}
+
+.btn-notice-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+  transform: rotate(90deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .notice-card-modern {
+    padding: 24px;
+    margin: 16px;
+  }
+
+  .notice-icon-circle {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .notice-heading {
+    font-size: 18px;
+  }
+
+  .notice-message {
+    font-size: 14px;
+  }
+
+  .btn-notice-primary {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
 }
 </style>
