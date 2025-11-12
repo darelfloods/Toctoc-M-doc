@@ -751,24 +751,62 @@ function parseAiQueryFallback(input: string): { productName: string; quantity: n
     .split(/\s+/)
     .filter(w => w && w.trim().length > 0)
 
-  // Stopwords français enrichis
+  // Stopwords français enrichis avec synonymes complets
   const stop = new Set([
     // Pronoms et articles
     'je', 'j', 'me', 'moi', 'mon', 'ma', 'mes', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
-    'de', 'des', 'du', 'd', 'au', 'aux', 'un', 'une', 'le', 'la', 'les', 'l', 'à', 'a', 'en', 'pour', 'dans', 'chez', 'sur', 'avec', 'sans', 'par', 'et', 'ou', '&', 'mais', 'donc', 'car',
-    // Verbes d'action courants
-    'veux', 'vouloir', 'voudrais', 'souhaite', 'souhaiterais', 'souhait', 'desire', 'désire', 'désirer', 'aimerais', 'aimerait', 'aimer',
-    'acheter', 'achète', 'achete', 'achat', 'prendre', 'prends', 'obtenir', 'commander', 'commande', 'cherche', 'chercher',
-    'trouve', 'trouver', 'situe', 'situer', 'suis', 'être', 'être', 'habite', 'habiter', 'resider', 'résider', 'vis', 'vivre',
+    'de', 'des', 'du', 'd', 'au', 'aux', 'un', 'une', 'le', 'la', 'les', 'l', 'à', 'a', 'en', 'pour', 'dans', 'chez', 'sur', 'avec', 'sans', 'par', 'et', 'ou', '&', 'mais', 'donc', 'car', 'ce', 'cette', 'ces', 'cet',
+
+    // Verbes VOULOIR et synonymes
+    'veux', 'veut', 'vouloir', 'voudrais', 'voudrait', 'voulons', 'voulez', 'veulent', 'voulu',
+    'souhaite', 'souhaites', 'souhaiter', 'souhaiterais', 'souhaiterait', 'souhaitons', 'souhaitez', 'souhait', 'souhaits',
+    'desire', 'désire', 'desires', 'désires', 'désirer', 'desirer', 'desirerais', 'désirerais', 'desirerait', 'désirerait', 'desir', 'désir',
+    'aimerais', 'aimerait', 'aimer', 'aime', 'aimes', 'aimons', 'aimez', 'aiment',
+
+    // Verbes ACHETER et synonymes
+    'acheter', 'achète', 'achete', 'achetes', 'achètes', 'achetons', 'achetez', 'achètent', 'achat', 'achats',
+    'acquerir', 'acquérir', 'acquiert', 'acquiers', 'acquerons', 'acquerrez', 'acquièrent', 'acquisition',
+    'obtenir', 'obtient', 'obtiens', 'obtenons', 'obtenez', 'obtiennent', 'obtention',
+    'procurer', 'procure', 'procures', 'procurons', 'procurez', 'procurent',
+    'commander', 'commande', 'commandes', 'commandons', 'commandez', 'commandent', 'commanda',
+
+    // Verbes CHERCHER et synonymes
+    'cherche', 'cherches', 'chercher', 'cherchons', 'cherchez', 'cherchent', 'recherche', 'recherches', 'rechercher',
+    'trouve', 'trouver', 'trouves', 'trouvons', 'trouvez', 'trouvent',
+    'quete', 'quête', 'queter', 'quêter',
+    'besoin', 'besoins', 'necessaire', 'nécessaire', 'necessaires', 'nécessaires', 'necessiter', 'nécessiter', 'necessite', 'nécessite',
+    'faut', 'falloir', 'faudrait', 'il', 'me', 'te', 'lui', 'leur',
+
+    // Verbes de LOCALISATION
+    'situe', 'situer', 'situes', 'situons', 'situez', 'situent', 'située', 'situé',
+    'suis', 'être', 'es', 'est', 'sommes', 'êtes', 'sont', 'etre',
+    'habite', 'habiter', 'habites', 'habitons', 'habitez', 'habitent',
+    'resider', 'résider', 'reside', 'réside', 'resides', 'résides', 'residons', 'résidons', 'residez', 'résidez', 'resident', 'résident',
+    'vis', 'vivre', 'vit', 'vivons', 'vivez', 'vivent',
+    'demeure', 'demeurer', 'demeures', 'demeurons', 'demeurez', 'demeurent',
+    'loge', 'loger', 'loges', 'logeons', 'logez', 'logent',
+
+    // Verbes PRENDRE et synonymes
+    'prendre', 'prends', 'prend', 'prenons', 'prenez', 'prennent', 'pris', 'prise',
+    'recevoir', 'recois', 'reçois', 'recoit', 'reçoit', 'recevons', 'recevez', 'recoivent', 'reçoivent',
+    'recuperer', 'récupérer', 'recupere', 'récupère', 'recuperes', 'récupères', 'recuperons', 'récupérons',
+
     // Mots de quantité déjà extraits
     'boite', 'boites', 'boîte', 'boîtes', 'carton', 'cartons', 'paquet', 'paquets', 'unite', 'unites', 'unité', 'unités',
     'flacon', 'flacons', 'tube', 'tubes', 'sachet', 'sachets', 'comprime', 'comprimé', 'comprimés', 'comprimes',
+    'piece', 'pièce', 'pieces', 'pièces', 'exemplaire', 'exemplaires',
+
     // Mots génériques pour produits
-    'medicament', 'médicament', 'medicaments', 'médicaments', 'produit', 'produits', 'article', 'articles',
+    'medicament', 'médicament', 'medicaments', 'médicaments', 'medoc', 'médoc', 'medocs', 'médocs',
+    'produit', 'produits', 'article', 'articles', 'item', 'items',
+    'remede', 'remède', 'remedes', 'remèdes', 'traitement', 'traitements',
+
     // Formules de politesse
-    'svp', 'sil', 's\'il', 'vous', 'plait', 'plaît', 'merci',
+    'svp', 'sil', 's\'il', 'vous', 'plait', 'plaît', 'merci', 'stp', 'please',
+
     // Mots de liaison locaux (déjà traités par placeTokens)
-    'vers', 'cote', 'côté', 'region', 'région', 'province'
+    'vers', 'cote', 'côté', 'region', 'région', 'province', 'zone', 'secteur', 'quartier',
+    'proche', 'pres', 'près', 'autour', 'alentours'
   ])
 
   // Construire l'ensemble des tokens de lieu à supprimer
