@@ -399,7 +399,7 @@ async function commander() {
 .product-card {
   background:#f8fafc;
   border-radius:15px;
-  padding:1.5rem;
+  padding:1.25rem; /* Réduit légèrement pour gagner de l'espace */
   margin-bottom:1rem;
   border:1px solid #e2e8f0;
   transition:all .3s ease;
@@ -443,8 +443,8 @@ async function commander() {
 }
 
 .product-image-cart {
-  width:70px;
-  height:70px;
+  width:65px; /* Réduit légèrement pour donner plus d'espace au texte */
+  height:65px;
   object-fit:cover;
   border-radius:12px;
   box-shadow:0 4px 15px rgba(0,0,0,0.1);
@@ -460,26 +460,28 @@ async function commander() {
 .product-name-cart {
   font-weight:600;
   color:#2d3748;
-  font-size:1rem;
-  margin-bottom:.4rem; /* Réduit pour plus de compacité */
+  font-size:0.92rem; /* Réduit pour tenir sur 2-3 lignes */
+  margin-bottom:.3rem;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 1; /* Réduit à 1 ligne au lieu de 2 */
+  -webkit-line-clamp: 3; /* 3 lignes pour le nom complet du médicament */
   -webkit-box-orient: vertical;
-  line-height: 1.3;
+  line-height: 1.35;
+  word-break: break-word;
+  max-height: 3.8em; /* Limite la hauteur à ~3 lignes */
 }
 
 .product-pharmacy {
   color:#64748b;
-  font-size:.85rem;
+  font-size:.82rem;
   display:flex;
   align-items:center;
   gap:5px;
+  margin-bottom: .5rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: .4rem; /* Espace avant le badge */
+  white-space: nowrap; /* 1 ligne seulement pour la pharmacie */
 }
 
 .product-status {
