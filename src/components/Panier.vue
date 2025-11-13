@@ -364,7 +364,7 @@ async function commander() {
   box-shadow:0 8px 32px rgba(0,0,0,.08);
   margin-bottom:2rem;
   border:1px solid rgba(102,126,234,0.1);
-  max-height: 70vh;
+  max-height: 55vh; /* Réduit de 70vh pour laisser plus d'espace au résumé */
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -569,25 +569,28 @@ async function commander() {
 .summary-card {
   background: linear-gradient(145deg,#f8fafc,#e8ecff);
   border-radius:20px;
-  padding:2rem;
+  padding:1.5rem; /* Réduit de 2rem pour plus de compacité */
   box-shadow:0 8px 32px rgba(102,126,234,0.1);
   border:1px solid rgba(102,126,234,0.1);
   position: sticky;
-  top:2rem;
+  top:1rem; /* Réduit de 2rem pour monter la carte */
+  max-height: calc(100vh - 240px); /* Limite la hauteur pour éviter débordement */
+  overflow-y: auto;
 }
 
 .summary-title {
   color:#2d3748;
-  font-size:1.3rem;
+  font-size:1.2rem; /* Réduit légèrement */
   font-weight:600;
-  margin-bottom:1.5rem;
+  margin-bottom:1.25rem; /* Réduit pour gagner de l'espace */
   text-align:center;
   position:relative;
+  padding-bottom: 0.75rem;
 }
 .summary-title::after {
   content:'';
   position:absolute;
-  bottom:-8px;
+  bottom:0;
   left:50%;
   transform: translateX(-50%);
   width:50px;
@@ -600,12 +603,12 @@ async function commander() {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:.75rem 0;
+  padding:.6rem 0; /* Réduit légèrement */
   border-bottom:1px solid rgba(102,126,234,0.1);
 }
 .summary-item:last-child {
   border-bottom:none;
-  padding-top:1rem;
+  padding-top:.75rem; /* Réduit légèrement */
   margin-top:.5rem;
   border-top:2px solid rgba(102,126,234,0.2);
 }
@@ -629,7 +632,8 @@ async function commander() {
 .action-buttons {
   display:flex;
   gap:1rem;
-  margin-top:2rem;
+  margin-top:1.5rem; /* Réduit de 2rem pour monter les boutons */
+  padding-bottom: 0.5rem; /* Ajoute un petit padding en bas pour éviter que ça soit coupé */
 }
 
 .btn-clear {
@@ -686,12 +690,12 @@ async function commander() {
    RESPONSIVE DESIGN - Modal Sizes
    ======================================== */
 .modal-cart-responsive {
-  max-width: 1140px;
+  max-width: 980px; /* Réduit de 1140px pour un look plus compact */
   margin: 1.75rem auto;
 }
 
 .modal-dialog.modal-dialog-scrollable .modal-content {
-  max-height: 90vh;
+  max-height: 85vh; /* Réduit de 90vh pour éviter que les boutons soient coupés */
 }
 
 /* ========================================
@@ -699,7 +703,7 @@ async function commander() {
    ======================================== */
 @media (max-width: 991px) {
   .modal-cart-responsive {
-    max-width: 95%;
+    max-width: 90%; /* Réduit de 95% pour un look plus compact */
     margin: 1rem auto;
   }
 
@@ -708,7 +712,7 @@ async function commander() {
   }
 
   .products-section {
-    max-height: 50vh;
+    max-height: 45vh; /* Réduit de 50vh */
     padding: 1rem;
   }
 
@@ -716,6 +720,8 @@ async function commander() {
     position: static;
     top: auto;
     margin-top: 1rem;
+    max-height: none; /* Enlève la limitation de hauteur sur tablette */
+    overflow: visible;
   }
 
   /* Réduire les espacements sur tablette */
