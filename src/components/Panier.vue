@@ -641,12 +641,13 @@ async function commander() {
   border:2px solid #f56565;
   color:#f56565;
   border-radius:25px;
-  padding:12px 25px;
+  padding:10px 20px; /* Réduit de 12px 25px */
   font-weight:500;
   transition:all .3s ease;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:6px; /* Réduit de 8px */
+  font-size: 0.9rem; /* Ajouté pour réduire la taille du texte */
 }
 .btn-clear:hover {
   background:#f56565;
@@ -935,8 +936,13 @@ async function commander() {
   .btn-checkout {
     width: 100%;
     justify-content: center;
-    padding: 10px 20px;
-    font-size: 0.95rem;
+    padding: 8px 16px; /* Réduit pour mobile */
+    font-size: 0.875rem; /* Réduit de 0.95rem */
+  }
+
+  .btn-clear i,
+  .btn-checkout i {
+    font-size: 0.875rem; /* Réduit la taille des icônes */
   }
 
   /* Custom scrollbar pour le container mobile */
