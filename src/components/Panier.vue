@@ -443,9 +443,10 @@ async function commander() {
 .product-main-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem; /* Réduit pour plus d'espace */
   flex: 1;
   min-width: 0;
+  overflow: visible; /* Permet au contenu de déborder */
 }
 
 .product-controls-section {
@@ -468,16 +469,16 @@ async function commander() {
 .product-info {
   flex:1;
   min-width: 0;
+  overflow: visible; /* Permet au texte de déborder si nécessaire */
 }
 
 .product-name-cart {
   font-weight:600;
   color:#2d3748;
-  font-size:0.9rem; /* Taille réduite pour tenir sur 1 ligne */
+  font-size:0.8rem; /* Taille réduite pour afficher le nom complet */
   margin-bottom:.3rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap; /* 1 ligne seulement */
+  /* PAS d'overflow: hidden ni ellipsis - on veut tout afficher */
 }
 
 .product-pharmacy {
