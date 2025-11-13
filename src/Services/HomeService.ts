@@ -28,10 +28,12 @@ export class HomeService {
     const medicamentName = input.productName || 'médicament recherché'
     
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
-    
-    // Webhook URL n8n (via proxy pour éviter CORS) - alternatives webhook (production)
-    const webhookUrl = '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
-    
+
+    // Webhook URL n8n - direct URL in production, proxy in dev
+    const webhookUrl = import.meta.env.DEV
+      ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+      : 'https://n8n-workflows-cktx.onrender.com/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
     const controller = new AbortController()
