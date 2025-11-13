@@ -37,7 +37,7 @@
                             <i class="bi bi-shop"></i>
                             {{ pharmacyName(item.pharmacy) }}<template v-if="pharmacyCity(item.pharmacy)">, {{ pharmacyCity(item.pharmacy) }}</template>
                           </div>
-                          <div class="mt-2">
+                          <div class="product-status">
                             <span class="status-badge">En stock</span>
                           </div>
                         </div>
@@ -461,12 +461,13 @@ async function commander() {
   font-weight:600;
   color:#2d3748;
   font-size:1rem;
-  margin-bottom:.5rem;
+  margin-bottom:.4rem; /* Réduit pour plus de compacité */
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1; /* Réduit à 1 ligne au lieu de 2 */
   -webkit-box-orient: vertical;
+  line-height: 1.3;
 }
 
 .product-pharmacy {
@@ -478,16 +479,24 @@ async function commander() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: .4rem; /* Espace avant le badge */
+}
+
+.product-status {
+  display: flex;
+  align-items: center;
 }
 
 .status-badge {
   background: linear-gradient(135deg,#48bb78,#38a169);
   color:#fff;
-  padding:4px 10px;
-  border-radius:15px;
-  font-size:.75rem;
+  padding:3px 8px; /* Réduit pour être plus compact */
+  border-radius:12px; /* Réduit légèrement */
+  font-size:.7rem; /* Réduit légèrement */
   font-weight:500;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .price-section {
@@ -569,23 +578,26 @@ async function commander() {
 .summary-card {
   background: linear-gradient(145deg,#f8fafc,#e8ecff);
   border-radius:20px;
-  padding:1.5rem; /* Réduit de 2rem pour plus de compacité */
+  padding:1.5rem;
   box-shadow:0 8px 32px rgba(102,126,234,0.1);
   border:1px solid rgba(102,126,234,0.1);
   position: sticky;
-  top:1rem; /* Réduit de 2rem pour monter la carte */
-  max-height: calc(100vh - 240px); /* Limite la hauteur pour éviter débordement */
+  top:1rem;
+  max-height: calc(100vh - 180px); /* Augmenté de 240px pour plus d'espace en bas */
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .summary-title {
   color:#2d3748;
-  font-size:1.2rem; /* Réduit légèrement */
+  font-size:1.2rem;
   font-weight:600;
-  margin-bottom:1.25rem; /* Réduit pour gagner de l'espace */
+  margin-bottom:1rem; /* Encore réduit */
   text-align:center;
   position:relative;
   padding-bottom: 0.75rem;
+  flex-shrink: 0; /* Le titre ne rétrécit pas */
 }
 .summary-title::after {
   content:'';
@@ -603,13 +615,14 @@ async function commander() {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:.6rem 0; /* Réduit légèrement */
+  padding:.5rem 0; /* Encore plus réduit */
   border-bottom:1px solid rgba(102,126,234,0.1);
+  flex-shrink: 0; /* Les items ne rétrécissent pas */
 }
 .summary-item:last-child {
   border-bottom:none;
-  padding-top:.75rem; /* Réduit légèrement */
-  margin-top:.5rem;
+  padding-top:.6rem;
+  margin-top:.4rem;
   border-top:2px solid rgba(102,126,234,0.2);
 }
 
@@ -632,8 +645,10 @@ async function commander() {
 .action-buttons {
   display:flex;
   gap:1rem;
-  margin-top:1.5rem; /* Réduit de 2rem pour monter les boutons */
-  padding-bottom: 0.5rem; /* Ajoute un petit padding en bas pour éviter que ça soit coupé */
+  margin-top:auto; /* Push les boutons en bas avec flexbox */
+  padding-top: 1rem; /* Espace au-dessus des boutons */
+  padding-bottom: 0.75rem; /* Plus d'espace en bas pour éviter coupure */
+  flex-shrink: 0; /* Les boutons ne rétrécissent jamais */
 }
 
 .btn-clear {
