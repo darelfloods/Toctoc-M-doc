@@ -135,13 +135,26 @@ const statusMessage = ref('')
 const statusType = ref<'success' | 'error'>('success')
 
 function pharmacyName(ph: any) {
-  return (
+  const fullName = (
     ph?.nom_pharmacie ||
     ph?.pharmacie?.nom_pharmacie ||
     ph?.name ||
     ph?.pharmacie?.name ||
     'Pharmacie'
   )
+
+  // Extraire le dernier mot (nom principal de la pharmacie)
+  // Ex: "DEPOT PHARMACEUTIQUE AKEWA" → "AKEWA"
+  const words = fullName.trim().split(/\s+/)
+  const lastName = words[words.length - 1]
+
+  // Si c'est un mot générique, prendre les 2 derniers mots
+  const generics = ['PHARMACIE', 'DEPOT', 'PHARMACEUTIQUE', 'OFFICINE']
+  if (generics.includes(lastName.toUpperCase()) && words.length > 1) {
+    return words.slice(-2).join(' ')
+  }
+
+  return lastName
 }
 function pharmacyCity(ph: any) {
   return (
@@ -460,16 +473,11 @@ async function commander() {
 .product-name-cart {
   font-weight:600;
   color:#2d3748;
-  font-size:0.92rem; /* Réduit pour tenir sur 2-3 lignes */
+  font-size:0.9rem; /* Taille réduite pour tenir sur 1 ligne */
   margin-bottom:.3rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* 3 lignes pour le nom complet du médicament */
-  -webkit-box-orient: vertical;
-  line-height: 1.35;
-  word-break: break-word;
-  max-height: 3.8em; /* Limite la hauteur à ~3 lignes */
+  white-space: nowrap; /* 1 ligne seulement */
 }
 
 .product-pharmacy {
