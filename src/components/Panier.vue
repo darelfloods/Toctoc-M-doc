@@ -475,7 +475,7 @@ async function commander() {
 .product-name-cart {
   font-weight:600;
   color:#2d3748;
-  font-size:0.8rem; /* Taille réduite pour afficher le nom complet */
+  font-size:0.85rem; /* Augmenté de 0.8rem pour meilleure lisibilité */
   margin-bottom:.3rem;
   white-space: nowrap; /* 1 ligne seulement */
   /* PAS d'overflow: hidden ni ellipsis - on veut tout afficher */
@@ -859,12 +859,12 @@ async function commander() {
   }
 
   .product-name-cart {
-    font-size: 0.95rem;
-    -webkit-line-clamp: 2;
+    font-size: 0.8rem; /* Plus petit sur mobile pour afficher le nom complet */
+    /* Garde white-space: nowrap du style de base */
   }
 
   .product-pharmacy {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Réduit sur mobile */
   }
 
   .product-pharmacy i {
