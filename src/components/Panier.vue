@@ -19,9 +19,9 @@
           </div>
 
           <div class="cart-content">
-            <div class="row">
+            <div class="row cart-row">
               <!-- Section des produits -->
-              <div class="col-lg-8">
+              <div class="col-lg-8 cart-col-products">
                 <div class="products-section">
                   <h6 class="section-title">Produits sélectionnés</h6>
 
@@ -68,7 +68,7 @@
               </div>
 
               <!-- Section résumé -->
-              <div class="col-lg-4">
+              <div class="col-lg-4 cart-col-summary">
                 <div class="summary-card">
                   <h6 class="summary-title">Résumé de la commande</h6>
 
@@ -741,10 +741,13 @@ async function commander() {
   .modal-content {
     border-radius: 0;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
   .modal-header-cart {
     padding: 1.5rem 1rem;
+    flex-shrink: 0;
   }
 
   .cart-icon {
@@ -767,14 +770,33 @@ async function commander() {
     height: 35px;
   }
 
+  /* CRITICAL FIX: Cart content scrollable container */
   .cart-content {
     padding: 1rem;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
+  .cart-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cart-col-products,
+  .cart-col-summary {
+    width: 100%;
+    padding: 0;
+  }
+
+  /* Products section - NO max-height, let content flow */
   .products-section {
     padding: 1rem;
-    max-height: 55vh;
-    margin-bottom: 1rem;
+    max-height: none;
+    overflow: visible;
+    margin-bottom: 0;
   }
 
   .section-title {
@@ -871,9 +893,11 @@ async function commander() {
     font-size: 16px;
   }
 
-  /* SUMMARY SECTION - Mobile */
+  /* SUMMARY SECTION - Mobile (no sticky, flows naturally) */
   .summary-card {
     padding: 1.25rem;
+    position: static;
+    margin-top: 1rem;
   }
 
   .summary-title {
@@ -907,6 +931,21 @@ async function commander() {
     justify-content: center;
     padding: 10px 20px;
     font-size: 0.95rem;
+  }
+
+  /* Custom scrollbar pour le container mobile */
+  .cart-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .cart-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  .cart-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  .cart-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 }
 
