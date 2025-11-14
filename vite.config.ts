@@ -26,58 +26,58 @@ export default defineConfig({
     strictPort: true,  // oblige Vite à rester sur ce port
     cors: true,        // autorise les appels cross-origin
     proxy: {
-      // Proxy vers le backend TTM sur Render
+      // Proxy vers le backend TTM LOCAL (api_ttm dans le dossier parent)
       '/auth': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/user': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/account': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/rate': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/event': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/price_list': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/my_pay_ga': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/sing_pay_api': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
-      // API EPG vers le backend TTM sur Render
+      // API EPG vers le backend TTM local
       '/api_epg': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       // Fallback pour anciens endpoints /api
       '/api': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Proxy for reservation products endpoint to bypass CORS in dev
