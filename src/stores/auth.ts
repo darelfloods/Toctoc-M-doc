@@ -5,8 +5,8 @@ export interface User {
   id: number
   email: string
   name: string
-  firstname?: string
-  lastname?: string
+  firstname: string
+  lastname: string
   phone?: string
   role: string
   created_at?: string
@@ -17,6 +17,7 @@ export interface Token {
   access_token: string
   token_type?: string
   expires_in?: number
+  refresh_token?: string
 }
 
 export interface LoginCredentials {

@@ -1013,7 +1013,7 @@ async function runAiSearch(): Promise<void> {
   const prelim = scored.filter(s => (s.overlap > 0) && (numsInTarget.length === 0 || numsInTarget.every(n => s.labelNorm.includes(n))))
   // Ask for confirmation unless we have an exact normalized match including dosage numbers
   // Filtrer strictement sur le nom principal (mot pour mot) dans le libellé
-  let strict = scored.filter(s => {
+  const strict = scored.filter(s => {
     const tokens = (s.labelNorm || '').split(' ').filter(Boolean)
     return tokens.includes(primaryNameNorm)
   })

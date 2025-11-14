@@ -76,7 +76,7 @@ async function testCurrentConfig() {
     console.log('🔍 Test API diagnostic vers:', currentApiUrl.value)
 
     // Test de la route racine
-    const response = await HttpService.get('/')
+    const response = await HttpService.get<{ msg?: string }>('/')
 
     testResult.value = {
       success: true,

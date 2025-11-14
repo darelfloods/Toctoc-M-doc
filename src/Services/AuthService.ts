@@ -166,9 +166,8 @@ export class AuthService {
 
       console.log('✅ Inscription réussie:', response.data)
 
-      // Note: Le backend retourne directement un utilisateur créé, pas forcément avec token
-      // Il faudra peut-être faire un login séparé après l'inscription
-      if (response.data.token) {
+      // Le backend retourne maintenant un token après l'inscription
+      if (response.data.token && response.data.user) {
         const authStore = useAuthStore()
         const userData = {
           id: response.data.user.id,
@@ -182,12 +181,17 @@ export class AuthService {
 
         authStore.login(userData as any, response.data.token as any)
         HttpService.setAuthToken(response.data.token.access_token)
+
+        console.log('✅ Utilisateur connecté automatiquement après inscription')
       }
 
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur d\'inscription backend TTM:', error)
-      throw new Error('Échec de l\'inscription au backend TTM')
+
+      // Extraire le message d'erreur détaillé
+      const errorMessage = error?.data?.detail || error?.message || 'Échec de l\'inscription au backend TTM'
+      throw new Error(errorMessage)
     }
   }
 

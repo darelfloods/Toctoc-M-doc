@@ -160,7 +160,7 @@ async function resolvePricing(of: any): Promise<{ rate_id: number; creditAmount:
   
   const libelle: string | undefined = of?.libelle
   const prix = parseAmount(of?.price) || 0
-  let rate_id = Number(of?.id) || 0 // Garder le rate_id original pour MyPayGA
+  const rate_id = Number(of?.id) || 0 // Garder le rate_id original pour MyPayGA
   
   // 🎯 PRIORITÉ 1: Correspondance par prix (le plus fiable)
   let creditAmount = creditsByPrice[prix] || 0

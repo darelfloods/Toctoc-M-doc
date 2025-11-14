@@ -28,10 +28,17 @@
             <div class="d-flex justify-content-center mt-3">
               <form class="col-md-8 pe-0 ps-0" @submit.prevent="register">
                 <div class="mb-3">
-                  <label class="form-label mb-1 text-dark" for="username"
-                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Nom d'utilisateur*</label>
-                  <input class="form-control" type="text" id="username" name="username"
-                         style="border-radius: 16px" placeholder="Entrez votre nom d'utilisateur" v-model.trim="name" required>
+                  <label class="form-label mb-1 text-dark" for="firstname"
+                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Prénom*</label>
+                  <input class="form-control" type="text" id="firstname" name="firstname"
+                         style="border-radius: 16px" placeholder="Entrez votre prénom" v-model.trim="firstname" required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label mb-1 text-dark" for="lastname"
+                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Nom*</label>
+                  <input class="form-control" type="text" id="lastname" name="lastname"
+                         style="border-radius: 16px" placeholder="Entrez votre nom" v-model.trim="lastname" required>
                 </div>
 
                 <div class="mb-3">
@@ -135,7 +142,8 @@ import { AuthService } from '@/Services/AuthService'
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close', 'openConnexion', 'registerSuccess'])
 
-const name = ref('')
+const firstname = ref('')
+const lastname = ref('')
 const email = ref('')
 const phone = ref('')
 const password = ref('')
@@ -159,7 +167,7 @@ function onOpenConnexion() {
 async function register() {
   errorMessage.value = ''
 
-  if (!name.value || !email.value || !password.value || !passwordConfirmation.value) {
+  if (!firstname.value || !lastname.value || !email.value || !password.value || !passwordConfirmation.value) {
     errorMessage.value = 'Veuillez remplir tous les champs requis.'
     showErrorToast.value = true
     return
@@ -173,19 +181,24 @@ async function register() {
   try {
     isLoading.value = true
 
-    // Séparer le nom en firstname et lastname pour le backend TTM
-    const nameParts = name.value.trim().split(/\s+/)
-    const firstname = nameParts[0] || ''
-    const lastname = nameParts.slice(1).join(' ') || nameParts[0] || ''
-
     // Utilise l'API existante via AuthService.register
-    await AuthService.register({
-      firstname,
-      lastname,
+    const response = await AuthService.register({
+      firstname: firstname.value,
+      lastname: lastname.value,
       email: email.value,
       password: password.value,
       phone: phone.value || undefined,
     })
+
+    // Si l'inscription a réussi et qu'un token est retourné, l'utilisateur est déjà connecté
+    // Sinon, on tente une connexion automatique
+    if (!response.token) {
+      console.log('🔄 Token non reçu après inscription, connexion automatique...')
+      await AuthService.login({
+        username: email.value,
+        password: password.value
+      })
+    }
 
     showSuccessToast.value = true
     emit('registerSuccess')
@@ -194,7 +207,7 @@ async function register() {
     setTimeout(() => emit('close'), 700)
   } catch (e: unknown) {
     console.error('Erreur inscription:', e)
-    errorMessage.value = "Échec de l'inscription"
+    errorMessage.value = e instanceof Error ? e.message : "Échec de l'inscription"
     showErrorToast.value = true
   } finally {
     isLoading.value = false
