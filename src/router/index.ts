@@ -17,6 +17,14 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/ResetPassword.vue'),
+      meta: {
+        title: 'Réinitialiser votre mot de passe - Toc Toc Medoc'
+      }
+    },
   ],
 })
 

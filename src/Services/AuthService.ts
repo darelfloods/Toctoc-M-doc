@@ -208,6 +208,30 @@ export class AuthService {
     }
   }
 
+  // Réinitialiser le mot de passe avec un token de réinitialisation
+  static async resetPassword(token: string, newPassword: string): Promise<{ msg?: string }> {
+    try {
+      console.log('🔐 Réinitialisation du mot de passe avec token...')
+
+      const response = await HttpService.post<{ msg?: string }>(
+        '/user/reset-password',
+        {
+          token,
+          new_password: newPassword
+        }
+      )
+
+      console.log('✅ Mot de passe réinitialisé avec succès')
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la réinitialisation du mot de passe:', error)
+
+      // Extraire le message d'erreur détaillé
+      const errorMessage = error?.data?.detail || error?.message || 'Échec de la réinitialisation du mot de passe'
+      throw new Error(errorMessage)
+    }
+  }
+
   // Mettre à jour le mot de passe (même logique que dans l'Angular EpharmaService.updateMdp)
   static async updatePassword(userId: number, newPassword: string): Promise<void> {
     try {
