@@ -77,6 +77,90 @@
 
     <!-- Modal de paiement -->
     <Paiement v-if="showPayment" :visible="showPayment" :offer="selectedOffer" @close="showPayment=false" @validate="onPaymentValidate" />
+
+    <!-- Modal de transaction en attente -->
+    <div v-if="showPendingMessage" class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+          <div class="modal-body text-center p-5">
+            <div class="pending-icon mb-4">
+              <i class="bi bi-hourglass-split text-warning" style="font-size: 64px;"></i>
+            </div>
+            <h3 class="mb-3 fw-bold">Transaction en attente</h3>
+            <p class="text-muted mb-4">
+              Vous allez recevoir une notification sur votre téléphone <strong>{{ pendingPhone }}</strong>.
+              <br><br>
+              Composez votre code PIN Mobile Money pour confirmer le paiement.
+            </p>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              Vos crédits seront ajoutés automatiquement après confirmation du paiement.
+            </div>
+            <button type="button" class="btn btn-primary btn-lg mt-3" @click="closePendingAndRefresh">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              J'ai validé le paiement
+            </button>
+            <button type="button" class="btn btn-outline-secondary mt-2" @click="showPendingMessage=false">
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showPendingMessage" class="modal-backdrop fade show"></div>
+
+    <!-- Modal d'erreur -->
+    <div v-if="showErrorMessage" class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+          <div class="modal-body text-center p-5">
+            <div class="error-icon mb-4">
+              <i class="bi bi-x-circle text-danger" style="font-size: 64px;"></i>
+            </div>
+            <h3 class="mb-3 fw-bold text-danger">Erreur de paiement</h3>
+            <p class="text-muted mb-4">{{ errorDetails }}</p>
+            <div class="alert alert-warning">
+              <strong>Vérifiez :</strong>
+              <ul class="text-start mt-2 mb-0">
+                <li>Votre numéro de téléphone</li>
+                <li>Votre solde Mobile Money</li>
+                <li>Votre connexion internet</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg mt-3" @click="showErrorMessage=false">
+              Compris
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showErrorMessage" class="modal-backdrop fade show"></div>
+
+    <!-- Modal de succès -->
+    <div v-if="showSuccessMessage" class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+          <div class="modal-body text-center p-5">
+            <div class="success-icon mb-4">
+              <i class="bi bi-check-circle text-success" style="font-size: 64px;"></i>
+            </div>
+            <h3 class="mb-3 fw-bold text-success">Paiement confirmé !</h3>
+            <p class="text-muted mb-4">
+              Vos crédits ont été ajoutés avec succès.
+            </p>
+            <div class="credit-display">
+              <p class="text-muted small mb-1">Votre nouveau solde</p>
+              <h1 class="text-primary fw-bold">{{ creditStore.credits }} <small>crédits</small></h1>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg mt-4" @click="closeSuccessModal">
+              <i class="bi bi-check2 me-2"></i>
+              Parfait !
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showSuccessMessage" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -119,6 +203,13 @@ const selectedOffer = ref<any | null>(null)
 const auth = useAuthStore()
 const creditStore = useCreditStore()
 
+// Nouveaux états pour les modals custom
+const showPendingMessage = ref(false)
+const showErrorMessage = ref(false)
+const showSuccessMessage = ref(false)
+const pendingPhone = ref('')
+const errorDetails = ref('')
+
 function openConfirm(offer: any) {
   selectedOffer.value = offer
   showConfirm.value = true
@@ -128,6 +219,33 @@ function confirmPurchase() {
   // close confirm modal and open payment modal
   showConfirm.value = false
   showPayment.value = true
+}
+
+async function closePendingAndRefresh() {
+  showPendingMessage.value = false
+
+  // Rafraîchir les crédits
+  console.log('🔄 [MAGASIN] Rafraîchissement des crédits...')
+  const oldCredits = creditStore.credits
+  await creditStore.refreshForCurrentUser()
+  const newCredits = creditStore.credits
+
+  console.log('💰 [MAGASIN] Anciens crédits:', oldCredits, '→ Nouveaux crédits:', newCredits)
+
+  // Afficher le modal de succès seulement si les crédits ont augmenté
+  if (newCredits > oldCredits) {
+    showSuccessMessage.value = true
+    emit('purchased')
+  } else {
+    // Si pas de changement, afficher un message informatif
+    showErrorMessage.value = true
+    errorDetails.value = 'Le paiement n\'a pas encore été confirmé. Veuillez réessayer dans quelques instants ou contacter le support si le problème persiste.'
+  }
+}
+
+function closeSuccessModal() {
+  showSuccessMessage.value = false
+  emit('close')
 }
 
 function parseAmount(p: any): number {
@@ -182,35 +300,14 @@ async function resolvePricing(of: any): Promise<{ rate_id: number; creditAmount:
   return { rate_id, creditAmount }
 }
 
-// États pour les modales de statut de paiement
-const showPaymentPending = ref(false)
-const showPaymentSuccess = ref(false)
-const showPaymentError = ref(false)
-const paymentErrorMessage = ref('')
-const pendingPaymentPhone = ref('')
-
 async function onPaymentValidate(payload: { method: string; phone: string; offer?: any }) {
   try {
     const offer = payload.offer || selectedOffer.value
     const amount = parseAmount(offer?.price)
-
-    // 🎯 VALIDATION: Vérifier que le montant est valide
-    if (!amount || amount <= 0) {
-      paymentErrorMessage.value = 'Montant invalide. Veuillez sélectionner une offre valide.'
-      showPaymentError.value = true
-      return
-    }
-
-    // 🎯 VALIDATION: Vérifier que le téléphone est renseigné
-    if (!payload.phone || payload.phone.trim().length < 8) {
-      paymentErrorMessage.value = 'Numéro de téléphone invalide. Veuillez saisir un numéro valide.'
-      showPaymentError.value = true
-      return
-    }
-
     // Récupérer rate_id et le nombre de crédits à créditer
     const { rate_id, creditAmount } = await resolvePricing(offer)
 
+    // DEBUG: Log des valeurs pour comprendre le problème
     console.log('🔍 [MAGASIN] Debug recharge crédits:')
     console.log('  - Offre:', offer)
     console.log('  - Montant:', amount)
@@ -229,51 +326,49 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       email: user?.email || '',
       rate_id,
       network: payload.method
+      // Le backend va gérer automatiquement l'ajout des crédits via le callback
     })
 
     console.log('📦 [MAGASIN] Réponse MyPayGa:', paymentResult)
     console.log('📦 [MAGASIN] request_status:', paymentResult.request_status)
+    console.log('📦 [MAGASIN] request_status TYPE:', typeof paymentResult.request_status)
     console.log('📦 [MAGASIN] message:', paymentResult.message)
 
+    // Vérifier si la requête de paiement a été envoyée avec succès
+    // request_status === 0 : Demande envoyée, attente de confirmation
+    // request_status === 200 : Paiement confirmé immédiatement
+    // IMPORTANT: Convertir en nombre car l'API peut renvoyer une string "0"
     const status = Number(paymentResult.request_status)
+    const requestSent = status === 0 || status === 200
 
-    // 🎯 LOGIQUE CORRIGÉE: Ne rafraîchir les crédits QUE si le paiement est confirmé par l'API
-    if (status === 200) {
-      // ✅ Paiement confirmé immédiatement
-      console.log('✅ [MAGASIN] Paiement confirmé immédiatement!')
-      showPayment.value = false
-      await creditStore.refreshForCurrentUser()
-      console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
-      showPaymentSuccess.value = true
-      emit('purchased', payload)
-    } else if (status === 0) {
-      // ⏳ Demande envoyée, en attente de confirmation sur le téléphone
-      console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation')
-      pendingPaymentPhone.value = payload.phone
-      showPayment.value = false
-      showPaymentPending.value = true
-    } else {
-      // ❌ Erreur de paiement
-      console.error('❌ [MAGASIN] Échec du paiement:', paymentResult.message)
-      paymentErrorMessage.value = paymentResult.message || 'Échec du paiement. Veuillez réessayer.'
-      showPaymentError.value = true
+    console.log('✨ [MAGASIN] Status converti en nombre:', status)
+    console.log('✨ [MAGASIN] requestSent:', requestSent)
+
+    if (!requestSent) {
+      console.error('❌❌❌ [MAGASIN] CETTE ALERTE VIENT D\'ICI - Ligne 230 ❌❌❌')
+      console.error('❌ [MAGASIN] Échec de l\'envoi de la demande:', paymentResult.message)
+      alert(`Erreur de paiement: ${paymentResult.message || 'Échec du paiement'}`)
+      return
     }
+
+    console.log('✅✅✅ [MAGASIN] La requête a été envoyée avec succès! ✅✅✅')
+
+    // Fermer le modal de paiement
+    showPayment.value = false
+
+    // Afficher un message d'information et ne pas afficher de succès tant que le paiement n'est pas confirmé
+    console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation sur téléphone')
+
+    showPendingMessage.value = true
+    pendingPhone.value = payload.phone
+
+    return
   } catch (e: any) {
     console.error('❌ [MAGASIN] Erreur MyPayGA:', e)
-    const errorMessage = e?.message || e?.data?.message || e?.data || 'Erreur inconnue'
-    paymentErrorMessage.value = `Erreur lors du paiement: ${errorMessage}\n\nVérifiez:\n• Votre numéro de téléphone\n• Votre solde Mobile Money\n• Votre connexion internet`
-    showPaymentError.value = true
     showPayment.value = false
+    showErrorMessage.value = true
+    errorDetails.value = e?.message || e?.data?.message || e?.data || 'Erreur inconnue lors du paiement'
   }
-}
-
-// Fonction pour vérifier le statut du paiement en attente
-async function checkPendingPayment() {
-  console.log('🔄 [MAGASIN] Vérification du paiement...')
-  await creditStore.refreshForCurrentUser()
-  console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
-  showPaymentPending.value = false
-  showPaymentSuccess.value = true
 }
 </script>
 
@@ -290,6 +385,49 @@ async function checkPendingPayment() {
 .buy-btn { background: linear-gradient(135deg, #0F7ABB 0%, #3AB24F 100%); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 600; }
 .value-indicator { position: absolute; top: 10px; left: 10px; background: rgba(58,178,79,0.1); color: #059669; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .popular-badge { position: absolute; top: 10px; right: 10px; background: #F59E0B; color: #fff; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; box-shadow: 0 5px 15px rgba(245,158,11,0.4); }
+
+/* Nouveaux styles pour modals custom */
+.modern-modal {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.pending-icon, .error-icon, .success-icon {
+  animation: iconPop 0.5s ease-out;
+}
+
+@keyframes iconPop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.credit-display {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  border: 2px solid #0F7ABB;
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 122, 187, 0.3);
+}
+
+.btn-outline-secondary {
+  border-radius: 12px;
+  margin-top: 8px;
+}
 
 @media (max-width: 992px) {
   .grid-container { flex-direction: column; min-height: 200px; }
