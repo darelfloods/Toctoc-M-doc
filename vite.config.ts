@@ -28,54 +28,54 @@ export default defineConfig({
     proxy: {
       // Proxy vers le backend TTM LOCAL (api_ttm dans le dossier parent)
       '/auth': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/user': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/account': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/rate': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/event': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/price_list': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/my_pay_ga': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/sing_pay_api': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       // API EPG vers le backend TTM local
       '/api_epg': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       // Fallback pour anciens endpoints /api
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

@@ -365,6 +365,7 @@ async function commander() {
 
 .cart-content {
   padding:2rem;
+  overflow-y: auto;
 }
 
 /* ========================================
