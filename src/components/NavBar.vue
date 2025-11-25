@@ -34,13 +34,13 @@
         </div>
 
         <!-- Bouton Pharmacies (avant les autres icônes) -->
-        <Button
+        <!--<Button
           icon="pi pi-building"
           label="Pharmacies"
           class="ml-2"
           text
           @click="showPharmaciesModal = true"
-        />
+        />-->
 
         <!-- Ici tu peux ajouter les boutons Paramètre et Panier si besoin -->
         <!--

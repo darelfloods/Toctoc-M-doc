@@ -121,6 +121,22 @@
       </div>
     </div>
     <div class="modal-backdrop fade show"></div>
+    <!-- Confirmation modal: coût en crédits -->
+    <div v-if="showDebitConfirm">
+      <div class="modal fade show" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
+        <div class="modal-dialog" style="--bs-modal-width:520px;">
+          <div class="modal-content p-4">
+            <h5>Confirmation</h5>
+            <p>Cette action vaut 2 crédits. Voulez-vous continuer ?</p>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+              <button class="btn-cancel-provinces" @click="cancelConfirm">Annuler</button>
+              <button class="btn-confirm-provinces" :disabled="isDebiting" @click="doConfirm">Confirmer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    </div>
   </div>
 </template>
 
@@ -152,6 +168,8 @@ const provinces = [
 // ])
 // const page = ref(1)
 const selectedProvince = ref<string | null>(null)
+const showDebitConfirm = ref<boolean>(false)
+const isDebiting = ref<boolean>(false)
 
 const hasAnyData = computed(() => Object.keys(props.groupedPharmacies || {}).length > 0)
 function hasPharmacies(key: string) {
@@ -206,7 +224,21 @@ function selectProvince(key: string) {
   // L'événement ne sera émis que lors de la confirmation
 }
 function confirmSelection() {
-  if (selectedProvince.value) emit('confirmSelection', selectedProvince.value)
+  if (selectedProvince.value) {
+    // Ouvrir la confirmation indiquant le coût en crédits
+    showDebitConfirm.value = true
+  }
+}
+
+function cancelConfirm() {
+  showDebitConfirm.value = false
+}
+
+function doConfirm() {
+  if (!selectedProvince.value) return
+  // Émettre l événement vers le parent pour ouvrir la sélection de pharmacies
+  emit('confirmSelection', selectedProvince.value)
+  showDebitConfirm.value = false
 }
 </script>
 

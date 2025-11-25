@@ -108,14 +108,57 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useCreditStore } from '../stores/credit'
 
 const props = defineProps<{ visible: boolean; province: string | null; pharmacy: any; product?: any }>()
 const emit = defineEmits(['close','confirm'])
 
 const quantite = ref<number>(1)
+const creditStore = useCreditStore()
 
-watch(() => props.visible, (v) => {
-  if (v) { quantite.value = 1 }
+// Petit helper visuel local pour indiquer le débit
+function showLocalDebitToast(text = '2 crédits ont été débités') {
+  const id = 'reservation-credit-debited'
+  let el = document.getElementById(id)
+  if (!el) {
+    el = document.createElement('div')
+    el.id = id
+    Object.assign(el.style, {
+      position: 'fixed',
+      top: '16px',
+      right: '16px',
+      zIndex: '2000',
+      background: '#0F7ABB',
+      color: '#fff',
+      padding: '10px 14px',
+      borderRadius: '8px',
+      boxShadow: '0 6px 18px rgba(15,122,187,0.25)',
+      fontWeight: '600',
+      fontSize: '14px',
+      display: 'none',
+    } as CSSStyleDeclaration)
+    document.body.appendChild(el)
+  }
+  el.textContent = text
+  el.style.display = 'block'
+  window.setTimeout(() => { el && (el.style.display = 'none') }, 3000)
+}
+
+watch(() => props.visible, async (v) => {
+  if (v) {
+    quantite.value = 1
+    try {
+      // Débiter 2 crédits à l'ouverture de la modale
+      const success = await creditStore.debitCredits(2)
+      if (success) {
+        showLocalDebitToast('2 crédits ont été débités')
+      } else {
+        console.warn('Le débit des crédits a échoué (ou compte manquant)')
+      }
+    } catch (e) {
+      console.error('Erreur lors du débit des crédits à l ouverture du modal:', e)
+    }
+  }
 })
 
 function confirm() {
