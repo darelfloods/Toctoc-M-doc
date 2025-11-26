@@ -2180,7 +2180,7 @@ async function onPurchased(payload: any) {
           <div class="col-lg-3 col-md-8 col-sm-12" v-for="(product, idx) in products" :key="idx">
             <div class="product-card mb-4 mx-3">
               <div class="product-image">
-                <img :src="product.photoURL || '/assets/placeholder.png'" :alt="product.libelle" loading="lazy" />
+                <img :src="product.photo || '/assets/placeholder.png'" :alt="product.libelle" loading="lazy" />
               </div>
               <div class="product-info">
                 <h6 class="product-title">{{ product.libelle }}</h6>

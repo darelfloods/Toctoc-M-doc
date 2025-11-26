@@ -94,6 +94,13 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/n8n-webhook/, ''),
       },
+      // Proxy vers epharma-panel API pour contourner CORS en dev
+      '/epharma-api': {
+        target: 'https://epharma-panel.srv557357.hstgr.cloud',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/epharma-api/, ''),
+      },
     },
   },
 })
