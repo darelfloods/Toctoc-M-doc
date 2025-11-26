@@ -77,6 +77,9 @@ const pendingProductForCheck = ref<any | null>(null)
 const isLoadingProducts = ref(true)
 // Nombre d'articles visibles sur la page d'accueil
 const visibleCount = ref(8)
+// Pagination: page size and current page for product listing
+const pageSize = ref(50)
+const currentPage = ref(1)
 // Notification temporaire après débit de crédit
 const showCreditDebited = ref(false)
 let creditDebitedTimer: number | undefined
@@ -1466,13 +1469,17 @@ async function loadAllProduct() {
   try {
     console.log('📦 [PRODUCTS] Chargement des produits...')
 
-    // Charger un échantillon plus large pour avoir plus de choix
-    const data = await homeService.getAllProduct(1, 100)
+    // Charger la page 1 (pageSize) depuis l'API
+    const data = await homeService.getAllProduct(1, 10000)
+    // initialProducts: tout le dataset (ou gros échantillon) pour la pagination côté client
     initialProducts.value = data || []
 
-    if (data && data.length > 0) {
-      console.log('✅ [PRODUCTS] Affichage des produits')
-      products.value = data.slice(0, visibleCount.value)
+    if (initialProducts.value && initialProducts.value.length > 0) {
+      console.log('✅ [PRODUCTS] Affichage des produits (pageSize=', pageSize.value, ')')
+      currentPage.value = 1
+      // afficher la première page
+      const start = (currentPage.value - 1) * pageSize.value
+      products.value = initialProducts.value.slice(start, start + pageSize.value)
     } else {
       products.value = []
     }
@@ -1492,16 +1499,39 @@ function retryLoadProducts() {
 }
 
 function loadMore() {
-  // Afficher jusqu'à 2000 produits en une seule action
-  const maxToShow = Math.min(2000, (initialProducts.value || []).length)
-  visibleCount.value = maxToShow
-  products.value = (initialProducts.value || []).slice(0, visibleCount.value)
+  // Avancer d'une page
+  const total = initialProducts.value.length
+  const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+  if (currentPage.value < maxPage) {
+    currentPage.value += 1
+    const start = (currentPage.value - 1) * pageSize.value
+    products.value = initialProducts.value.slice(start, start + pageSize.value)
+  }
 }
 
 function reduceList() {
-  // Réduire l'affichage aux 8 premiers produits
-  visibleCount.value = 8
-  products.value = (initialProducts.value || []).slice(0, visibleCount.value)
+  // Revenir à la première page
+  currentPage.value = 1
+  const start = 0
+  products.value = (initialProducts.value || []).slice(start, start + pageSize.value)
+}
+
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil((initialProducts.value || []).length / pageSize.value))
+})
+
+function prevPage() {
+  if (currentPage.value <= 1) return
+  currentPage.value -= 1
+  const start = (currentPage.value - 1) * pageSize.value
+  products.value = (initialProducts.value || []).slice(start, start + pageSize.value)
+}
+
+function nextPage() {
+  if (currentPage.value >= totalPages.value) return
+  currentPage.value += 1
+  const start = (currentPage.value - 1) * pageSize.value
+  products.value = (initialProducts.value || []).slice(start, start + pageSize.value)
 }
 
 async function onSearchInput(e: Event) {
@@ -1969,10 +1999,10 @@ async function onPurchased(payload: any) {
               <span class="text">{{ creditStore.credits }} crédits</span>
             </div>
             <!-- Bouton Pharmacies -->
-            <button class="pharmacies-btn ms-3" @click="showPharmacies = true">
+            <!--<button class="pharmacies-btn ms-3" @click="showPharmacies = true">
               <i class="bi bi-hospital"></i>
               <span class="text">Pharmacies</span>
-            </button>
+            </button>-->
             <button style="border: none;" @click="showPanier = true">
               <span class="badge bg-success p-2 position-relative" style="border-radius: 50px;">
                 <i class="bi bi-cart4" style="font-size:25px"></i>
@@ -2163,12 +2193,32 @@ async function onPurchased(payload: any) {
           </div>
         </div>
       </div>
-      <!-- Actions liste produits: Voir plus / Réduire -->
-      <div v-if="!isLoadingProducts && searchTerm.trim().length === 0" class="text-center mt-3">
-        <button v-if="products.length < Math.min(2000, initialProducts.length)" class="btn btn-primary px-4 py-2"
-          style="border-radius: 12px;" @click="loadMore">Voir plus</button>
-        <button v-else-if="initialProducts.length > 8" class="btn btn-outline-secondary px-4 py-2 ms-2"
-          style="border-radius: 12px;" @click="reduceList">Réduire</button>
+      <!-- Actions liste produits: Pagination simple (controls fixed at bottom corners) -->
+      <div v-if="!isLoadingProducts && searchTerm.trim().length === 0">
+        <!-- Left chevron (previous) -->
+        <button
+          class="pagination-fixed pagination-left"
+          :disabled="currentPage <= 1"
+          @click="prevPage"
+          aria-label="Page précédente"
+        >
+          <i class="bi bi-chevron-left" style="font-size:18px"></i>
+        </button>
+
+        <!-- Right chevron (next) -->
+        <button
+          class="pagination-fixed pagination-right"
+          :disabled="currentPage >= totalPages"
+          @click="nextPage"
+          aria-label="Page suivante"
+        >
+          <i class="bi bi-chevron-right" style="font-size:18px"></i>
+        </button>
+
+        <!-- Page indicator centered bottom (optional) -->
+        <div class="pagination-center">
+          <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        </div>
       </div>
     </div>
   </section>
@@ -4032,5 +4082,41 @@ body {
   .modal-overlay-modern .text-muted {
     font-size: 0.85rem;
   }
+}
+
+/* Pagination fixed chevrons */
+.pagination-fixed {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2000;
+  background: rgba(15,122,187,0.95);
+  color: #fff;
+  border: none;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.pagination-fixed:disabled { opacity: 0.45; cursor: not-allowed; }
+.pagination-left { left: 18px; }
+.pagination-right { right: 18px; }
+.pagination-center {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1999;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 10px 18px;
+  min-width: 220px;
+  text-align: center;
+  border-radius: 14px;
+  font-weight: 700;
 }
 </style>

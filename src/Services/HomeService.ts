@@ -211,14 +211,86 @@ export class HomeService {
   }
 
   async getAllProduct(page: number, count: number) {
-    const { ExcelProductService } = await import('./ExcelProductService');
-    const allProducts = await ExcelProductService.getProducts();
+    // Nouvelle implémentation: récupérer les produits depuis l'API epharma
+    // Helper pour construire des URLs d'images propres (accessible depuis try + catch)
+    const baseEpharma = 'https://epharma-panel.srv557357.hstgr.cloud'
+    const makeFullUrl = (raw: any) => {
+      if (!raw || raw === 'null' || raw === null) {
+        return '/assets/placeholder.png'
+      }
 
-    // Simulation de la pagination
-    const startIndex = (page - 1) * count;
-    const endIndex = startIndex + count;
+      let s = String(raw).trim()
 
-    return allProducts.slice(startIndex, endIndex);
+      // Déjà une URL complète → on la renvoie telle quelle (avec nettoyage)
+      if (/^https?:\/\//i.test(s)) {
+        return s.replace(/([^:])\/{2,}/g, '$1/')
+      }
+
+      // Chemin relatif → on préfixe
+      return (baseEpharma + '/' + s).replace(/\/{2,}/g, '/')
+    }
+
+    try {
+      const url = 'https://epharma-panel.srv557357.hstgr.cloud/public/api/produits'
+      const res = await fetch(url)
+      if (!res.ok) {
+        throw new Error(`Erreur HTTP ${res.status}`)
+      }
+      const json = await res.json()
+      const allProducts = Array.isArray(json?.data) ? json.data : []
+      // Normaliser les propriétés attendues par l'app (photoURL, libelle, cip...)
+      // Use the photo URL exactly as returned by the external API (do not prefix or modify),
+      // but guard against null / "null" / empty values which should use the placeholder.
+      const normalized = allProducts.map((p: any) => {
+        const raw = p.photo ?? p.photoURL ?? p.image
+        const photoURL = (raw === null || raw === undefined)
+          ? '/assets/placeholder.png'
+          : (String(raw).trim() || '/assets/placeholder.png')
+
+        // If API returns the string "null", fallback to placeholder
+        const finalPhoto = (typeof photoURL === 'string' && photoURL.toLowerCase() === 'null')
+          ? '/assets/placeholder.png'
+          : photoURL
+
+        return {
+          id: p.id,
+          libelle: p.libelle || p.name || p.nom || '',
+          cip: p.cip || p.cip_deux || '',
+          prix_de_vente: p.prix_de_vente ?? p.price ?? null,
+          description: p.description || '',
+          photoURL: finalPhoto,
+          // garder le reste pour compatibilité
+          ...p
+        }
+      })
+
+      // Pagination côté client: renvoyer la page demandée
+      const startIndex = (page - 1) * count
+      const endIndex = startIndex + count
+      return normalized.slice(startIndex, endIndex)
+    } catch (e) {
+      console.warn('[HomeService] getAllProduct failed, falling back to local Excel list:', e)
+      // Fallback to previous behavior when external API fails
+      const { ExcelProductService } = await import('./ExcelProductService');
+      const allProducts = await ExcelProductService.getProducts();
+      // Normalize fallback products so UI always has a `photoURL` and expected fields
+      const normalizedFallback = (allProducts || []).map((p: any) => {
+        const photoRaw = p.photo || p.photoURL || p.image || ''
+        return {
+          id: p.id,
+          libelle: p.libelle || p.name || p.nom || '',
+          cip: p.cip || p.cip_deux || '',
+          prix_de_vente: p.prix_de_vente ?? p.price ?? null,
+          description: p.description || p.desc || '',
+          // Excel source may not have a dedicated photo field; try common keys then fallback to placeholder
+          photoURL: makeFullUrl(photoRaw),
+          ...p
+        }
+      })
+      const startIndex = (page - 1) * count;
+      const endIndex = startIndex + count;
+      return normalizedFallback.slice(startIndex, endIndex);
+    }
   }
 
   async disponibilite(cip: string | number) {
