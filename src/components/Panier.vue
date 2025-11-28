@@ -237,9 +237,8 @@ function resolveProductLabel(p: any): string {
 }
 
 async function postReservationProduct(payload: any): Promise<Response> {
-  const base = import.meta.env.DEV
-    ? '/reservations-api'
-    : 'https://demo2.srv557357.hstgr.cloud'
+  // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+  const base = '/reservations-api'
   const url = `${base}/api/reservation_produits`
   return fetch(url, {
     method: 'POST',

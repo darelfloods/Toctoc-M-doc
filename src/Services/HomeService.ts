@@ -35,10 +35,8 @@ export class HomeService {
 
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
 
-    // Webhook URL n8n - direct URL in production, proxy in dev
-    const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
-      : 'https://n8n-workflows-cktx.onrender.com/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    // Webhook URL n8n - utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+    const webhookUrl = '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
 
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
@@ -218,10 +216,8 @@ export class HomeService {
 
   async getAllProduct(page: number, count: number) {
     try {
-      // En dev, utiliser le proxy Vite pour contourner CORS. En prod, utiliser l'URL directe.
-      const apiUrl = import.meta.env.DEV
-        ? '/epharma-api/public/api/produits'
-        : 'https://epharma-panel.srv557357.hstgr.cloud/public/api/produits'
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const apiUrl = '/epharma-api/public/api/produits'
       const res = await fetch(apiUrl)
       if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`)
 

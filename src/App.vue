@@ -9,7 +9,8 @@ import { onMounted } from 'vue'
 
 // Wake up n8n on Render (free tier sleeps after 15min inactivity)
 onMounted(() => {
-  const n8nUrl = 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+  const n8nUrl = '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
 
   const sendWakeupPing = () => {
     fetch(n8nUrl, {

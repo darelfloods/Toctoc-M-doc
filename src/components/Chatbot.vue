@@ -208,10 +208,8 @@ let hasSentChatbotPing = false
 watch(open, (isOpen) => {
   if (isOpen && !hasSentChatbotPing) {
     hasSentChatbotPing = true
-    // Use direct URL in production, proxy in development
-    const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
-      : 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+    // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+    const webhookUrl = '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
 
     fetch(webhookUrl, {
       method: 'POST',
@@ -396,10 +394,8 @@ async function sendMessage() {
     return
   }
 
-  // Free-text: POST to n8n webhook - direct URL in production, proxy in dev
-  const webhookUrl = import.meta.env.DEV
-    ? '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
-    : 'https://n8n-workflows-cktx.onrender.com/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
+  // Free-text: POST to n8n webhook - utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+  const webhookUrl = '/n8n-webhook/webhook/8e3590f6-96f5-4761-98f3-a487f882b066'
   isTyping.value = true
   let botText: string | null = null
 

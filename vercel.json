@@ -6,6 +6,22 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/epharma-api/:path*",
+      "destination": "https://epharma-panel.srv557357.hstgr.cloud/:path*"
+    },
+    {
+      "source": "/api_epg/:path*",
+      "destination": "https://api-ttm.onrender.com/api_epg/:path*"
+    },
+    {
+      "source": "/reservations-api/:path*",
+      "destination": "https://demo2.srv557357.hstgr.cloud/:path*"
+    },
+    {
+      "source": "/n8n-webhook/:path*",
+      "destination": "https://n8n-workflows-cktx.onrender.com/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -17,6 +33,23 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/epharma-api/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     }
