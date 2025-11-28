@@ -30,7 +30,17 @@
                     <div class="product-card-content">
                       <!-- Section image + info -->
                       <div class="product-main-section">
-                        <img :src="item.product?.photoURL || '/assets/placeholder.png'" alt="Produit" class="product-image-cart">
+                        <img 
+                          :src="getProductImage(item.product)" 
+                          alt="Produit" 
+                          class="product-image-cart"
+                          @error="(e) => { 
+                            const target = e.target as HTMLImageElement
+                            if (target.src !== '/assets/placeholder.png') {
+                              target.src = '/assets/placeholder.png'
+                            }
+                          }"
+                        >
                         <div class="product-info">
                           <div class="product-name-cart">{{ item.product?.libelle || item.product?.nom || 'Produit' }}</div>
                           <div class="product-pharmacy">
@@ -122,6 +132,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useCartStore } from '../stores/cart'
+import { getProductImage } from '../utils/imageUtils'
 // import { HttpService } from '../Services/HttpService' // Non utilisé pour éviter la préfixation BASE_URL
 
 const props = defineProps<{ visible: boolean }>()

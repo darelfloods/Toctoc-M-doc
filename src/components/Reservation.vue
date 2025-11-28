@@ -17,7 +17,17 @@
             <div class="row g-3 align-items-stretch">
               <!-- Left: product image -->
               <div class="col-5 text-center position-relative">
-                <img class="product-image" :src="productImage" alt="Produit">
+                <img 
+                  class="product-image" 
+                  :src="productImage" 
+                  alt="Produit"
+                  @error="(e) => { 
+                    const target = e.target as HTMLImageElement
+                    if (target.src !== '/assets/placeholder.png') {
+                      target.src = '/assets/placeholder.png'
+                    }
+                  }"
+                >
                 <div class="badge-new">Nouveau</div>
               </div>
               <!-- Right: pharmacy + product info -->
@@ -108,6 +118,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { getProductImage } from '../utils/imageUtils'
 import { useCreditStore } from '../stores/credit'
 
 const props = defineProps<{ visible: boolean; province: string | null; pharmacy: any; product?: any }>()
@@ -168,7 +179,7 @@ function confirm() {
 const unitPrice = computed(() => Number(props.product?.prix_de_vente || 0))
 const totalPrice = computed(() => unitPrice.value * Math.max(1, Number(quantite.value || 1)))
 const productName = computed(() => props.product?.libelle || props.product?.nom || props.product?.name || 'Produit')
-const productImage = computed(() => props.product?.photoURL || '/assets/placeholder.png')
+const productImage = computed(() => getProductImage(props.product))
 const pharmacy = computed(() => props.pharmacy)
 
 function pharmacyName(ph: any) {

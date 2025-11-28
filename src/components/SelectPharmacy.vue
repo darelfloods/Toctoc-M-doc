@@ -10,7 +10,17 @@
             </button>
             <div class="header-main">
               <div class="header-info">
-                <img class="pharmacy-icon" :src="productImage" alt="Pharmacie">
+                <img 
+                  class="pharmacy-icon" 
+                  :src="productImage" 
+                  alt="Pharmacie"
+                  @error="(e) => { 
+                    const target = e.target as HTMLImageElement
+                    if (target.src !== '/assets/placeholder.png') {
+                      target.src = '/assets/placeholder.png'
+                    }
+                  }"
+                >
                 <div>
                   <h4 class="modal-title">Pharmacies — {{ province || 'province non définie' }}</h4>
                   <p class="modal-subtitle">Sélectionnez une ou plusieurs pharmacies pour votre produit</p>
@@ -51,7 +61,17 @@
               <!-- Bandeau produit allégé -->
               <div class="product-strip">
                 <div class="strip-left">
-                  <img class="product-thumb" :src="productImage" alt="Produit" />
+                   <img 
+                     class="product-thumb" 
+                     :src="productImage" 
+                     alt="Produit"
+                     @error="(e) => { 
+                       const target = e.target as HTMLImageElement
+                       if (target.src !== '/assets/placeholder.png') {
+                         target.src = '/assets/placeholder.png'
+                       }
+                     }"
+                   />
                   <div class="strip-info">
                     <span class="product-name">{{ productName }}</span>
                     <span class="product-helper">Produits similaires</span>
@@ -158,6 +178,7 @@ const emit = defineEmits(['close','select','selectMultiple'])
 
 // Gestion des sélections multiples
 import { useCreditStore } from '../stores/credit'
+import { getProductImage } from '../utils/imageUtils'
 
 const selectedPharmacies = ref<Set<any>>(new Set())
 const showDebitConfirm = ref<boolean>(false)
@@ -165,7 +186,7 @@ const isDebiting = ref<boolean>(false)
 const creditStore = useCreditStore()
 
 const productName = computed(() => props.product?.libelle || props.product?.nom || props.product?.name || 'Produit')
-const productImage = computed(() => props.product?.photoURL || '/assets/placeholder.png')
+const productImage = computed(() => getProductImage(props.product))
 const loading = computed(() => props.loading === true)
 
 // Recherche et filtrage

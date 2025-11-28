@@ -1,6 +1,7 @@
 // src/Services/HomeService.ts
 import { joinUrl } from '@/utils/url'
 import { fetchApi } from '@/utils/api'
+import { normalizeProductImage } from '@/utils/imageUtils'
 
 export class HomeService {
   private searchController?: AbortController;
@@ -18,6 +19,11 @@ export class HomeService {
       }
     } catch { }
     this.searchController = undefined;
+  }
+
+  // Vider le cache de recherche pour forcer le rafraîchissement des données (y compris les images)
+  public clearSearchCache() {
+    this.searchCache.clear();
   }
 
   /**
@@ -223,21 +229,22 @@ export class HomeService {
       const allProducts = Array.isArray(json?.data) ? json.data : []
 
       const normalized = allProducts.map((p: any) => {
-        // Vérifier que photo n'est pas vide, null, undefined ou la chaîne "null"
-        const photoValue = p.photo || p.image || p.photoURL
-        const photo = (!photoValue || String(photoValue).toLowerCase() === 'null' || String(photoValue).trim() === '')
-          ? '/assets/placeholder.png'
-          : photoValue
+        // Normaliser l'image du produit avec fallback vers placeholder
+        const productWithImage = normalizeProductImage(p)
         
+        // Construire l'objet final : d'abord les propriétés de base, puis le reste, enfin les images normalisées
         return {
           id: p.id,
           libelle: p.libelle || p.name || p.nom || '',
           cip: p.cip || p.cip_deux || '',
           prix_de_vente: p.prix_de_vente ?? p.price ?? null,
           description: p.description || '',
-          photo: photo,
           prescriptionRequired: p.prescriptionRequired ?? p.prescription_required ?? false,
-          ...p
+          ...p, // Toutes les autres propriétés originales
+          // Enfin, écraser avec les valeurs normalisées d'image (photo, photoURL, image) pour garantir le fallback
+          photo: productWithImage.photo,
+          photoURL: productWithImage.photoURL,
+          image: productWithImage.image
         }
       })
 
@@ -273,10 +280,12 @@ export class HomeService {
     const { ExcelProductService } = await import('./ExcelProductService');
     const key = term.toLowerCase();
 
-    // Retour immédiat si déjà en cache
-    if (this.searchCache.has(key)) {
-      return this.searchCache.get(key) as any[];
-    }
+    // Note: Le cache est désactivé pour garantir que les nouvelles images sont toujours prises en compte
+    // Si vous avez besoin de performance, vous pouvez réactiver le cache mais avec un TTL
+    // Retour immédiat si déjà en cache (désactivé temporairement pour garantir les mises à jour)
+    // if (this.searchCache.has(key)) {
+    //   return this.searchCache.get(key) as any[];
+    // }
 
     // Annuler la recherche précédente si elle est encore en cours
     this.cancelSearch();
@@ -287,18 +296,12 @@ export class HomeService {
       const data = await ExcelProductService.searchProducts(term);
 
       // Normaliser les images des résultats de recherche avec placeholder si absent
+      // Cette normalisation garantit que les nouvelles images sont toujours détectées
       const normalized = (data || []).map((p: any) => {
-        const photoValue = p.photo || p.image || p.photoURL
-        const photo = (!photoValue || String(photoValue).toLowerCase() === 'null' || String(photoValue).trim() === '')
-          ? '/assets/placeholder.png'
-          : photoValue
-        return {
-          ...p,
-          photo: photo
-        }
+        return normalizeProductImage(p)
       })
 
-      // Mettre en cache le résultat
+      // Mettre en cache le résultat (optionnel - peut être désactivé pour forcer le rafraîchissement)
       this.searchCache.set(key, Array.isArray(normalized) ? normalized : []);
       return normalized;
     } catch (err: any) {
