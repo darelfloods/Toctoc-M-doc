@@ -3,17 +3,29 @@
     <div v-if="!showPayment" class="modal fade show" id="magasin" tabindex="-1" aria-labelledby="magasinLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="display:block;" role="dialog" aria-modal="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content custom-modal-content">
-          <div class="modal-header border-0">
-            <h1 class="modal-title d-flex align-items-center" id="magasinLabel">
-              <i class="bi bi-coin me-3" style="color: var(--accent-color);"></i>
-              Magasin de Crédits
-            </h1>
+          <div class="modal-header border-0 magasin-header">
+            <div class="magasin-title-block">
+              <div class="magasin-icon">
+                <i class="bi bi-coin"></i>
+              </div>
+              <div>
+                <h1 class="modal-title" id="magasinLabel">Magasin de crédits</h1>
+                <p class="magasin-subtitle">
+                  Choisissez une offre, payez par Mobile Money et vos crédits sont automatiquement ajoutés à votre compte.
+                </p>
+              </div>
+            </div>
             <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
           </div>
 
-          <div class="modal-body p-0">
+          <div class="modal-body magasin-body">
             <div class="grid-container">
-              <div class="credit-card" v-for="offer in offers" :key="offer.id" :class="{ popular: offer.popular }">
+              <div
+                class="credit-card"
+                v-for="offer in offers"
+                :key="offer.id"
+                :class="{ popular: offer.popular }"
+              >
                 <div v-if="offer.badge" class="value-indicator">
                   <i :class="offer.badge.icon + ' me-1'"></i>
                   {{ offer.badge.text }}
@@ -23,24 +35,32 @@
                   Populaire
                 </div>
                 <div class="text-center">
-                  <h5 class="mb-3 fw-bold text-uppercase">{{ offer.title }}</h5>
-                  <div class="mb-3">
-                    <div class="credit-amount">
-                      <img :src="offer.img" width="60" height="60" alt="" />
-                    </div>
-                    <div class="credit-label">Crédits</div>
+                  <div class="credit-amount">
+                    <img :src="offer.img" width="64" height="64" alt="" />
                   </div>
-                  <div class="price">{{ offer.price }}</div>
+                  <h5 class="offer-title">{{ offer.title }}</h5>
+
+                  <div class="credits-line">
+                    <span class="credits-value">
+                      {{ getCreditsForOffer(offer) }}
+                    </span>
+                    <span class="credits-unit">crédits</span>
+                  </div>
+
+                  <div class="price-line">
+                    <span class="price">{{ offer.price }}</span>
+                  </div>
+
                   <button class="buy-btn" @click="openConfirm(offer)">
                     <i class="bi bi-cart-check me-2"></i>
-                    Acheter
+                    Acheter cette offre
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="modal-footer border-0">
+          <div class="modal-footer border-0 magasin-footer">
             <button type="button" class="btn btn-outline-secondary footer-btn" @click="$emit('close')">
               <i class="bi bi-x me-2"></i>
               Fermer
@@ -81,12 +101,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Paiement from './Paiement.vue'
 import { MyPayGaService } from '@/Services/MyPayGaService'
 import { useAuthStore } from '@/stores/auth'
 import { CreditService } from '@/Services/CreditService'
 import { useCreditStore } from '@/stores/credit'
+import { HttpService } from '@/Services/HttpService'
 
 interface Offer {
   id: number
@@ -98,19 +119,25 @@ interface Offer {
   badge?: { icon: string; text: string }
 }
 
+interface Rate {
+  id: number
+  libelle: string
+  price: number
+  credit: number
+}
+
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close','purchased'])
 
 // Ajout du libelle (clé produit) attendu par l'API pour résoudre le bon rate_id côté backend
-// 🎯 SEULEMENT L'OFFRE 100F AVEC L'IMAGE DES 20 CRÉDITS
+// 🎯 Toutes les offres sont maintenant affichées et synchronisées avec les tarifs backend
 const offers: Offer[] = [
   { id: 1, libelle: 'starter', title: 'Offre Starter', price: '100 F CFA', img: '/assets/offre3.png' },
-  // Autres offres masquées temporairement
-  // { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },
-  // { id: 3, libelle: 'standard', title: 'Offre Standard', price: '1000 F CFA', img: '/assets/offre3.png', popular: true },
-  // { id: 4, libelle: 'premium', title: 'Offre Premium', price: '2500 F CFA', img: '/assets/offre4.png', badge: { icon: 'fas fa-percentage', text: 'Économie' } },
-  // { id: 5, libelle: 'pro', title: 'Offre Pro', price: '5000 F CFA', img: '/assets/offre5.png', badge: { icon: 'fas fa-fire', text: 'Top Deal' } },
-  // { id: 6, libelle: 'elite', title: 'Offre Elite', price: '7500 F CFA', img: '/assets/offre6.png', badge: { icon: 'fas fa-crown', text: 'VIP' } },
+  { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },
+  { id: 3, libelle: 'standard', title: 'Offre Standard', price: '1000 F CFA', img: '/assets/offre3.png', popular: true },
+  { id: 4, libelle: 'premium', title: 'Offre Premium', price: '2500 F CFA', img: '/assets/offre4.png', badge: { icon: 'fas fa-percentage', text: 'Économie' } },
+  { id: 5, libelle: 'pro', title: 'Offre Pro', price: '5000 F CFA', img: '/assets/offre5.png', badge: { icon: 'fas fa-fire', text: 'Top Deal' } },
+  { id: 6, libelle: 'elite', title: 'Offre Elite', price: '7500 F CFA', img: '/assets/offre6.png', badge: { icon: 'fas fa-crown', text: 'VIP' } },
 ]
 
 const showConfirm = ref(false)
@@ -118,6 +145,30 @@ const showPayment = ref(false)
 const selectedOffer = ref<any | null>(null)
 const auth = useAuthStore()
 const creditStore = useCreditStore()
+const rates = ref<Rate[]>([])
+
+onMounted(async () => {
+  try {
+    console.log('📡 [MAGASIN] Chargement des tarifs depuis le backend (/rate/all)...')
+    const res = await HttpService.get<Rate[]>('/rate/all')
+    rates.value = res.data || []
+
+    // Synchroniser les offres front avec les tarifs backend (id + prix)
+    offers.forEach((of) => {
+      const rate = rates.value.find(
+        (r) => r.libelle.toLowerCase() === String(of.libelle || '').toLowerCase()
+      )
+      if (rate) {
+        of.id = rate.id
+        of.price = `${rate.price} F CFA`
+      }
+    })
+
+    console.log('✅ [MAGASIN] Tarifs backend chargés:', rates.value)
+  } catch (e) {
+    console.error('❌ [MAGASIN] Erreur lors du chargement des tarifs backend:', e)
+  }
+})
 
 function openConfirm(offer: any) {
   selectedOffer.value = offer
@@ -137,49 +188,45 @@ function parseAmount(p: any): number {
 }
 
 async function resolvePricing(of: any): Promise<{ rate_id: number; creditAmount: number }> {
-  // 🎯 TABLE DE CORRESPONDANCE DÉFINITIVE PRIX → CRÉDITS
-  // Basée sur les vrais forfaits du système
-  const creditsByPrice: Record<number, number> = {
-    100: 2,      // 100 F CFA → 2 crédits
-    500: 10,     // 500 F CFA → 10 crédits  
-    1000: 20,    // 1000 F CFA → 20 crédits
-    2500: 50,    // 2500 F CFA → 50 crédits
-    5000: 100,   // 5000 F CFA → 100 crédits
-    7500: 200,   // 7500 F CFA → 200 crédits
+  // 🎯 NOUVELLE LOGIQUE : s'aligner sur le backend
+  // On récupère le tarif directement depuis /rate/all (RateModel) et on utilise Rate.credit
+
+  if (!rates.value.length) {
+    console.warn('⚠️ [MAGASIN] Aucun tarif chargé, tentative de résolution impossible')
+    return { rate_id: 0, creditAmount: 0 }
   }
-  
-  // Fallback par libellé (garde pour compatibilité)
-  const fallbackByLibelle: Record<string, number> = {
-    starter: 2,
-    basic: 10,
-    standard: 20,
-    premium: 50,
-    pro: 100,
-    elite: 200,
-  }
-  
+
   const libelle: string | undefined = of?.libelle
-  const prix = parseAmount(of?.price) || 0
-  const rate_id = Number(of?.id) || 0 // Garder le rate_id original pour MyPayGA
-  
-  // 🎯 PRIORITÉ 1: Correspondance par prix (le plus fiable)
-  let creditAmount = creditsByPrice[prix] || 0
-  
-  // 🎯 PRIORITÉ 2: Fallback par libellé si pas de correspondance prix
-  if (creditAmount === 0 && libelle) {
-    creditAmount = fallbackByLibelle[libelle] || 0
+
+  // On essaie d'abord par id (si déjà synchronisé), puis par libellé
+  let rate = rates.value.find((r) => r.id === of.id)
+  if (!rate && libelle) {
+    rate = rates.value.find(
+      (r) => r.libelle.toLowerCase() === String(libelle).toLowerCase()
+    )
   }
-  
-  console.log('💰 [PRICING] RÉSOLUTION FINALE:')
-  console.log('  - Prix:', prix, 'F CFA')
-  console.log('  - Libellé:', libelle)
-  console.log('  - Crédits attribués:', creditAmount)
+
+  if (!rate) {
+    console.warn('⚠️ [MAGASIN] Aucun tarif backend correspondant pour cette offre:', of)
+    return { rate_id: 0, creditAmount: 0 }
+  }
+
+  const rate_id = rate.id
+  const creditAmount = rate.credit
+
+  console.log('💰 [PRICING] RÉSOLUTION VIA BACKEND:')
+  console.log('  - Libellé (API):', rate.libelle)
+  console.log('  - Prix (API):', rate.price)
+  console.log('  - Crédits (API):', creditAmount)
   console.log('  - Rate ID:', rate_id)
-  
-  // 🚫 IGNORER COMPLÈTEMENT L'API DÉFAILLANTE
-  // L'API renvoie des valeurs incorrectes, on utilise nos valeurs hardcodées
-  
+
   return { rate_id, creditAmount }
+}
+
+function getCreditsForOffer(of: Offer): string {
+  // 🔒 Affichage volontairement neutre pour les crédits
+  // On masque la valeur exacte et on affiche simplement "--"
+  return '—'
 }
 
 async function onPaymentValidate(payload: { method: string; phone: string; offer?: any }) {
@@ -268,24 +315,179 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
 <style scoped>
 .custom-modal-content { background: rgba(255,255,255,0.98); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); overflow: hidden; }
-.grid-container { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 24px; min-height: 300px; }
-/* Pour plusieurs offres, utiliser grid */
-.grid-container.multiple-offers { display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; }
-.credit-card { background: #fff; border-radius: 16px; padding: 24px; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; }
-.credit-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-.credit-amount { display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
-.credit-label { color: #718096; font-size: 12px; }
-.price { font-size: 20px; font-weight: 700; color: #2d3748; margin: 12px 0 16px; }
-.buy-btn { background: linear-gradient(135deg, #0F7ABB 0%, #3AB24F 100%); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 600; }
-.value-indicator { position: absolute; top: 10px; left: 10px; background: rgba(58,178,79,0.1); color: #059669; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-.popular-badge { position: absolute; top: 10px; right: 10px; background: #F59E0B; color: #fff; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; box-shadow: 0 5px 15px rgba(245,158,11,0.4); }
+.magasin-header {
+  padding: 24px 32px 8px;
+}
 
+.magasin-title-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.magasin-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0F7ABB 0%, #3AB24F 100%);
+  color: #fff;
+  font-size: 22px;
+}
+
+.magasin-title-block h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.magasin-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.magasin-body {
+  padding: 8px 24px 24px;
+  background: radial-gradient(circle at top left, rgba(15, 122, 187, 0.07), transparent 55%),
+              radial-gradient(circle at bottom right, rgba(58, 178, 79, 0.07), transparent 55%);
+}
+
+.offers-helper-text {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  padding: 0 8px;
+}
+
+.offers-helper-text > span:first-child {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 8px 4px 4px;
+  min-height: 260px;
+}
+
+.credit-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 16px 18px;
+  position: relative;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.credit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  border-color: rgba(37, 99, 235, 0.55);
+}
+
+.credit-amount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.offer-title {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #111827;
+}
+
+.credits-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.credits-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F7ABB;
+}
+
+.credits-unit {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.price-line {
+  margin-bottom: 10px;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.buy-btn {
+  background: linear-gradient(135deg, #0F7ABB 0%, #3AB24F 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 4px;
+  box-shadow: 0 8px 18px rgba(15, 122, 187, 0.28);
+}
+
+.buy-btn:hover {
+  opacity: 0.95;
+}
+
+.value-indicator {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(58,178,79,0.08);
+  color: #059669;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.popular-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #F59E0B;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 5px 15px rgba(245,158,11,0.4);
+}
 @media (max-width: 992px) {
-  .grid-container { flex-direction: column; min-height: 200px; }
-  .grid-container.multiple-offers { grid-template-columns: repeat(2, 1fr); }
+  .magasin-body {
+    padding-inline: 16px;
+  }
 }
 @media (max-width: 576px) {
-  .grid-container { padding: 16px; min-height: 150px; }
-  .grid-container.multiple-offers { grid-template-columns: 1fr; }
+  .magasin-header {
+    padding: 20px 16px 6px;
+  }
+
+  .grid-container { padding: 4px 0 8px; min-height: 150px; }
 }
 </style>
