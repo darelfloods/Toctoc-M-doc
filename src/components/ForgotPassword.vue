@@ -16,7 +16,10 @@
                 <img class="img-fluid" src="/assets/Fichier 12.svg" alt="logo_ttm" width="160" height="80">
               </div>
               <div class="text-center" style="display: inline-block;">
-                <h3 class="text-dark" style="display: inline-block; font-family: sans-serif;">Réinitialisation de mot de passe</h3>
+                <h3 class="text-dark" style="display: inline-block; font-family: sans-serif;">Mot de passe oublié ?</h3>
+                <p class="text-muted" style="font-size: 14px; margin-top: 10px;">
+                  Entrez votre email et nous vous enverrons un lien pour choisir un nouveau mot de passe.
+                </p>
               </div>
             </div>
 
@@ -76,9 +79,9 @@ async function onSubmit() {
   errorMessage.value = ''
   try {
     await AuthService.forgotPassword(email.value.trim())
-    successMessage.value = 'Si cet email est reconnu, un lien de réinitialisation vous a été envoyé.'
+    successMessage.value = 'Un lien de réinitialisation a été envoyé à votre email. Vérifiez votre boîte de réception.'
     // fermer après un court délai
-    setTimeout(() => emit('close'), 1200)
+    setTimeout(() => emit('close'), 2500)
   } catch (e) {
     errorMessage.value = "Échec de l'envoi. Veuillez réessayer."
   } finally {

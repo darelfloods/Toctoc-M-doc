@@ -10,7 +10,17 @@
             </button>
             <div class="header-main">
               <div class="header-info">
-                <img class="pharmacy-icon" :src="productImage" alt="Pharmacie">
+                <img 
+                  class="pharmacy-icon" 
+                  :src="productImage" 
+                  alt="Pharmacie"
+                  @error="(e) => { 
+                    const target = e.target as HTMLImageElement
+                    if (target.src !== '/assets/placeholder.png') {
+                      target.src = '/assets/placeholder.png'
+                    }
+                  }"
+                >
                 <div>
                   <h4 class="modal-title">Pharmacies — {{ province || 'province non définie' }}</h4>
                   <p class="modal-subtitle">Sélectionnez une ou plusieurs pharmacies pour votre produit</p>
@@ -51,7 +61,17 @@
               <!-- Bandeau produit allégé -->
               <div class="product-strip">
                 <div class="strip-left">
-                  <img class="product-thumb" :src="productImage" alt="Produit" />
+                   <img 
+                     class="product-thumb" 
+                     :src="productImage" 
+                     alt="Produit"
+                     @error="(e) => { 
+                       const target = e.target as HTMLImageElement
+                       if (target.src !== '/assets/placeholder.png') {
+                         target.src = '/assets/placeholder.png'
+                       }
+                     }"
+                   />
                   <div class="strip-info">
                     <span class="product-name">{{ productName }}</span>
                     <span class="product-helper">Produits similaires</span>
@@ -131,6 +151,23 @@
     </div>
     <div class="modal-backdrop fade show"></div>
   </div>
+  
+  <!-- Confirmation de débit (coût en crédits) -->
+  <div v-if="showDebitConfirm">
+    <div class="modal fade show" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="--bs-modal-width: 520px;">
+        <div class="modal-content p-4">
+          <h5>Confirmation</h5>
+          <p>Cette action vaut 2 crédits. Voulez-vous continuer ?</p>
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+            <button class="btn-cancel" @click="cancelDebitConfirm">Annuler</button>
+            <button class="btn-confirm" :disabled="isDebiting" @click="doConfirmDebitAndEmit">Confirmer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -140,10 +177,16 @@ const props = defineProps<{ visible: boolean; province: string | null; pharmacie
 const emit = defineEmits(['close','select','selectMultiple'])
 
 // Gestion des sélections multiples
+import { useCreditStore } from '../stores/credit'
+import { getProductImage } from '../utils/imageUtils'
+
 const selectedPharmacies = ref<Set<any>>(new Set())
+const showDebitConfirm = ref<boolean>(false)
+const isDebiting = ref<boolean>(false)
+const creditStore = useCreditStore()
 
 const productName = computed(() => props.product?.libelle || props.product?.nom || props.product?.name || 'Produit')
-const productImage = computed(() => props.product?.photoURL || '/assets/placeholder.png')
+const productImage = computed(() => getProductImage(props.product))
 const loading = computed(() => props.loading === true)
 
 // Recherche et filtrage
@@ -198,12 +241,39 @@ function togglePharmacySelection(ph: any) {
   }
 }
 
-function confirmMultipleSelections() {
-  if (selectedPharmacies.value.size > 0) {
+async function confirmMultipleSelections() {
+  if (selectedPharmacies.value.size === 0) return
+  // Ouvrir la modale de confirmation indiquant le coût en crédits
+  showDebitConfirm.value = true
+}
+
+async function doConfirmDebitAndEmit() {
+  if (isDebiting.value) return
+  isDebiting.value = true
+  try {
+    // Débiter 2 crédits via le store
+    const ok = await creditStore.debitCredits(2)
+    if (!ok) {
+      // Échec: garder la modale ouverte et alerter l'utilisateur
+      alert('Le débit de crédits a échoué. Vérifiez votre solde ou votre connexion.')
+      showDebitConfirm.value = false
+      return
+    }
+    // Succès: émettre la sélection multiple
     emit('selectMultiple', Array.from(selectedPharmacies.value))
     selectedPharmacies.value.clear()
     emit('close')
+  } catch (e) {
+    console.error('Erreur lors du débit des crédits:', e)
+    alert('Erreur lors du débit des crédits')
+  } finally {
+    isDebiting.value = false
+    showDebitConfirm.value = false
   }
+}
+
+function cancelDebitConfirm() {
+  showDebitConfirm.value = false
 }
 </script>
 

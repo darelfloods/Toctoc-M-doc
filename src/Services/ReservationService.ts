@@ -24,9 +24,8 @@ export class ReservationService {
 
     // Essayer de récupérer le fullname depuis l'API epharma
     try {
-      const base = import.meta.env.DEV
-        ? '/reservations-api'
-        : 'https://demo2.srv557357.hstgr.cloud'
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const base = '/reservations-api'
 
       // D'abord essayer de récupérer l'utilisateur connecté via l'API
       const userResponse = await fetch(`${base}/api/user`, {
@@ -87,9 +86,8 @@ export class ReservationService {
   // Initialiser la session Laravel en récupérant le token CSRF
   private static async initializeSession(): Promise<void> {
     try {
-      const base = import.meta.env.DEV
-        ? '/reservations-api'
-        : 'https://demo2.srv557357.hstgr.cloud'
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const base = '/reservations-api'
 
       console.log('[ReservationService] Initializing session...')
 
@@ -131,10 +129,8 @@ export class ReservationService {
         await this.initializeSession()
       }
 
-      // Utiliser le proxy Vite pour éviter les problèmes CORS
-      const base = import.meta.env.DEV
-        ? '/reservations-api'  // Proxy Vite en dev
-        : 'https://demo2.srv557357.hstgr.cloud'  // Direct en prod
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const base = '/reservations-api'
 
       const url = `${base}/api/reservations`
 
@@ -255,10 +251,8 @@ export class ReservationService {
 
   static async addProductsToReservation(reservationId: number, items: any[]): Promise<{ success: boolean; error?: string }> {
     try {
-      // Utiliser le proxy Vite pour éviter les problèmes CORS
-      const base = import.meta.env.DEV
-        ? '/reservations-api'  // Proxy Vite en dev
-        : 'https://demo2.srv557357.hstgr.cloud'  // Direct en prod
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const base = '/reservations-api'
 
       // Envoyer chaque produit individuellement avec tous les champs epharma
       for (const item of items) {

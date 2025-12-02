@@ -1,6 +1,7 @@
 // src/Services/HomeService.ts
 import { joinUrl } from '@/utils/url'
 import { fetchApi } from '@/utils/api'
+import { normalizeProductImage } from '@/utils/imageUtils'
 
 export class HomeService {
   private searchController?: AbortController;
@@ -16,8 +17,13 @@ export class HomeService {
       if (this.searchController) {
         this.searchController.abort();
       }
-    } catch {}
+    } catch { }
     this.searchController = undefined;
+  }
+
+  // Vider le cache de recherche pour forcer le rafraîchissement des données (y compris les images)
+  public clearSearchCache() {
+    this.searchCache.clear();
   }
 
   /**
@@ -26,25 +32,23 @@ export class HomeService {
    */
   async askN8nAlternatives(input: { productName?: string; province?: string; cip?: string | number; rawQuery?: string }): Promise<string | null> {
     const medicamentName = input.productName || 'médicament recherché'
-    
+
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
 
-    // Webhook URL n8n - direct URL in production, proxy in dev
-    const webhookUrl = import.meta.env.DEV
-      ? '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
-      : 'https://n8n-workflows-cktx.onrender.com/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    // Webhook URL n8n - utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+    const webhookUrl = '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
 
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-    
+
     try {
       // Format du message exact comme demandé
       const message = `quel est l'alternatif de ${medicamentName}`
-      
+
       console.log('[HomeService] 📤 Sending message to webhook:', message)
-      
+
       // Essayer plusieurs formats de payload au cas où n8n attend un format spécifique
       const payloads = [
         // Format correct pour le workflow n8n alternatives (body.prompt)
@@ -69,34 +73,34 @@ export class HomeService {
           type: 'alternative_request'
         }
       ]
-      
+
       let response: Response | null = null
-      
+
       // Essayer chaque format jusqu'à ce qu'un fonctionne
       for (let i = 0; i < payloads.length; i++) {
         try {
           console.log(`[HomeService] 📤 Trying payload format ${i + 1}:`, payloads[i])
-          
-          const testResponse = await fetch(webhookUrl, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
+
+          const testResponse = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payloads[i]),
             signal: controller.signal
           })
-          
+
           if (testResponse.ok) {
             // Vérifier si la réponse contient du contenu valide
             const testText = await testResponse.clone().text()
             console.log(`[HomeService] 📥 Response ${i + 1} preview:`, testText.substring(0, 200))
             console.log(`[HomeService] 📊 Response ${i + 1} full length:`, testText.length, 'chars')
             console.log(`[HomeService] 🔍 Response ${i + 1} content-type:`, testResponse.headers.get('content-type'))
-            
+
             // Critères plus intelligents pour détecter une vraie réponse
             const hasContent = testText && testText.trim()
             const isNotEmpty = testText !== '{}' && testText !== 'null' && testText !== ''
             const isNotError = !testText.includes('No prompt specified') && !testText.includes('error')
             const hasMinLength = testText.length > 5 // Une vraie réponse fait au moins quelques caractères
-            
+
             if (hasContent && isNotEmpty && isNotError && hasMinLength) {
               response = testResponse
               console.log(`[HomeService] ✅ Payload format ${i + 1} worked! Response: "${testText.substring(0, 50)}..."`)
@@ -111,22 +115,22 @@ export class HomeService {
           console.warn(`[HomeService] ⚠️ Payload format ${i + 1} failed:`, e)
         }
       }
-      
+
       if (!response) {
         console.error('[HomeService] ❌ All POST payload formats failed')
         return null
       }
-      
+
       clearTimeout(timeoutId)
-      
+
       if (!response.ok) {
         console.warn(`[HomeService] ❌ Webhook returned ${response.status} ${response.statusText}`)
         return null
       }
-      
+
       const contentType = response.headers?.get('content-type') || ''
       let webhookResponse: string | null = null
-      
+
       if (contentType.includes('application/json')) {
         try {
           const data = await response.json()
@@ -164,7 +168,7 @@ export class HomeService {
       } else {
         webhookResponse = await response.text().catch(() => null)
       }
-      
+
       if (webhookResponse && webhookResponse.trim()) {
         // Clean the response: remove markdown asterisks and extra whitespace
         let cleaned = webhookResponse.replace(/\*\*/g, '').replace(/\*/g, '').trim()
@@ -175,51 +179,81 @@ export class HomeService {
         console.log('[HomeService] ✅ Webhook alternative found:', cleaned)
         return cleaned
       }
-      
+
       console.log('[HomeService] ❌ No valid response from webhook')
-      
+
       // Debug: afficher la réponse brute pour diagnostic
       try {
         const debugText = await response.clone().text()
         console.log('[HomeService] 🐛 Raw response for debugging:', debugText)
-        
+
         // Si la réponse est vide, c'est probablement un problème de configuration n8n
         if (!debugText || debugText.trim() === '' || debugText === '{}') {
           console.warn('[HomeService] 🚨 Webhook returns empty response - n8n workflow needs configuration!')
           console.warn('[HomeService] 📖 See WEBHOOK_N8N_SETUP_GUIDE.md for setup instructions')
-          
+
           // Fallback temporaire avec message utile
           return `Alternative suggérée : Consultez votre pharmacien pour un équivalent de ${medicamentName}. (Webhook n8n à configurer)`
         }
       } catch (e) {
         console.log('[HomeService] 🐛 Could not read raw response for debugging')
       }
-      
+
       return null
-      
+
     } catch (e: any) {
       clearTimeout(timeoutId)
-      
+
       if (e?.name === 'AbortError') {
         console.warn('[HomeService] ⏰ Webhook timeout after 5s')
       } else {
         console.warn('[HomeService] ❌ Webhook request failed:', e)
       }
-      
+
       return null
     }
   }
 
   async getAllProduct(page: number, count: number) {
-    const { ExcelProductService } = await import('./ExcelProductService');
-    const allProducts = await ExcelProductService.getProducts();
+    try {
+      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
+      const apiUrl = '/epharma-api/public/api/produits'
+      const res = await fetch(apiUrl)
+      if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`)
 
-    // Simulation de la pagination
-    const startIndex = (page - 1) * count;
-    const endIndex = startIndex + count;
+      const json = await res.json()
+      const allProducts = Array.isArray(json?.data) ? json.data : []
 
-    return allProducts.slice(startIndex, endIndex);
+      const normalized = allProducts.map((p: any) => {
+        // Normaliser l'image du produit avec fallback vers placeholder
+        const productWithImage = normalizeProductImage(p)
+        
+        // Construire l'objet final : d'abord les propriétés de base, puis le reste, enfin les images normalisées
+        return {
+          id: p.id,
+          libelle: p.libelle || p.name || p.nom || '',
+          cip: p.cip || p.cip_deux || '',
+          prix_de_vente: p.prix_de_vente ?? p.price ?? null,
+          description: p.description || '',
+          prescriptionRequired: p.prescriptionRequired ?? p.prescription_required ?? false,
+          ...p, // Toutes les autres propriétés originales
+          // Enfin, écraser avec les valeurs normalisées d'image (photo, photoURL, image) pour garantir le fallback
+          photo: productWithImage.photo,
+          photoURL: productWithImage.photoURL,
+          image: productWithImage.image
+        }
+      })
+
+      const startIndex = (page - 1) * count
+      const endIndex = startIndex + count
+      return normalized.slice(startIndex, endIndex)
+
+    } catch (e) {
+      console.warn('[HomeService] getAllProduct failed:', e)
+      return []
+    }
   }
+
 
   async disponibilite(cip: string | number) {
     const path = joinUrl('api_epg', 'disponibility_product');
@@ -242,10 +276,12 @@ export class HomeService {
     const { ExcelProductService } = await import('./ExcelProductService');
     const key = term.toLowerCase();
 
-    // Retour immédiat si déjà en cache
-    if (this.searchCache.has(key)) {
-      return this.searchCache.get(key) as any[];
-    }
+    // Note: Le cache est désactivé pour garantir que les nouvelles images sont toujours prises en compte
+    // Si vous avez besoin de performance, vous pouvez réactiver le cache mais avec un TTL
+    // Retour immédiat si déjà en cache (désactivé temporairement pour garantir les mises à jour)
+    // if (this.searchCache.has(key)) {
+    //   return this.searchCache.get(key) as any[];
+    // }
 
     // Annuler la recherche précédente si elle est encore en cours
     this.cancelSearch();
@@ -255,9 +291,15 @@ export class HomeService {
       // Rechercher dans le fichier Excel local
       const data = await ExcelProductService.searchProducts(term);
 
-      // Mettre en cache le résultat
-      this.searchCache.set(key, Array.isArray(data) ? data : []);
-      return data;
+      // Normaliser les images des résultats de recherche avec placeholder si absent
+      // Cette normalisation garantit que les nouvelles images sont toujours détectées
+      const normalized = (data || []).map((p: any) => {
+        return normalizeProductImage(p)
+      })
+
+      // Mettre en cache le résultat (optionnel - peut être désactivé pour forcer le rafraîchissement)
+      this.searchCache.set(key, Array.isArray(normalized) ? normalized : []);
+      return normalized;
     } catch (err: any) {
       // Si la requête est annulée, retourner un tableau vide pour ignorer ce résultat
       if (err?.name === 'AbortError') {

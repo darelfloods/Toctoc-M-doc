@@ -223,20 +223,41 @@ async function resolvePricing(of: any): Promise<{ rate_id: number; creditAmount:
   return { rate_id, creditAmount }
 }
 
+// 🔒 Fonction d'affichage des crédits pour une offre
+// Pour l'instant, on masque volontairement la valeur exacte et on affiche un tiret cadratin
 function getCreditsForOffer(of: Offer): string {
-  // 🔒 Affichage volontairement neutre pour les crédits
-  // On masque la valeur exacte et on affiche simplement "--"
   return '—'
 }
+
+// États pour les modales de statut de paiement
+const showPaymentPending = ref(false)
+const showPaymentSuccess = ref(false)
+const showPaymentError = ref(false)
+const paymentErrorMessage = ref('')
+const pendingPaymentPhone = ref('')
 
 async function onPaymentValidate(payload: { method: string; phone: string; offer?: any }) {
   try {
     const offer = payload.offer || selectedOffer.value
     const amount = parseAmount(offer?.price)
+
+    // 🎯 VALIDATION: Vérifier que le montant est valide
+    if (!amount || amount <= 0) {
+      paymentErrorMessage.value = 'Montant invalide. Veuillez sélectionner une offre valide.'
+      showPaymentError.value = true
+      return
+    }
+
+    // 🎯 VALIDATION: Vérifier que le téléphone est renseigné
+    if (!payload.phone || payload.phone.trim().length < 8) {
+      paymentErrorMessage.value = 'Numéro de téléphone invalide. Veuillez saisir un numéro valide.'
+      showPaymentError.value = true
+      return
+    }
+
     // Récupérer rate_id et le nombre de crédits à créditer
     const { rate_id, creditAmount } = await resolvePricing(offer)
 
-    // DEBUG: Log des valeurs pour comprendre le problème
     console.log('🔍 [MAGASIN] Debug recharge crédits:')
     console.log('  - Offre:', offer)
     console.log('  - Montant:', amount)
@@ -255,61 +276,51 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       email: user?.email || '',
       rate_id,
       network: payload.method
-      // Le backend va gérer automatiquement l'ajout des crédits via le callback
     })
 
     console.log('📦 [MAGASIN] Réponse MyPayGa:', paymentResult)
     console.log('📦 [MAGASIN] request_status:', paymentResult.request_status)
-    console.log('📦 [MAGASIN] request_status TYPE:', typeof paymentResult.request_status)
     console.log('📦 [MAGASIN] message:', paymentResult.message)
 
-    // Vérifier si la requête de paiement a été envoyée avec succès
-    // request_status === 0 : Demande envoyée, attente de confirmation
-    // request_status === 200 : Paiement confirmé immédiatement
-    // IMPORTANT: Convertir en nombre car l'API peut renvoyer une string "0"
     const status = Number(paymentResult.request_status)
-    const requestSent = status === 0 || status === 200
 
-    console.log('✨ [MAGASIN] Status converti en nombre:', status)
-    console.log('✨ [MAGASIN] requestSent:', requestSent)
-
-    if (!requestSent) {
-      console.error('❌❌❌ [MAGASIN] CETTE ALERTE VIENT D\'ICI - Ligne 230 ❌❌❌')
-      console.error('❌ [MAGASIN] Échec de l\'envoi de la demande:', paymentResult.message)
-      alert(`Erreur de paiement: ${paymentResult.message || 'Échec du paiement'}`)
-      return
-    }
-
-    console.log('✅✅✅ [MAGASIN] La requête a été envoyée avec succès! ✅✅✅')
-
-    // Pour TOUS les statuts (0 ou 200), le backend gère l'ajout des crédits automatiquement via le callback
-    // On informe l'utilisateur et on lui permet de rafraîchir ses crédits après validation
-    console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation sur téléphone')
-
-    const confirmed = confirm(
-      `📲 Demande de paiement envoyée !\n\n` +
-      `Vous allez recevoir un SMS/notification sur votre téléphone (${payload.phone}) pour confirmer le paiement avec votre code PIN Mobile Money.\n\n` +
-      `Composez le code affiché sur votre téléphone pour valider le paiement.\n\n` +
-      `Cliquez sur OK après avoir validé le paiement pour voir vos crédits mis à jour.`
-    )
-
-    if (confirmed) {
-      // Rafraîchir les crédits pour voir si le paiement a été confirmé par le backend
-      console.log('🔄 [MAGASIN] Rafraîchissement des crédits...')
+    // 🎯 LOGIQUE CORRIGÉE: Ne rafraîchir les crédits QUE si le paiement est confirmé par l'API
+    if (status === 200) {
+      // ✅ Paiement confirmé immédiatement
+      console.log('✅ [MAGASIN] Paiement confirmé immédiatement!')
+      showPayment.value = false
       await creditStore.refreshForCurrentUser()
-      console.log('💰 [MAGASIN] Crédits actuels après rafraîchissement:', creditStore.credits)
-      alert(`✅ Crédits mis à jour ! Vous avez maintenant ${creditStore.credits} crédits.`)
+      console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
+      showPaymentSuccess.value = true
+      emit('purchased', payload)
+    } else if (status === 0) {
+      // ⏳ Demande envoyée, en attente de confirmation sur le téléphone
+      console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation')
+      pendingPaymentPhone.value = payload.phone
+      showPayment.value = false
+      showPaymentPending.value = true
+    } else {
+      // ❌ Erreur de paiement
+      console.error('❌ [MAGASIN] Échec du paiement:', paymentResult.message)
+      paymentErrorMessage.value = paymentResult.message || 'Échec du paiement. Veuillez réessayer.'
+      showPaymentError.value = true
     }
-
-    return
   } catch (e: any) {
     console.error('❌ [MAGASIN] Erreur MyPayGA:', e)
     const errorMessage = e?.message || e?.data?.message || e?.data || 'Erreur inconnue'
-    alert(`Erreur lors du paiement: ${errorMessage}\n\nVeuillez vérifier:\n- Votre numéro de téléphone\n- Votre solde Mobile Money\n- Votre connexion internet`)
-  } finally {
-    emit('purchased', payload)
+    paymentErrorMessage.value = `Erreur lors du paiement: ${errorMessage}\n\nVérifiez:\n• Votre numéro de téléphone\n• Votre solde Mobile Money\n• Votre connexion internet`
+    showPaymentError.value = true
     showPayment.value = false
   }
+}
+
+// Fonction pour vérifier le statut du paiement en attente
+async function checkPendingPayment() {
+  console.log('🔄 [MAGASIN] Vérification du paiement...')
+  await creditStore.refreshForCurrentUser()
+  console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
+  showPaymentPending.value = false
+  showPaymentSuccess.value = true
 }
 </script>
 

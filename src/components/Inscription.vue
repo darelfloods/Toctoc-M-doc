@@ -132,12 +132,35 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de félicitations après inscription -->
+    <div v-if="showCongrats">
+      <div class="modal fade show" style="display:block;" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+          <div class="modal-content p-4 text-dark">
+            <div class="modal-body">
+              <p class="text-center">
+                Félicitation ! <br>
+                Pour votre inscription, vous bénéficiez de 10 crédits gratuits pour recherher le produit que
+                vous voulez. <br>
+                Pour plus de crédits, allez y dans les paramètre de votre compte.
+              </p>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+              <button class="btn btn-primary" @click="showCongrats = false">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AuthService } from '@/Services/AuthService'
+import { useCreditStore } from '@/stores/credit'
 
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close', 'openConnexion', 'registerSuccess'])
@@ -155,6 +178,8 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const showSuccessToast = ref(false)
 const showErrorToast = ref(false)
+const showCongrats = ref(false)
+const creditStore = useCreditStore()
 
 function onClose() {
   emit('close')
@@ -203,8 +228,19 @@ async function register() {
     showSuccessToast.value = true
     emit('registerSuccess')
 
-    // Fermer le modal après un léger délai
-    setTimeout(() => emit('close'), 700)
+    // Essayer d'ajouter 10 crédits gratuits localement (tentative non bloquante)
+    try {
+      // Rafraîchir le compte si nécessaire puis ajouter les crédits localement
+      creditStore.refreshForCurrentUser().catch(() => {})
+      // Tentative d'ajout (peut échouer si accountId absent) — fonction gère son propre fallback
+      creditStore.addCreditsAfterPayment(10).catch(() => {})
+    } catch (e) {
+      // ignore
+    }
+
+    // Fermer le modal d'inscription et afficher la modale de félicitations
+    emit('close')
+    showCongrats.value = true
   } catch (e: unknown) {
     console.error('Erreur inscription:', e)
     errorMessage.value = e instanceof Error ? e.message : "Échec de l'inscription"

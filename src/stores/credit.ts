@@ -81,6 +81,36 @@ export const useCreditStore = defineStore('credit', () => {
     return true
   }
 
+  // Débiter des crédits du compte utilisateur
+  async function debitCredits(amount: number): Promise<boolean> {
+    console.log(`🏧 [CREDIT STORE] Débit demandé: ${amount} crédits`)
+    if (!accountId.value) {
+      console.log('⚙️ [CREDIT STORE] accountId absent, tentative de rafraîchissement')
+      await refreshForCurrentUser()
+    }
+    if (!accountId.value) {
+      console.warn('⚠️ [CREDIT STORE] Impossible de débiter : pas de compte')
+      return false
+    }
+
+    // Appeler le service backend pour tenter le débit
+    try {
+      const ok = await CreditService.souscrireCredit(accountId.value, amount)
+      if (ok) {
+        // Mise à jour locale immédiate
+        const before = credits.value
+        credits.value = Math.max(0, Number(credits.value || 0) - Number(amount))
+        console.log(`✅ [CREDIT STORE] Débit appliqué: ${before} -> ${credits.value}`)
+        return true
+      }
+      console.warn('⚠️ [CREDIT STORE] Le service a retourné un échec lors du débit')
+      return false
+    } catch (e) {
+      console.error('❌ [CREDIT STORE] Erreur lors du débit:', e)
+      return false
+    }
+  }
+
   function reset() {
     credits.value = 0
     accountId.value = null
@@ -93,6 +123,7 @@ export const useCreditStore = defineStore('credit', () => {
     loading,
     refreshForCurrentUser,
     addCreditsAfterPayment,
+    debitCredits,
     reset,
   }
 })
