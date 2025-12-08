@@ -1,6 +1,6 @@
 <template>
   <div v-if="visible">
-    <div v-if="!showPayment" class="modal fade show" id="magasin" tabindex="-1" aria-labelledby="magasinLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="display:block;" role="dialog" aria-modal="true">
+    <div v-if="!showPayment" class="modal fade show" id="magasin" tabindex="-1" aria-labelledby="magasinLabel" data-bs-backdrop="static" data-bs-keyboard="false" style="display:block;" role="dialog" aria-modal="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content custom-modal-content">
           <div class="modal-header border-0 magasin-header">
@@ -19,7 +19,22 @@
           </div>
 
           <div class="modal-body magasin-body">
-            <div class="grid-container">
+            <!-- Message de chargement -->
+            <div v-if="isLoading" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="mt-3">Chargement des offres...</p>
+            </div>
+            
+            <!-- Message si aucune offre -->
+            <div v-else-if="offers.length === 0" class="text-center py-5">
+              <i class="bi bi-inbox" style="font-size: 48px; color: #6b7280;"></i>
+              <p class="mt-3 text-muted">Aucune offre disponible pour le moment.</p>
+            </div>
+            
+            <!-- Grille des offres -->
+            <div v-else class="grid-container">
               <div
                 class="credit-card"
                 v-for="offer in offers"
@@ -129,44 +144,99 @@ interface Rate {
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close','purchased'])
 
-// Ajout du libelle (clé produit) attendu par l'API pour résoudre le bon rate_id côté backend
-// 🎯 Toutes les offres sont maintenant affichées et synchronisées avec les tarifs backend
-const offers: Offer[] = [
-  { id: 1, libelle: 'starter', title: 'Offre Starter', price: '100 F CFA', img: '/assets/offre3.png' },
-  { id: 2, libelle: 'basic', title: 'Offre Basic', price: '500 F CFA', img: '/assets/offre2.png' },
-  { id: 3, libelle: 'standard', title: 'Offre Standard', price: '1000 F CFA', img: '/assets/offre3.png', popular: true },
-  { id: 4, libelle: 'premium', title: 'Offre Premium', price: '2500 F CFA', img: '/assets/offre4.png', badge: { icon: 'fas fa-percentage', text: 'Économie' } },
-  { id: 5, libelle: 'pro', title: 'Offre Pro', price: '5000 F CFA', img: '/assets/offre5.png', badge: { icon: 'fas fa-fire', text: 'Top Deal' } },
-  { id: 6, libelle: 'elite', title: 'Offre Elite', price: '7500 F CFA', img: '/assets/offre6.png', badge: { icon: 'fas fa-crown', text: 'VIP' } },
-]
-
 const showConfirm = ref(false)
 const showPayment = ref(false)
 const selectedOffer = ref<any | null>(null)
 const auth = useAuthStore()
 const creditStore = useCreditStore()
 const rates = ref<Rate[]>([])
+const isLoading = ref(true)
+
+// 🎯 SYSTÈME 100% DYNAMIQUE : Les offres sont générées automatiquement depuis l'API
+// Plus besoin de définir les offres manuellement dans le code !
+const offers = ref<Offer[]>([])
+
+// Mapping des images par défaut selon le libellé (optionnel)
+const defaultImages: Record<string, string> = {
+  'starter': '/assets/offre1.png',
+  'basic': '/assets/offre2.png',
+  'standard': '/assets/offre3.png',
+  'premium': '/assets/offre4.png',
+  'pro': '/assets/offre5.png',
+  'elite': '/assets/offre6.png',
+}
+
+// Fonction pour formater le titre à partir du libellé
+function formatTitle(libelle: string): string {
+  return `Offre ${libelle.charAt(0).toUpperCase() + libelle.slice(1)}`
+}
+
+// Fonction pour déterminer l'image à utiliser
+function getImageForOffer(libelle: string, index: number): string {
+  const normalizedLibelle = libelle.toLowerCase()
+  // Utiliser l'image par défaut si elle existe, sinon utiliser une image cyclique
+  return defaultImages[normalizedLibelle] || `/assets/offre${(index % 6) + 1}.png`
+}
+
+// Fonction pour déterminer si une offre est populaire (optionnel)
+function isPopular(libelle: string, price: number): boolean {
+  // Marquer comme populaire les offres "standard" ou celles entre 1000 et 3000 FCFA
+  return libelle.toLowerCase() === 'standard' || (price >= 1000 && price <= 3000)
+}
+
+// Fonction pour déterminer le badge d'une offre (optionnel)
+function getBadge(libelle: string, price: number): { icon: string; text: string } | undefined {
+  const normalized = libelle.toLowerCase()
+  
+  if (normalized === 'premium' || price >= 2000) {
+    return { icon: 'fas fa-percentage', text: 'Économie' }
+  }
+  if (normalized === 'pro' || price >= 4000) {
+    return { icon: 'fas fa-fire', text: 'Top Deal' }
+  }
+  if (normalized === 'elite' || price >= 7000) {
+    return { icon: 'fas fa-crown', text: 'VIP' }
+  }
+  
+  return undefined
+}
 
 onMounted(async () => {
+  isLoading.value = true
   try {
     console.log('📡 [MAGASIN] Chargement des tarifs depuis le backend (/rate/all)...')
     const res = await HttpService.get<Rate[]>('/rate/all')
-    rates.value = res.data || []
+    
+    console.log('📦 [MAGASIN] Réponse brute de l\'API:', res)
+    
+    // Gérer différents formats de réponse
+    const ratesData = res.data || res || []
+    rates.value = Array.isArray(ratesData) ? ratesData : []
+    
+    console.log('📊 [MAGASIN] Tarifs extraits:', rates.value)
 
-    // Synchroniser les offres front avec les tarifs backend (id + prix)
-    offers.forEach((of) => {
-      const rate = rates.value.find(
-        (r) => r.libelle.toLowerCase() === String(of.libelle || '').toLowerCase()
-      )
-      if (rate) {
-        of.id = rate.id
-        of.price = `${rate.price} F CFA`
-      }
-    })
+    if (rates.value.length === 0) {
+      console.warn('⚠️ [MAGASIN] Aucun tarif reçu de l\'API')
+    } else {
+      // 🎯 GÉNÉRATION AUTOMATIQUE DES OFFRES depuis les tarifs backend
+      offers.value = rates.value.map((rate, index) => ({
+        id: rate.id,
+        libelle: rate.libelle,
+        title: formatTitle(rate.libelle),
+        price: `${rate.price} F CFA`,
+        img: getImageForOffer(rate.libelle, index),
+        popular: isPopular(rate.libelle, rate.price),
+        badge: getBadge(rate.libelle, rate.price)
+      }))
 
-    console.log('✅ [MAGASIN] Tarifs backend chargés:', rates.value)
-  } catch (e) {
+      console.log('✅ [MAGASIN] Tarifs backend chargés:', rates.value)
+      console.log('✅ [MAGASIN] Offres générées automatiquement:', offers.value)
+    }
+  } catch (e: any) {
     console.error('❌ [MAGASIN] Erreur lors du chargement des tarifs backend:', e)
+    console.error('❌ [MAGASIN] Détails de l\'erreur:', e?.response || e?.message || e)
+  } finally {
+    isLoading.value = false
   }
 })
 
@@ -224,9 +294,10 @@ async function resolvePricing(of: any): Promise<{ rate_id: number; creditAmount:
 }
 
 // 🔒 Fonction d'affichage des crédits pour une offre
-// Pour l'instant, on masque volontairement la valeur exacte et on affiche un tiret cadratin
+// Affiche le nombre de crédits depuis les données backend
 function getCreditsForOffer(of: Offer): string {
-  return '—'
+  const rate = rates.value.find(r => r.id === of.id)
+  return rate ? rate.credit.toLocaleString() : '—'
 }
 
 // États pour les modales de statut de paiement
