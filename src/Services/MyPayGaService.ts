@@ -7,21 +7,6 @@ export interface MyPayGaResponse {
   [key: string]: any
 }
 
-// Fonction pour vérifier si le token JWT est expiré
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const exp = payload.exp * 1000 // Convertir en millisecondes
-    console.log('🕐 [Token] Expiration:', new Date(exp).toLocaleString())
-    console.log('🕐 [Token] Maintenant:', new Date().toLocaleString())
-    console.log('🕐 [Token] Expiré:', Date.now() >= exp)
-    return Date.now() >= exp
-  } catch (error) {
-    console.error('❌ [Token] Erreur lors du décodage du token:', error)
-    return true
-  }
-}
-
 export class MyPayGaService {
   static async subscribePricing(params: {
     phone: string
@@ -48,36 +33,28 @@ export class MyPayGaService {
     }
 
     // Vérifier que le token d'authentification est présent
-    let authToken = AuthService.getAuthToken()
+    const authToken = AuthService.getAuthToken()
     const currentUser = AuthService.getCurrentUser()
+    
+    console.log('🔐 [MyPayGa] === VÉRIFICATION AUTHENTIFICATION ===')
     console.log('🔐 [MyPayGa] Token présent:', !!authToken)
-    console.log('🔐 [MyPayGa] Token (tronqué):', authToken ? `${authToken.substring(0, 20)}...` : 'AUCUN')
-    console.log('👤 [MyPayGa] Utilisateur:', currentUser?.email)
+    console.log('🔐 [MyPayGa] Token complet:', authToken)
+    console.log('🔐 [MyPayGa] Token (tronqué):', authToken ? `${authToken.substring(0, 30)}...` : 'AUCUN')
+    console.log('👤 [MyPayGa] Utilisateur:', currentUser)
+    console.log('👤 [MyPayGa] Email:', currentUser?.email)
     console.log('🎭 [MyPayGa] Rôle utilisateur:', currentUser?.role)
 
     if (!authToken) {
       console.error('❌ [MyPayGa] Aucun token d\'authentification trouvé')
-      throw new Error('Vous devez être connecté pour effectuer un paiement')
-    }
-
-    // Vérifier si le token est expiré
-    if (isTokenExpired(authToken)) {
-      console.warn('⚠️ [MyPayGa] Token expiré, tentative de rafraîchissement...')
-
-      // Essayer de rafraîchir le token
-      const refreshed = await AuthService.refreshToken()
-
-      if (refreshed) {
-        console.log('✅ [MyPayGa] Token rafraîchi avec succès')
-        authToken = AuthService.getAuthToken()
-      } else {
-        console.error('❌ [MyPayGa] Impossible de rafraîchir le token')
-        throw new Error('Votre session a expiré. Veuillez vous reconnecter.')
-      }
+      console.error('❌ [MyPayGa] Veuillez vous déconnecter et vous reconnecter')
+      throw new Error('Vous devez être connecté pour effectuer un paiement. Veuillez vous reconnecter.')
     }
 
     // S'assurer que le token est bien configuré dans HttpService
-    HttpService.setAuthToken(authToken!)
+    console.log('🔧 [MyPayGa] Configuration du token dans HttpService...')
+    HttpService.setAuthToken(authToken)
+    console.log('✅ [MyPayGa] Token configuré avec succès')
+    console.log('✅ [MyPayGa] Prêt pour le paiement')
 
     console.log('📞 [MyPayGa] Appel API /my_pay_ga/subscribe_pricing')
     console.log('📦 [MyPayGa] Payload:', payload)
