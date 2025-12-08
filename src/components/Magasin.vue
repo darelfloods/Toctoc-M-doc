@@ -112,6 +112,66 @@
 
     <!-- Modal de paiement -->
     <Paiement v-if="showPayment" :visible="showPayment" :offer="selectedOffer" @close="showPayment=false" @validate="onPaymentValidate" />
+
+    <!-- Modal de succès du paiement -->
+    <div v-if="showPaymentSuccess" class="modal fade show" id="paymentSuccess" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+          <div class="modal-body">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 64px;"></i>
+            <h4 class="mt-3">Paiement réussi !</h4>
+            <p class="text-muted">Vos crédits ont été ajoutés à votre compte.</p>
+            <p class="fw-bold">Nouveaux crédits : {{ creditStore.credits }}</p>
+          </div>
+          <div class="modal-footer border-0 justify-content-center">
+            <button type="button" class="btn btn-primary" @click="closeAllModals">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showPaymentSuccess" class="modal-backdrop fade show"></div>
+
+    <!-- Modal de paiement en attente -->
+    <div v-if="showPaymentPending" class="modal fade show" id="paymentPending" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+          <div class="modal-body">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <h4 class="mt-3">Paiement en cours...</h4>
+            <p class="text-muted">Veuillez confirmer le paiement sur votre téléphone {{ pendingPaymentPhone }}</p>
+            <p class="text-muted small">Vous allez recevoir un message de votre opérateur Mobile Money</p>
+          </div>
+          <div class="modal-footer border-0 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary" @click="showPaymentPending=false">Annuler</button>
+            <button type="button" class="btn btn-primary" @click="checkPendingPayment">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Vérifier le statut
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showPaymentPending" class="modal-backdrop fade show"></div>
+
+    <!-- Modal d'erreur de paiement -->
+    <div v-if="showPaymentError" class="modal fade show" id="paymentError" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+          <div class="modal-body">
+            <i class="bi bi-x-circle-fill text-danger" style="font-size: 64px;"></i>
+            <h4 class="mt-3">Échec du paiement</h4>
+            <p class="text-muted" style="white-space: pre-line;">{{ paymentErrorMessage }}</p>
+          </div>
+          <div class="modal-footer border-0 justify-content-center">
+            <button type="button" class="btn btn-secondary" @click="showPaymentError=false">Fermer</button>
+            <button type="button" class="btn btn-primary" @click="showPaymentError=false; showPayment=true">Réessayer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showPaymentError" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -355,15 +415,35 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
     const status = Number(paymentResult.request_status)
 
-    // 🎯 LOGIQUE CORRIGÉE: Ne rafraîchir les crédits QUE si le paiement est confirmé par l'API
+    // 🎯 LOGIQUE CORRIGÉE: Vérifier que les crédits ont bien été ajoutés
     if (status === 200) {
-      // ✅ Paiement confirmé immédiatement
-      console.log('✅ [MAGASIN] Paiement confirmé immédiatement!')
+      // ✅ Paiement confirmé immédiatement - mais on vérifie les crédits
+      console.log('✅ [MAGASIN] Paiement confirmé par MyPayGa')
       showPayment.value = false
+      
+      // Sauvegarder les crédits avant paiement
+      const creditsBefore = creditStore.credits
+      console.log('💰 [MAGASIN] Crédits avant paiement:', creditsBefore)
+      
+      // Attendre un peu pour que le callback soit traité
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Rafraîchir les crédits
       await creditStore.refreshForCurrentUser()
-      console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
-      showPaymentSuccess.value = true
-      emit('purchased', payload)
+      const creditsAfter = creditStore.credits
+      console.log('💰 [MAGASIN] Crédits après paiement:', creditsAfter)
+      
+      // Vérifier si les crédits ont bien augmenté
+      if (creditsAfter > creditsBefore) {
+        console.log('✅ [MAGASIN] Crédits ajoutés avec succès!')
+        showPaymentSuccess.value = true
+        emit('purchased', payload)
+      } else {
+        // Les crédits n'ont pas augmenté = paiement échoué
+        console.error('❌ [MAGASIN] Les crédits n\'ont pas été ajoutés - paiement échoué')
+        paymentErrorMessage.value = 'Le paiement a échoué. Vérifiez votre solde Mobile Money et réessayez.'
+        showPaymentError.value = true
+      }
     } else if (status === 0) {
       // ⏳ Demande envoyée, en attente de confirmation sur le téléphone
       console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation')
@@ -392,6 +472,16 @@ async function checkPendingPayment() {
   console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
   showPaymentPending.value = false
   showPaymentSuccess.value = true
+}
+
+// Fonction pour fermer toutes les modales
+function closeAllModals() {
+  showPaymentSuccess.value = false
+  showPaymentPending.value = false
+  showPaymentError.value = false
+  showPayment.value = false
+  showConfirm.value = false
+  emit('close')
 }
 </script>
 

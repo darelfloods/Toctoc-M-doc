@@ -152,45 +152,62 @@ export class CreditService {
     // Essayer plusieurs variantes car l'API peut attendre un verbe ou un payload différent selon l'environnement
     // Reset last error before attempts
     CreditService.lastError = null
+    
+    console.log('💳 [CreditService] Tentative de débit de', credit, 'crédit(s) pour le compte', accountId)
+    
     const attempts: Array<() => Promise<boolean>> = [
-      // 1) POST /account/debit - endpoint standard pour débiter des crédits
+      // 1) PUT /account/spent/{id}?credit={amount} - ENDPOINT CORRECT DE L'API
       async () => {
-        await HttpService.post(`/account/debit`, { accountId: Number(accountId), amount: Number(credit) })
+        console.log('💳 [CreditService] Tentative #1: PUT /account/spent avec query param')
+        await HttpService.put(`/account/spent/${accountId}?credit=${encodeURIComponent(String(credit))}`)
+        console.log('✅ [CreditService] Succès avec PUT /account/spent + query param')
         return true
       },
-      // 2) POST /account/update_credit - mise à jour générale des crédits
+      // 2) PUT /account/spent/{id} avec body JSON
       async () => {
-        await HttpService.post(`/account/update_credit`, { accountId: Number(accountId), credit: -Number(credit), operation: 'debit' })
-        return true
-      },
-      // 3) PATCH /account/{id} - mise à jour partielle du compte
-      async () => {
-        await HttpService.patch(`/account/${accountId}`, { credit_spent: Number(credit) })
-        return true
-      },
-      // 4) PUT /account/{id}/spent - endpoint spécifique au débit (implémentation originale)
-      async () => {
+        console.log('💳 [CreditService] Tentative #2: PUT /account/spent avec body')
         await HttpService.put(`/account/spent/${accountId}`, { credit: Number(credit) })
+        console.log('✅ [CreditService] Succès avec PUT /account/spent + body')
         return true
       },
-      // 5) POST /account/{id}/debit - débit par ID de compte
+      // 3) POST /account/debit - endpoint standard pour débiter des crédits
       async () => {
+        console.log('💳 [CreditService] Tentative #3: POST /account/debit')
+        await HttpService.post(`/account/debit`, { accountId: Number(accountId), amount: Number(credit) })
+        console.log('✅ [CreditService] Succès avec POST /account/debit')
+        return true
+      },
+      // 4) POST /account/update_credit - mise à jour générale des crédits
+      async () => {
+        console.log('💳 [CreditService] Tentative #4: POST /account/update_credit')
+        await HttpService.post(`/account/update_credit`, { accountId: Number(accountId), credit: -Number(credit), operation: 'debit' })
+        console.log('✅ [CreditService] Succès avec POST /account/update_credit')
+        return true
+      },
+      // 5) PATCH /account/{id} - mise à jour partielle du compte
+      async () => {
+        console.log('💳 [CreditService] Tentative #5: PATCH /account')
+        await HttpService.patch(`/account/${accountId}`, { credit_spent: Number(credit) })
+        console.log('✅ [CreditService] Succès avec PATCH /account')
+        return true
+      },
+      // 6) POST /account/{id}/debit - débit par ID de compte
+      async () => {
+        console.log('💳 [CreditService] Tentative #6: POST /account/{id}/debit')
         await HttpService.post(`/account/${accountId}/debit`, { amount: Number(credit) })
+        console.log('✅ [CreditService] Succès avec POST /account/{id}/debit')
         return true
       },
-      // 6) POST /account/transaction - enregistrement de transaction générique
+      // 7) POST /account/transaction - enregistrement de transaction générique
       async () => {
+        console.log('💳 [CreditService] Tentative #7: POST /account/transaction')
         await HttpService.post(`/account/transaction`, { 
           accountId: Number(accountId), 
           amount: Number(credit), 
           type: 'debit',
           reason: 'reservation_check' 
         })
-        return true
-      },
-      // 7) PUT avec query param (implémentation originale)
-      async () => {
-        await HttpService.put(`/account/spent/${accountId}?credit=${encodeURIComponent(String(credit))}`)
+        console.log('✅ [CreditService] Succès avec POST /account/transaction')
         return true
       },
       // 8) POST avec FormData pour compatibilité ancienne API
