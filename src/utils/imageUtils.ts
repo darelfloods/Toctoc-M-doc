@@ -3,6 +3,7 @@
  */
 
 const DEFAULT_PLACEHOLDER = '/assets/placeholder.png'
+const EPHARMA_BASE_URL = 'https://epharma-panel.srv557357.hstgr.cloud'
 
 /**
  * Récupère l'URL de l'image d'un produit avec fallback vers l'image par défaut
@@ -28,10 +29,26 @@ export function getProductImage(product: any): string {
     return DEFAULT_PLACEHOLDER
   }
 
-  // Retourner l'URL de l'image
-  // Vue détectera automatiquement les changements dans product.photo, product.photoURL ou product.image
-  // et réévaluera cette fonction pour mettre à jour l'affichage
-  return String(photoValue).trim()
+  const photoStr = String(photoValue).trim()
+
+  // Si l'URL est déjà complète (commence par http:// ou https://), la retourner telle quelle
+  if (photoStr.startsWith('http://') || photoStr.startsWith('https://')) {
+    return photoStr
+  }
+
+  // Si l'URL est relative (commence par / ou storage/), construire l'URL complète avec le domaine epharma
+  if (photoStr.startsWith('/')) {
+    return `${EPHARMA_BASE_URL}${photoStr}`
+  }
+
+  // Si l'URL commence par "storage/" ou "public/", ajouter le slash et le domaine
+  if (photoStr.startsWith('storage/') || photoStr.startsWith('public/')) {
+    return `${EPHARMA_BASE_URL}/${photoStr}`
+  }
+
+  // Pour toute autre valeur, essayer de construire l'URL complète
+  // (au cas où ce serait juste un nom de fichier)
+  return `${EPHARMA_BASE_URL}/storage/${photoStr}`
 }
 
 /**
