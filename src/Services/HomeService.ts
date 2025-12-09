@@ -291,15 +291,50 @@ export class HomeService {
       // Rechercher dans le fichier Excel local
       const data = await ExcelProductService.searchProducts(term);
 
-      // Normaliser les images des résultats de recherche avec placeholder si absent
-      // Cette normalisation garantit que les nouvelles images sont toujours détectées
-      const normalized = (data || []).map((p: any) => {
+      // Récupérer les produits de l'API epharma pour obtenir les images
+      let apiProducts: any[] = []
+      try {
+        const apiUrl = '/epharma-api/public/api/produits'
+        const res = await fetch(apiUrl)
+        if (res.ok) {
+          const json = await res.json()
+          apiProducts = Array.isArray(json?.data) ? json.data : []
+        }
+      } catch (e) {
+        console.warn('[HomeService] Impossible de récupérer les images depuis l\'API epharma:', e)
+      }
+
+      // Créer un map CIP -> photo pour un accès rapide
+      const cipToPhotoMap = new Map<string, string>()
+      apiProducts.forEach((apiProduct: any) => {
+        const cip = String(apiProduct.cip || apiProduct.cip_deux || '').trim()
+        const photo = apiProduct.photo || apiProduct.photoURL || apiProduct.image
+        if (cip && photo) {
+          cipToPhotoMap.set(cip, photo)
+        }
+      })
+
+      // Enrichir les résultats Excel avec les images de l'API
+      const enriched = (data || []).map((p: any) => {
+        const cip = String(p.cip || p.cip_deux || '').trim()
+        const photoFromApi = cip ? cipToPhotoMap.get(cip) : null
+        
+        // Si on a trouvé une image dans l'API, l'utiliser, sinon normaliser avec placeholder
+        if (photoFromApi) {
+          return normalizeProductImage({
+            ...p,
+            photo: photoFromApi,
+            photoURL: photoFromApi,
+            image: photoFromApi
+          })
+        }
+        
         return normalizeProductImage(p)
       })
 
       // Mettre en cache le résultat (optionnel - peut être désactivé pour forcer le rafraîchissement)
-      this.searchCache.set(key, Array.isArray(normalized) ? normalized : []);
-      return normalized;
+      this.searchCache.set(key, Array.isArray(enriched) ? enriched : []);
+      return enriched;
     } catch (err: any) {
       // Si la requête est annulée, retourner un tableau vide pour ignorer ce résultat
       if (err?.name === 'AbortError') {
