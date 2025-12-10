@@ -6,9 +6,24 @@ import { normalizeProductImage } from '@/utils/imageUtils'
 export class HomeService {
   private searchController?: AbortController;
   private searchCache: Map<string, any[]> = new Map();
+  private useDirectUrls: boolean = false; // Fallback si les proxies ne fonctionnent pas
 
   constructor() {
     // Nothing to init now; paths are built relatively and fetchApi handles bases
+  }
+
+  /**
+   * Détecte si une réponse est du HTML au lieu de JSON (erreur de proxy)
+   */
+  private isHtmlResponse(text: string): boolean {
+    return text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')
+  }
+
+  /**
+   * Obtient l'URL correcte pour un endpoint en fonction du mode (proxy ou direct)
+   */
+  private getApiUrl(proxyPath: string, directUrl: string): string {
+    return this.useDirectUrls ? directUrl : proxyPath
   }
 
   // Cancel any ongoing product search
@@ -35,8 +50,12 @@ export class HomeService {
 
     console.log(`[HomeService] 🔍 Asking n8n alternatives for: ${medicamentName} in province: ${input.province || 'unknown'}`)
 
-    // Webhook URL n8n - utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
-    const webhookUrl = '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    // Webhook URL n8n - utiliser le proxy Vercel/Nginx en prod et le proxy Vite en dev pour contourner CORS
+    // Fallback automatique vers URL directe si le proxy ne fonctionne pas
+    const webhookUrl = this.getApiUrl(
+      '/n8n-webhook/webhook/659daf74-ca15-40e2-a52c-54054db41de6',
+      'https://n8n-workflows-cktx.onrender.com/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+    )
 
     // Timeout configuration (60s pour laisser le temps à l'IA de répondre + cold start)
     const timeoutMs = 60000
@@ -94,6 +113,14 @@ export class HomeService {
             console.log(`[HomeService] 📥 Response ${i + 1} preview:`, testText.substring(0, 200))
             console.log(`[HomeService] 📊 Response ${i + 1} full length:`, testText.length, 'chars')
             console.log(`[HomeService] 🔍 Response ${i + 1} content-type:`, testResponse.headers.get('content-type'))
+
+            // Détecter si on reçoit du HTML au lieu de JSON (erreur de proxy)
+            if (this.isHtmlResponse(testText)) {
+              console.warn('[HomeService] ⚠️ Webhook proxy non configuré, bascule sur URL directe')
+              this.useDirectUrls = true
+              // Réessayer avec l'URL directe
+              return this.askN8nAlternatives(input)
+            }
 
             // Critères plus intelligents pour détecter une vraie réponse
             const hasContent = testText && testText.trim()
@@ -214,14 +241,29 @@ export class HomeService {
     }
   }
 
-  async getAllProduct(page: number, count: number) {
+  async getAllProduct(page: number, count: number): Promise<any[]> {
     try {
-      // Utiliser le proxy Vercel en prod et le proxy Vite en dev pour contourner CORS
-      const apiUrl = '/epharma-api/public/api/produits'
+      // Utiliser le proxy Vercel/Nginx en prod et le proxy Vite en dev pour contourner CORS
+      // Fallback automatique vers URL directe si le proxy ne fonctionne pas
+      const apiUrl = this.getApiUrl(
+        '/epharma-api/public/api/produits',
+        'https://epharma-panel.srv557357.hstgr.cloud/public/api/produits'
+      )
+      
+      console.log(`[HomeService] Fetching products from: ${apiUrl}`)
       const res = await fetch(apiUrl)
       if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`)
 
-      const json = await res.json()
+      // Vérifier si on reçoit du HTML au lieu de JSON (erreur de proxy)
+      const text = await res.text()
+      if (this.isHtmlResponse(text)) {
+        console.warn('[HomeService] ⚠️ Proxy non configuré, bascule sur URL directe')
+        this.useDirectUrls = true
+        // Réessayer avec l'URL directe
+        return this.getAllProduct(page, count)
+      }
+
+      const json = JSON.parse(text)
       const allProducts = Array.isArray(json?.data) ? json.data : []
 
       const normalized = allProducts.map((p: any) => {
@@ -294,7 +336,10 @@ export class HomeService {
       // Récupérer les produits de l'API epharma pour obtenir les images
       let apiProducts: any[] = []
       try {
-        const apiUrl = '/epharma-api/public/api/produits'
+        const apiUrl = this.getApiUrl(
+          '/epharma-api/public/api/produits',
+          'https://epharma-panel.srv557357.hstgr.cloud/public/api/produits'
+        )
         const res = await fetch(apiUrl)
         if (res.ok) {
           const json = await res.json()
@@ -353,15 +398,15 @@ export class HomeService {
    * Expected response shape (example): { libelle: string, cip?: string, [k:string]: any } | null
    */
   async alternativeByProvince(payload: { cip?: string | number; province?: string; query?: string }) {
-    const url = joinUrl('api_epg', 'alternative_by_province')
-    const res = await fetch(url, {
+    const path = joinUrl('api_epg', 'alternative_by_province')
+    const res = await fetchApi(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: {
         cip: payload.cip != null ? String(payload.cip) : undefined,
         province: payload.province,
         query: payload.query
-      })
+      }
     })
     if (!res.ok) {
       // Non-blocking: just return null so caller can gracefully fallback
