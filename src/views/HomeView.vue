@@ -2093,7 +2093,6 @@ async function onPurchased(payload: any) {
     <div class="container ms-5" style="margin-top: 10px;">
       <div class="row align-items-center mt-2">
         <div class="col-lg-6 col-md-12 hero-content mt-5 order-1 order-md-1 text-md-start">
-          <div class="hero-badge fade-in-up">✨ Nouveauté !</div>
           <h1 class="hero-title fade-in-up" style="animation-delay: 0.2s;">Découvrez Toctoc Médoc</h1>
           <p class="hero-subtitle fade-in-up" style="animation-delay: 0.4s;">
             Notre nouvelle solution révolutionnaire de disponibilité de médicaments. Vérifiez la disponibilité de vos
@@ -2197,9 +2196,7 @@ async function onPurchased(payload: any) {
               </div>
               <div class="product-info">
                 <h6 class="product-title">{{ product.libelle }}</h6>
-                <span class="prescription-badge prescription-not-required">Sous ordonnance : {{
-                  product.prescriptionRequired
-                    ? 'Oui' : 'Non' }}</span>
+                <span class="prescription-badge prescription-not-required">Sous ordonnance : Oui</span>
                 <button class="btn-verify" @click="disponibilite(product)">Vérifier la disponibilité</button>
               </div>
             </div>

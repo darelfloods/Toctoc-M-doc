@@ -32,6 +32,10 @@ export class MyPayGaService {
       ...(params.frontend_managed && { frontend_managed: true }),
     }
 
+    // 🔥 CRITIQUE: Forcer la réinitialisation du token depuis le store/localStorage
+    console.log('🔄 [MyPayGa] Réinitialisation du token depuis le store...')
+    AuthService.initializeAuth()
+    
     // Vérifier que le token d'authentification est présent
     const authToken = AuthService.getAuthToken()
     const currentUser = AuthService.getCurrentUser()
@@ -46,15 +50,37 @@ export class MyPayGaService {
 
     if (!authToken) {
       console.error('❌ [MyPayGa] Aucun token d\'authentification trouvé')
-      console.error('❌ [MyPayGa] Veuillez vous déconnecter et vous reconnecter')
-      throw new Error('Vous devez être connecté pour effectuer un paiement. Veuillez vous reconnecter.')
+      console.error('❌ [MyPayGa] Vérification du localStorage...')
+      const storedToken = localStorage.getItem('auth_token')
+      console.error('❌ [MyPayGa] Token dans localStorage:', storedToken ? 'EXISTE' : 'ABSENT')
+      
+      if (storedToken) {
+        console.error('❌ [MyPayGa] Token existe dans localStorage mais pas dans le store!')
+        console.error('❌ [MyPayGa] Tentative de récupération manuelle...')
+        try {
+          const tokenData = JSON.parse(storedToken)
+          if (tokenData.access_token) {
+            HttpService.setAuthToken(tokenData.access_token)
+            console.log('✅ [MyPayGa] Token récupéré manuellement depuis localStorage')
+            // Continuer avec le paiement
+          } else {
+            throw new Error('Token invalide dans localStorage')
+          }
+        } catch (e) {
+          console.error('❌ [MyPayGa] Impossible de parser le token:', e)
+          throw new Error('Vous devez être connecté pour effectuer un paiement. Veuillez vous reconnecter.')
+        }
+      } else {
+        console.error('❌ [MyPayGa] Veuillez vous déconnecter et vous reconnecter')
+        throw new Error('Vous devez être connecté pour effectuer un paiement. Veuillez vous reconnecter.')
+      }
+    } else {
+      // S'assurer que le token est bien configuré dans HttpService
+      console.log('🔧 [MyPayGa] Configuration du token dans HttpService...')
+      HttpService.setAuthToken(authToken)
+      console.log('✅ [MyPayGa] Token configuré avec succès')
+      console.log('✅ [MyPayGa] Prêt pour le paiement')
     }
-
-    // S'assurer que le token est bien configuré dans HttpService
-    console.log('🔧 [MyPayGa] Configuration du token dans HttpService...')
-    HttpService.setAuthToken(authToken)
-    console.log('✅ [MyPayGa] Token configuré avec succès')
-    console.log('✅ [MyPayGa] Prêt pour le paiement')
 
     console.log('📞 [MyPayGa] Appel API /my_pay_ga/subscribe_pricing')
     console.log('📦 [MyPayGa] Payload:', payload)

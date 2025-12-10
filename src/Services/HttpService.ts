@@ -58,8 +58,14 @@ export class HttpService {
     }
 
     // Ajouter le header Authorization si un token est présent
+    console.log('🔐 [HttpService] authToken stocké:', this.authToken ? 'OUI' : 'NON')
+    console.log('🔐 [HttpService] authToken (tronqué):', this.authToken ? `${this.authToken.substring(0, 30)}...` : 'AUCUN')
+    
     if (this.authToken) {
       requestHeaders['Authorization'] = `Bearer ${this.authToken}`
+      console.log('✅ [HttpService] Header Authorization ajouté')
+    } else {
+      console.warn('⚠️ [HttpService] AUCUN TOKEN - Header Authorization NON ajouté!')
     }
 
     // Configuration de la requête

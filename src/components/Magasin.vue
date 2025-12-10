@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import Paiement from './Paiement.vue'
 import { MyPayGaService } from '@/Services/MyPayGaService'
 import { useAuthStore } from '@/stores/auth'
@@ -261,7 +261,8 @@ function getBadge(libelle: string, price: number): { icon: string; text: string 
   return undefined
 }
 
-onMounted(async () => {
+// Fonction pour charger les offres depuis l'API
+async function loadOffers() {
   isLoading.value = true
   try {
     console.log('📡 [MAGASIN] Chargement des tarifs depuis le backend (/rate/all)...')
@@ -297,6 +298,19 @@ onMounted(async () => {
     console.error('❌ [MAGASIN] Détails de l\'erreur:', e?.response || e?.message || e)
   } finally {
     isLoading.value = false
+  }
+}
+
+// Charger les offres au montage initial
+onMounted(() => {
+  loadOffers()
+})
+
+// 🔥 FIX: Recharger automatiquement les offres à chaque ouverture du magasin
+watch(() => props.visible, (newValue) => {
+  if (newValue) {
+    console.log('🔄 [MAGASIN] Modal ouverte, rechargement des offres...')
+    loadOffers()
   }
 })
 
@@ -389,6 +403,13 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
     // Récupérer rate_id et le nombre de crédits à créditer
     const { rate_id, creditAmount } = await resolvePricing(offer)
 
+    // 🎯 VALIDATION: Vérifier que le rate_id est valide
+    if (!rate_id || rate_id === 0) {
+      paymentErrorMessage.value = 'Impossible de trouver le tarif correspondant. Veuillez réessayer ou contacter le support.'
+      showPaymentError.value = true
+      return
+    }
+
     console.log('🔍 [MAGASIN] Debug recharge crédits:')
     console.log('  - Offre:', offer)
     console.log('  - Montant:', amount)
@@ -398,6 +419,28 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
     console.log('  - Méthode:', payload.method)
 
     const user = auth.currentUser
+    
+    // 🎯 VALIDATION: Vérifier que l'utilisateur est connecté
+    if (!user) {
+      paymentErrorMessage.value = 'Vous devez être connecté pour effectuer un achat. Veuillez vous reconnecter.'
+      showPaymentError.value = true
+      return
+    }
+
+    // 🎯 VALIDATION CRITIQUE: Vérifier que le token existe et est valide
+    const authToken = auth.authToken
+    console.log('🔐 [MAGASIN] Vérification du token d\'authentification...')
+    console.log('🔐 [MAGASIN] Token présent:', !!authToken)
+    
+    if (!authToken) {
+      console.error('❌ [MAGASIN] Aucun token d\'authentification trouvé!')
+      paymentErrorMessage.value = 'Votre session a expiré. Veuillez vous déconnecter et vous reconnecter pour continuer.'
+      showPaymentError.value = true
+      showPayment.value = false
+      return
+    }
+
+    console.log('✅ [MAGASIN] Token valide trouvé')
     console.log('📞 [MAGASIN] Appel API MyPayGa...')
 
     const paymentResult = await MyPayGaService.subscribePricing({
@@ -414,6 +457,12 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
     console.log('📦 [MAGASIN] message:', paymentResult.message)
 
     const status = Number(paymentResult.request_status)
+    const message = paymentResult.message || ''
+
+    // 🎯 Détecter si c'est un paiement en attente de callback
+    const isPendingCallback = message.toLowerCase().includes('request sent') || 
+                              message.toLowerCase().includes('callback') ||
+                              message.toLowerCase().includes('final status will be sent')
 
     // 🎯 LOGIQUE CORRIGÉE: Vérifier que les crédits ont bien été ajoutés
     if (status === 200) {
@@ -425,13 +474,26 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       const creditsBefore = creditStore.credits
       console.log('💰 [MAGASIN] Crédits avant paiement:', creditsBefore)
       
-      // Attendre un peu pour que le callback soit traité
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Attendre progressivement et vérifier plusieurs fois (max 10 secondes)
+      let creditsAfter = creditsBefore
+      let attempts = 0
+      const maxAttempts = 5
       
-      // Rafraîchir les crédits
-      await creditStore.refreshForCurrentUser()
-      const creditsAfter = creditStore.credits
-      console.log('💰 [MAGASIN] Crédits après paiement:', creditsAfter)
+      while (attempts < maxAttempts && creditsAfter <= creditsBefore) {
+        attempts++
+        const waitTime = attempts * 2000 // 2s, 4s, 6s, 8s, 10s
+        console.log(`⏳ [MAGASIN] Tentative ${attempts}/${maxAttempts} - Attente ${waitTime}ms...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        
+        // Rafraîchir les crédits
+        await creditStore.refreshForCurrentUser()
+        creditsAfter = creditStore.credits
+        console.log('💰 [MAGASIN] Crédits après tentative', attempts, ':', creditsAfter)
+        
+        if (creditsAfter > creditsBefore) {
+          break
+        }
+      }
       
       // Vérifier si les crédits ont bien augmenté
       if (creditsAfter > creditsBefore) {
@@ -439,17 +501,42 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
         showPaymentSuccess.value = true
         emit('purchased', payload)
       } else {
-        // Les crédits n'ont pas augmenté = paiement échoué
-        console.error('❌ [MAGASIN] Les crédits n\'ont pas été ajoutés - paiement échoué')
-        paymentErrorMessage.value = 'Le paiement a échoué. Vérifiez votre solde Mobile Money et réessayez.'
+        // ❌ Les crédits n'ont PAS augmenté = le paiement a échoué
+        console.error('❌ [MAGASIN] Les crédits n\'ont pas été ajoutés après', maxAttempts, 'tentatives')
+        console.error('❌ [MAGASIN] Le paiement a probablement été annulé ou a échoué')
+        paymentErrorMessage.value = 'Le paiement a échoué ou a été annulé.\n\nPossibles raisons:\n• Paiement annulé sur votre téléphone\n• Mot de passe Mobile Money incorrect\n• Solde insuffisant\n• Problème de réseau\n\nVeuillez réessayer.'
         showPaymentError.value = true
+        showPayment.value = false
       }
-    } else if (status === 0) {
-      // ⏳ Demande envoyée, en attente de confirmation sur le téléphone
+    } else if (status === 0 || isPendingCallback) {
+      // ⏳ Demande envoyée, en attente de confirmation sur le téléphone ou du callback
       console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation')
+      console.log('📲 [MAGASIN] Message:', message)
       pendingPaymentPhone.value = payload.phone
       showPayment.value = false
       showPaymentPending.value = true
+      
+      // 🔄 Démarrer une vérification automatique des crédits toutes les 5 secondes
+      const checkInterval = setInterval(async () => {
+        console.log('🔄 [MAGASIN] Vérification automatique des crédits...')
+        const creditsBefore = creditStore.credits
+        await creditStore.refreshForCurrentUser()
+        const creditsAfter = creditStore.credits
+        
+        if (creditsAfter > creditsBefore) {
+          console.log('✅ [MAGASIN] Crédits détectés! Paiement confirmé.')
+          clearInterval(checkInterval)
+          showPaymentPending.value = false
+          showPaymentSuccess.value = true
+          emit('purchased', payload)
+        }
+      }, 5000)
+      
+      // Arrêter la vérification après 2 minutes
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        console.log('⏱️ [MAGASIN] Timeout de vérification automatique atteint')
+      }, 120000)
     } else {
       // ❌ Erreur de paiement
       console.error('❌ [MAGASIN] Échec du paiement:', paymentResult.message)
@@ -467,11 +554,48 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
 // Fonction pour vérifier le statut du paiement en attente
 async function checkPendingPayment() {
-  console.log('🔄 [MAGASIN] Vérification du paiement...')
+  console.log('🔄 [MAGASIN] Vérification manuelle du paiement...')
+  
+  // Sauvegarder les crédits avant rafraîchissement
+  const creditsBefore = creditStore.credits
+  console.log('💰 [MAGASIN] Crédits avant vérification:', creditsBefore)
+  
+  // Rafraîchir les crédits depuis le serveur
   await creditStore.refreshForCurrentUser()
-  console.log('💰 [MAGASIN] Crédits actuels:', creditStore.credits)
-  showPaymentPending.value = false
-  showPaymentSuccess.value = true
+  const creditsAfter = creditStore.credits
+  console.log('💰 [MAGASIN] Crédits après vérification:', creditsAfter)
+  
+  // Vérifier si les crédits ont augmenté
+  if (creditsAfter > creditsBefore) {
+    // ✅ Les crédits ont augmenté = paiement réussi
+    console.log('✅ [MAGASIN] Paiement confirmé! Les crédits ont augmenté.')
+    showPaymentPending.value = false
+    showPaymentSuccess.value = true
+  } else {
+    // ❌ Les crédits n'ont pas augmenté = paiement toujours en attente ou échoué
+    console.warn('⚠️ [MAGASIN] Les crédits n\'ont pas encore augmenté')
+    console.warn('⚠️ [MAGASIN] Le paiement est toujours en attente ou a échoué')
+    
+    // Demander à l'utilisateur ce qu'il veut faire
+    const userChoice = confirm(
+      'Les crédits n\'ont pas encore été ajoutés à votre compte.\n\n' +
+      'Cela peut signifier que :\n' +
+      '• Le paiement est toujours en cours de traitement\n' +
+      '• Le paiement a été annulé\n' +
+      '• Le paiement a échoué\n\n' +
+      'Voulez-vous continuer à attendre ?\n\n' +
+      'Cliquez sur "OK" pour continuer à attendre\n' +
+      'Cliquez sur "Annuler" pour fermer et réessayer plus tard'
+    )
+    
+    if (!userChoice) {
+      // L'utilisateur veut fermer
+      showPaymentPending.value = false
+      paymentErrorMessage.value = 'Vérification annulée. Si vous avez effectué le paiement, vos crédits arriveront dans quelques minutes. Sinon, veuillez réessayer.'
+      showPaymentError.value = true
+    }
+    // Sinon, on garde le modal "en attente" ouvert
+  }
 }
 
 // Fonction pour fermer toutes les modales
