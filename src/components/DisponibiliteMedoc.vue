@@ -234,11 +234,35 @@ function cancelConfirm() {
   showDebitConfirm.value = false
 }
 
-function doConfirm() {
-  if (!selectedProvince.value) return
-  // Émettre l événement vers le parent pour ouvrir la sélection de pharmacies
-  emit('confirmSelection', selectedProvince.value)
-  showDebitConfirm.value = false
+async function doConfirm() {
+  if (!selectedProvince.value || isDebiting.value) return
+  
+  isDebiting.value = true
+  try {
+    // Importer le store de crédits
+    const { useCreditStore } = await import('../stores/credit')
+    const creditStore = useCreditStore()
+    
+    // Débiter 2 crédits via le store
+    const ok = await creditStore.debitCredits(2)
+    if (!ok) {
+      // Échec: garder la modale ouverte et alerter l'utilisateur
+      alert('Le débit de crédits a échoué. Vérifiez votre solde ou votre connexion.')
+      showDebitConfirm.value = false
+      isDebiting.value = false
+      return
+    }
+    
+    // Succès: émettre l'événement vers le parent pour ouvrir la sélection de pharmacies
+    emit('confirmSelection', selectedProvince.value)
+    showDebitConfirm.value = false
+  } catch (e) {
+    console.error('Erreur lors du débit des crédits:', e)
+    alert('Erreur lors du débit des crédits')
+    showDebitConfirm.value = false
+  } finally {
+    isDebiting.value = false
+  }
 }
 </script>
 
