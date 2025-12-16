@@ -152,13 +152,13 @@
     <div class="modal-backdrop fade show"></div>
   </div>
   
-  <!-- Confirmation de débit (coût en crédits) -->
+  <!-- Confirmation d'ajout au panier -->
   <div v-if="showDebitConfirm">
     <div class="modal fade show" tabindex="-1" style="display:block;" role="dialog" aria-modal="true">
       <div class="modal-dialog" style="--bs-modal-width: 520px;">
         <div class="modal-content p-4">
           <h5>Confirmation</h5>
-          <p>Cette action vaut 2 crédits. Voulez-vous continuer ?</p>
+          <p>Voulez-vous ajouter {{ selectedPharmacies.size }} pharmacie(s) à votre panier ?</p>
           <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
             <button class="btn-cancel" @click="cancelDebitConfirm">Annuler</button>
             <button class="btn-confirm" :disabled="isDebiting" @click="doConfirmDebitAndEmit">Confirmer</button>
@@ -251,21 +251,16 @@ async function doConfirmDebitAndEmit() {
   if (isDebiting.value) return
   isDebiting.value = true
   try {
-    // Débiter 2 crédits via le store
-    const ok = await creditStore.debitCredits(2)
-    if (!ok) {
-      // Échec: garder la modale ouverte et alerter l'utilisateur
-      alert('Le débit de crédits a échoué. Vérifiez votre solde ou votre connexion.')
-      showDebitConfirm.value = false
-      return
-    }
+    // Les crédits sont déjà débités lors de la confirmation de province dans DisponibiliteMedoc.vue
+    // Ne pas débiter à nouveau ici pour éviter les doubles débits
+    
     // Succès: émettre la sélection multiple
     emit('selectMultiple', Array.from(selectedPharmacies.value))
     selectedPharmacies.value.clear()
     emit('close')
   } catch (e) {
-    console.error('Erreur lors du débit des crédits:', e)
-    alert('Erreur lors du débit des crédits')
+    console.error('Erreur lors de la sélection multiple:', e)
+    alert('Erreur lors de la sélection')
   } finally {
     isDebiting.value = false
     showDebitConfirm.value = false

@@ -199,6 +199,11 @@ export class HttpService {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' })
   }
 
+  // Méthode pour récupérer le token d'authentification actuel
+  static getAuthToken(): string | null {
+    return this.authToken
+  }
+
   // Méthode pour ajouter un token d'authentification
   static setAuthToken(token: string): void {
     this.authToken = token || null

@@ -158,17 +158,8 @@ function showLocalDebitToast(text = '2 crédits ont été débités') {
 watch(() => props.visible, async (v) => {
   if (v) {
     quantite.value = 1
-    try {
-      // Débiter 2 crédits à l'ouverture de la modale
-      const success = await creditStore.debitCredits(2)
-      if (success) {
-        showLocalDebitToast('2 crédits ont été débités')
-      } else {
-        console.warn('Le débit des crédits a échoué (ou compte manquant)')
-      }
-    } catch (e) {
-      console.error('Erreur lors du débit des crédits à l ouverture du modal:', e)
-    }
+    // Les crédits sont déjà débités lors de la confirmation de province dans DisponibiliteMedoc.vue
+    // Ne pas débiter à nouveau ici pour éviter les doubles débits
   }
 })
 

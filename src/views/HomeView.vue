@@ -1100,9 +1100,12 @@ async function aiHeadlessReservationFlow(product: any, qty: number, place?: stri
     let pharmacies: any[] = []
     try {
       const response = await homeService.disponibilite(product.cip)
-      // Accepter les pharmacies disponibles même avec qte = 0 (quantité peut être mise à jour par la pharmacie)
-      pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible')
-      console.log(`[AI Flow] 📊 Found ${pharmacies.length} pharmacies with status 'disponible'`)
+      // Filtrer uniquement les pharmacies disponibles avec quantité >= 1
+      pharmacies = (response?.disponibilites || []).filter((p: any) => {
+        const qte = Number(p.qte || 0)
+        return p.statut === 'disponible' && qte >= 1
+      })
+      console.log(`[AI Flow] 📊 Found ${pharmacies.length} pharmacies with status 'disponible' and quantity >= 1`)
     } catch (e) {
       console.error(e)
       pharmacies = []
@@ -1691,12 +1694,40 @@ async function disponibilite(product: any) {
     // Ouvrir la modale immédiatement pour afficher le chargement
     showDisponibilite.value = true
     const response = await homeService.disponibilite(product.cip)
-    // Accepter les pharmacies disponibles même avec qte = 0 (quantité peut être mise à jour par la pharmacie)
-    const pharmacies = (response?.disponibilites || []).filter((p: any) => p.statut === 'disponible')
-    console.log(`[Manual Check] 📊 Found ${pharmacies.length} pharmacies with status 'disponible'`)
+    
+    // DEBUG: Afficher la réponse brute de l'API
+    console.log('[Manual Check] 📦 Raw API response:', response)
+    console.log('[Manual Check] 📦 Disponibilites array:', response?.disponibilites)
+    console.log('[Manual Check] 📦 Disponibilites count:', response?.disponibilites?.length || 0)
+    
+    // DEBUG: Afficher les premiers éléments pour voir leur structure
+    if (response?.disponibilites?.length > 0) {
+      console.log('[Manual Check] 📋 First item structure:', JSON.stringify(response.disponibilites[0], null, 2))
+      console.log('[Manual Check] 📋 Statut values:', response.disponibilites.map((p: any) => p.statut).slice(0, 10))
+      console.log('[Manual Check] 📋 Qte values:', response.disponibilites.map((p: any) => p.qte).slice(0, 10))
+    }
+    
+    // Filtrer uniquement les pharmacies disponibles avec quantité >= 1
+    const pharmacies = (response?.disponibilites || []).filter((p: any) => {
+      const qte = Number(p.qte || 0)
+      const isDisponible = p.statut === 'disponible'
+      const hasStock = qte >= 1
+      // DEBUG: Afficher les critères de filtrage pour les premiers éléments
+      if (response?.disponibilites?.indexOf(p) < 5) {
+        console.log(`[Manual Check] 🔍 Item ${response.disponibilites.indexOf(p)}: statut='${p.statut}', qte=${qte}, isDisponible=${isDisponible}, hasStock=${hasStock}, keep=${isDisponible && hasStock}`)
+      }
+      return isDisponible && hasStock
+    })
+    console.log(`[Manual Check] 📊 Found ${pharmacies.length} pharmacies with status 'disponible' and quantity >= 1`)
+    
+    // DEBUG: Afficher le groupement par province
+    if (pharmacies.length > 0) {
+      console.log('[Manual Check] 🗺️ Sample pharmacy for province extraction:', pharmacies[0])
+    }
+    
     appStore.setDisponibilityPharmacies(pharmacies)
   } catch (err) {
-    console.error(err)
+    console.error('[Manual Check] ❌ Error:', err)
     appStore.setDisponibilityPharmacies([])
   } finally {
     appStore.setLoadingDisponibilite(false)
@@ -1709,30 +1740,18 @@ function onSelectProvince(key: string) {
 
 async function onConfirmProvince(key: string) {
   selectedProvince.value = key
-  // Vérifier uniquement le solde de crédits (> 0). Ne pas débiter à cette étape.
-  const proceed = async () => {
-    // S'assurer que le solde est à jour
-    if (!creditStore.accountId) {
-      await creditStore.refreshForCurrentUser()
-    } else {
-      // Même si accountId existe, on peut rafraîchir pour la dernière valeur de crédits
-      await creditStore.refreshForCurrentUser()
-    }
-    const available = Number(creditStore.credits || 0)
-    if (creditStore.accountId && available > 0) {
-      // Ouvrir le modal de sélection de pharmacie
-      showDisponibilite.value = false
-      showSelectPharmacy.value = true
-      showMagasin.value = false
-    } else {
-      // Crédits insuffisants: ouvrir le magasin
-      showDisponibilite.value = false
-      showSelectPharmacy.value = false
-      showMagasin.value = true
-    }
-  }
-  proceed()
+  // Le débit de 2 crédits a déjà été effectué avec succès dans DisponibiliteMedoc.vue
+  // On ouvre directement le modal de sélection de pharmacie sans revérifier les crédits
+  
+  // Rafraîchir le solde pour afficher la valeur à jour
+  await creditStore.refreshForCurrentUser()
+  
+  // Fermer le modal de disponibilité et ouvrir celui de sélection de pharmacie
+  showDisponibilite.value = false
+  showSelectPharmacy.value = true
+  showMagasin.value = false
 }
+
 
 function onPharmacySelected(ph: any) {
   selectedPharmacy.value = ph

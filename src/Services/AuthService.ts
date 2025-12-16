@@ -159,10 +159,23 @@ export class AuthService {
 
       console.log('📤 Données d\'inscription:', { ...payload, password: '[HIDDEN]' })
 
+      // IMPORTANT: Sauvegarder le token actuel et le retirer temporairement
+      // car l'inscription est un endpoint PUBLIC qui ne doit pas avoir d'auth
+      const currentToken = HttpService.getAuthToken()
+      if (currentToken) {
+        console.log('🔓 Retrait temporaire du token pour inscription publique')
+        HttpService.clearAuthToken()
+      }
+
       const response = await HttpService.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.REGISTER,
         payload,
       )
+
+      // Restaurer le token si nécessaire (au cas où)
+      if (currentToken && !response.data.token) {
+        HttpService.setAuthToken(currentToken)
+      }
 
       console.log('✅ Inscription réussie:', response.data)
 

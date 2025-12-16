@@ -10,6 +10,14 @@ export const ENV = {
   API_BASE_URLS: (() => {
     const list: string[] = []
     const norm = (u?: string) => (u ? String(u).replace(/\/+$/g, '') : u)
+    
+    // En production, utiliser uniquement l'URL Render
+    if (import.meta.env.PROD) {
+      const prodUrl = norm(import.meta.env.VITE_API_BASE_URL) || 'https://api-ttm.onrender.com'
+      return [prodUrl]
+    }
+    
+    // En développement, garder les fallbacks
     const candidates = [
       norm(import.meta.env.VITE_API_BASE_URL),
       'https://api-ttm.onrender.com', // Backend Render en priorité

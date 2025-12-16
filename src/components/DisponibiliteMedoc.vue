@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 type Grouped = Record<string, any[]>
 
@@ -170,6 +170,19 @@ const provinces = [
 const selectedProvince = ref<string | null>(null)
 const showDebitConfirm = ref<boolean>(false)
 const isDebiting = ref<boolean>(false)
+// Protection contre le double débit : flag pour éviter les débits multiples dans la même session
+const hasDebited = ref<boolean>(false)
+
+// Réinitialiser l'état quand le modal se ferme pour permettre une nouvelle session
+watch(() => props.visible, (newVal) => {
+  if (!newVal) {
+    // Modal fermé : réinitialiser les flags
+    selectedProvince.value = null
+    showDebitConfirm.value = false
+    isDebiting.value = false
+    hasDebited.value = false
+  }
+})
 
 const hasAnyData = computed(() => Object.keys(props.groupedPharmacies || {}).length > 0)
 function hasPharmacies(key: string) {
@@ -235,7 +248,11 @@ function cancelConfirm() {
 }
 
 async function doConfirm() {
-  if (!selectedProvince.value || isDebiting.value) return
+  // Protection contre les doubles appels
+  if (!selectedProvince.value || isDebiting.value || hasDebited.value) {
+    console.log('[DisponibiliteMedoc] doConfirm bloqué - selectedProvince:', selectedProvince.value, 'isDebiting:', isDebiting.value, 'hasDebited:', hasDebited.value)
+    return
+  }
   
   isDebiting.value = true
   try {
@@ -244,6 +261,7 @@ async function doConfirm() {
     const creditStore = useCreditStore()
     
     // Débiter 2 crédits via le store
+    console.log('[DisponibiliteMedoc] Débit de 2 crédits...')
     const ok = await creditStore.debitCredits(2)
     if (!ok) {
       // Échec: garder la modale ouverte et alerter l'utilisateur
@@ -252,6 +270,10 @@ async function doConfirm() {
       isDebiting.value = false
       return
     }
+    
+    // Marquer le débit comme effectué pour empêcher les doubles débits
+    hasDebited.value = true
+    console.log('[DisponibiliteMedoc] Débit réussi, hasDebited =', hasDebited.value)
     
     // Succès: émettre l'événement vers le parent pour ouvrir la sélection de pharmacies
     emit('confirmSelection', selectedProvince.value)

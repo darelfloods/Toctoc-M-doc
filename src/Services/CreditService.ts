@@ -149,105 +149,24 @@ export class CreditService {
   }
 
   static async souscrireCredit(accountId: number, credit: number): Promise<boolean> {
-    // Essayer plusieurs variantes car l'API peut attendre un verbe ou un payload différent selon l'environnement
-    // Reset last error before attempts
+    // Utiliser UNIQUEMENT l'endpoint correct de l'API pour éviter les doubles débits
     CreditService.lastError = null
     
-    console.log('💳 [CreditService] Tentative de débit de', credit, 'crédit(s) pour le compte', accountId)
+    console.log('💳 [CreditService] Débit de', credit, 'crédit(s) pour le compte', accountId)
     
-    const attempts: Array<() => Promise<boolean>> = [
-      // 1) PUT /account/spent/{id}?credit={amount} - ENDPOINT CORRECT DE L'API
-      async () => {
-        console.log('💳 [CreditService] Tentative #1: PUT /account/spent avec query param')
-        await HttpService.put(`/account/spent/${accountId}?credit=${encodeURIComponent(String(credit))}`)
-        console.log('✅ [CreditService] Succès avec PUT /account/spent + query param')
-        return true
-      },
-      // 2) PUT /account/spent/{id} avec body JSON
-      async () => {
-        console.log('💳 [CreditService] Tentative #2: PUT /account/spent avec body')
-        await HttpService.put(`/account/spent/${accountId}`, { credit: Number(credit) })
-        console.log('✅ [CreditService] Succès avec PUT /account/spent + body')
-        return true
-      },
-      // 3) POST /account/debit - endpoint standard pour débiter des crédits
-      async () => {
-        console.log('💳 [CreditService] Tentative #3: POST /account/debit')
-        await HttpService.post(`/account/debit`, { accountId: Number(accountId), amount: Number(credit) })
-        console.log('✅ [CreditService] Succès avec POST /account/debit')
-        return true
-      },
-      // 4) POST /account/update_credit - mise à jour générale des crédits
-      async () => {
-        console.log('💳 [CreditService] Tentative #4: POST /account/update_credit')
-        await HttpService.post(`/account/update_credit`, { accountId: Number(accountId), credit: -Number(credit), operation: 'debit' })
-        console.log('✅ [CreditService] Succès avec POST /account/update_credit')
-        return true
-      },
-      // 5) PATCH /account/{id} - mise à jour partielle du compte
-      async () => {
-        console.log('💳 [CreditService] Tentative #5: PATCH /account')
-        await HttpService.patch(`/account/${accountId}`, { credit_spent: Number(credit) })
-        console.log('✅ [CreditService] Succès avec PATCH /account')
-        return true
-      },
-      // 6) POST /account/{id}/debit - débit par ID de compte
-      async () => {
-        console.log('💳 [CreditService] Tentative #6: POST /account/{id}/debit')
-        await HttpService.post(`/account/${accountId}/debit`, { amount: Number(credit) })
-        console.log('✅ [CreditService] Succès avec POST /account/{id}/debit')
-        return true
-      },
-      // 7) POST /account/transaction - enregistrement de transaction générique
-      async () => {
-        console.log('💳 [CreditService] Tentative #7: POST /account/transaction')
-        await HttpService.post(`/account/transaction`, { 
-          accountId: Number(accountId), 
-          amount: Number(credit), 
-          type: 'debit',
-          reason: 'reservation_check' 
-        })
-        console.log('✅ [CreditService] Succès avec POST /account/transaction')
-        return true
-      },
-      // 8) POST avec FormData pour compatibilité ancienne API
-      async () => {
-        const fd = new FormData()
-        fd.append('account_id', String(accountId))
-        fd.append('amount', String(credit))
-        fd.append('operation', 'debit')
-        await HttpService.post(`/account/debit`, fd)
-        return true
-      },
-    ]
-    console.log(`[CreditService] Attempting to debit ${credit} credits from account ${accountId}`)
-    
-    for (let i = 0; i < attempts.length; i++) {
-      try {
-        console.log(`[CreditService] Attempt ${i + 1}/${attempts.length}`)
-        const ok = await attempts[i]()
-        if (ok) {
-          console.log(`[CreditService] ✅ Debit successful on attempt ${i + 1}`)
-          return true
-        }
-      } catch (e: any) {
-        const msg = e instanceof HttpError
-          ? `HTTP ${e.status} ${e.statusText}${e.data ? ' - ' + (typeof e.data === 'string' ? e.data : JSON.stringify(e.data)) : ''}`
-          : (e?.message || String(e))
-        CreditService.lastError = msg
-        console.warn(`[CreditService] ❌ Debit attempt ${i + 1}/${attempts.length} failed:`, msg)
-        
-        // Si c'est une erreur d'auth (401/403), pas la peine de continuer
-        if (e instanceof HttpError && (e.status === 401 || e.status === 403)) {
-          console.error('[CreditService] Authentication error, stopping attempts')
-          break
-        }
-        
-        // Continue to next attempt pour les autres erreurs
-      }
+    try {
+      // PUT /account/spent/{id}?credit={amount} - ENDPOINT CORRECT DE L'API
+      console.log('💳 [CreditService] PUT /account/spent avec query param')
+      await HttpService.put(`/account/spent/${accountId}?credit=${encodeURIComponent(String(credit))}`)
+      console.log('✅ [CreditService] Succès - Débit effectué')
+      return true
+    } catch (e: any) {
+      const msg = e instanceof HttpError
+        ? `HTTP ${e.status} ${e.statusText}${e.data ? ' - ' + (typeof e.data === 'string' ? e.data : JSON.stringify(e.data)) : ''}`
+        : (e?.message || String(e))
+      CreditService.lastError = msg
+      console.error('[CreditService] ❌ Échec du débit:', msg)
+      return false
     }
-    
-    console.error('[CreditService] ❌ All debit attempts failed. Last error:', CreditService.lastError)
-    return false
   }
 }
