@@ -79,51 +79,64 @@
 
             <!-- Enhanced Pharmacies Grid -->
             <div class="pharmacies-section">
-              <div class="section-header">
-                <h3>Liste des Pharmacies</h3>
-                <div class="results-count">{{ filteredPharmacies.length }} résultat(s)</div>
+              <div v-if="isLoading" class="d-flex justify-content-center align-items-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+                <span class="ms-3 text-muted">Vérification des disponibilités en cours...</span>
               </div>
               
-              <div class="pharmacies-grid">
-                <div
-                  v-for="(pharmacy, index) in filteredPharmacies"
-                  :key="pharmacy.id || index"
-                  class="pharmacy-card modern-card"
-                  :class="{ 'active': pharmacy.status === 'active', 'inactive': pharmacy.status === 'inactive' }"
-                >
-                  <div class="card-header">
-                    <div class="pharmacy-icon">
-                      <i class="bi bi-building" v-if="pharmacy.type === 'main'"></i>
-                      <i class="bi bi-hospital" v-else-if="pharmacy.type === 'hospital'"></i>
-                      <i class="bi bi-heart-pulse" v-else-if="pharmacy.type === 'health'"></i>
-                      <i class="bi bi-capsule" v-else-if="pharmacy.type === 'capsule'"></i>
-                      <i class="bi bi-plus-circle-fill" v-else-if="pharmacy.type === 'plus'"></i>
-                      <i class="bi bi-shield-heart" v-else-if="pharmacy.type === 'shield'"></i>
-                      <i class="bi bi-building" v-else></i>
-                    </div>
-                    <div class="pharmacy-status">
-                      <span class="status-badge" :class="pharmacy.status">
-                        <i class="bi bi-circle-fill"></i>
-                        {{ pharmacy.status === 'active' ? 'Active' : 'Inactive' }}
-                      </span>
-                    </div>
-                  </div>
+              <div v-else-if="error" class="alert alert-danger text-center">
+                {{ error }}
+              </div>
 
-                  <div class="card-body">
-                    <h6 class="pharmacy-name">{{ pharmacy.name }}</h6>
-                    
-                    <div class="pharmacy-details">
-                      <div class="detail-item" v-if="pharmacy.address">
-                        <i class="bi bi-geo-alt"></i>
-                        <span>{{ pharmacy.address }}</span>
+              <div v-else>
+                <div class="section-header">
+                  <h3>Liste des Pharmacies</h3>
+                  <div class="results-count">{{ filteredPharmacies.length }} résultat(s)</div>
+                </div>
+                
+                <div class="pharmacies-grid">
+                  <div
+                    v-for="(pharmacy, index) in filteredPharmacies"
+                    :key="pharmacy.id || index"
+                    class="pharmacy-card modern-card"
+                    :class="{ 'active': pharmacy.status === 'active', 'inactive': pharmacy.status === 'inactive' }"
+                  >
+                    <div class="card-header">
+                      <div class="pharmacy-icon">
+                        <i class="bi bi-building" v-if="pharmacy.type === 'main'"></i>
+                        <i class="bi bi-hospital" v-else-if="pharmacy.type === 'hospital'"></i>
+                        <i class="bi bi-heart-pulse" v-else-if="pharmacy.type === 'health'"></i>
+                        <i class="bi bi-capsule" v-else-if="pharmacy.type === 'capsule'"></i>
+                        <i class="bi bi-plus-circle-fill" v-else-if="pharmacy.type === 'plus'"></i>
+                        <i class="bi bi-shield-heart" v-else-if="pharmacy.type === 'shield'"></i>
+                        <i class="bi bi-building" v-else></i>
                       </div>
-                      <div class="detail-item" v-if="pharmacy.province">
-                        <i class="bi bi-map"></i>
-                        <span>{{ pharmacy.province }}</span>
+                      <div class="pharmacy-status">
+                        <span class="status-badge" :class="pharmacy.status">
+                          <i class="bi bi-circle-fill"></i>
+                          {{ pharmacy.status === 'active' ? 'Active' : 'Inactive' }}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
+                    <div class="card-body">
+                      <h6 class="pharmacy-name">{{ pharmacy.name }}</h6>
+                      
+                      <div class="pharmacy-details">
+                        <div class="detail-item" v-if="pharmacy.address">
+                          <i class="bi bi-geo-alt"></i>
+                          <span>{{ pharmacy.address }}</span>
+                        </div>
+                        <div class="detail-item" v-if="pharmacy.province">
+                          <i class="bi bi-map"></i>
+                          <span>{{ pharmacy.province }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </div>
@@ -146,7 +159,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { HomeService } from '../Services/HomeService'
 
 interface Pharmacy {
   id?: string
@@ -157,7 +171,7 @@ interface Pharmacy {
   province?: string
 }
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
 }>()
 
@@ -165,112 +179,77 @@ defineEmits<{
   close: []
 }>()
 
-// Sample pharmacy data - combines static partners with realistic data
-const allPharmacies = computed<Pharmacy[]>(() => [
-  // Main pharmacies from the carousel
-  {
-    id: '1',
-    name: 'PHARMACIE CENTRALE',
-    type: 'main',
-    status: 'active',
-    address: 'Avenue de l\'Indépendance, Libreville',
-    province: 'Estuaire'
-  },
-  {
-    id: '2',
-    name: 'PHARMACIE MODERNE',
-    type: 'hospital',
-    status: 'active',
-    address: 'Boulevard Triomphal, Libreville',
-    province: 'Estuaire'
-  },
-  {
-    id: '3',
-    name: 'PHARMACIE SANTÉ',
-    type: 'health',
-    status: 'active',
-    address: 'Quartier Nombakélé, Libreville',
-    province: 'Estuaire'
-  },
-  {
-    id: '4',
-    name: 'PHARMACIE LA MANUFAC',
-    type: 'capsule',
-    status: 'inactive',
-    address: 'Zone Industrielle Oloumi, Libreville',
-    province: 'Estuaire'
-  },
-  {
-    id: '5',
-    name: 'PHARMACIE BON REMÈDE',
-    type: 'plus',
-    status: 'active',
-    address: 'Centre-ville, Port-Gentil',
-    province: 'Ogooué-Maritime'
-  },
-  {
-    id: '6',
-    name: 'PHARMACIE NOTRE DAME',
-    type: 'shield',
-    status: 'active',
-    address: 'Quartier Cathédrale, Libreville',
-    province: 'Estuaire'
-  },
-  // Partner pharmacies from the partenaires array
-  {
-    id: '7',
-    name: 'PHARMACIE AYITEBE',
-    status: 'active',
-    address: 'Centre-ville, Franceville',
-    province: 'Haut-Ogooué'
-  },
-  {
-    id: '8',
-    name: 'PHARMACIE AKEWA',
-    status: 'active',
-    address: 'Quartier Akewa, Oyem',
-    province: 'Woleu-Ntem'
-  },
-  {
-    id: '9',
-    name: 'PHARMACIE SOS BIBIKI',
-    status: 'inactive',
-    address: 'Bibiki, Oyem',
-    province: 'Woleu-Ntem'
-  },
-  {
-    id: '10',
-    name: 'PHARMACIE MARIE LAMLET',
-    status: 'active',
-    address: 'Lambaréné Centre',
-    province: 'Moyen-Ogooué'
-  },
-  {
-    id: '11',
-    name: 'PHARMACIE LIBWE',
-    status: 'active',
-    address: 'Quartier Libwe, Mouila',
-    province: 'Ngounié'
-  },
-  {
-    id: '12',
-    name: 'PHARMACIE EL RAPHA',
-    status: 'inactive',
-    address: 'Centre El Rapha, Tchibanga',
-    province: 'Nyanga'
-  },
-  {
-    id: '13',
-    name: 'PHARMACIE MANIEVA',
-    status: 'active',
-    address: 'Quartier Manieva, Makokou',
-    province: 'Ogooué-Ivindo'
-  }
-])
+const homeService = new HomeService()
+const allPharmacies = ref<Pharmacy[]>([])
+const isLoading = ref(false)
+const error = ref('')
 
 // Search and filter states
 const searchQuery = ref('')
 const statusFilter = ref('')
+
+// Test CIP for availability check (Doliprane 1000mg or generic)
+const TEST_CIP = '3400934892484' 
+
+async function fetchPharmacies() {
+  if (isLoading.value) return
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    // We use a common product to check which pharmacies are online/connected
+    const response = await homeService.disponibilite(TEST_CIP)
+    
+    if (response && Array.isArray(response.disponibilites)) {
+      allPharmacies.value = response.disponibilites.map((item: any, index: number) => {
+        // Determine status based on API result
+        // If statut is 'disponible', we consider it active. 
+        // Note: We might want to show all pharmacies but mark them active/inactive.
+        // However, the API typically returns pharmacies that RESPONDED.
+        // If the user wants "active/inactive" based on availability, we interpret 'disponible' as active.
+        // But re-reading request: "toute les pharmacie ayant le statut 'disponible' sont considérées comme 'active' et les autres comme 'non active'"
+        
+        const isAvailable = item.statut === 'disponible'
+        const rawName = item.pharmacie?.nom_pharmacie || item.nom_pharmacie || item.name || `Pharmacie ${index + 1}`
+        const rawAddress = item.pharmacie?.adresse || item.adresse || ''
+        const rawProvince = item.pharmacie?.province || item.province || item.region || ''
+        
+        // Randomize icon type for visual variety since API might not provide it
+        const types: Pharmacy['type'][] = ['main', 'hospital', 'health', 'capsule', 'plus', 'shield']
+        const randomType = types[index % types.length]
+
+        return {
+          id: String(item.id || item.pharmacie?.id || index),
+          name: rawName,
+          type: randomType,
+          status: isAvailable ? 'active' : 'inactive',
+          address: rawAddress,
+          province: rawProvince
+        }
+      })
+      
+      // Sort: Active first, then by name
+      allPharmacies.value.sort((a, b) => {
+        if (a.status === b.status) return a.name.localeCompare(b.name)
+        return a.status === 'active' ? -1 : 1
+      })
+    } else {
+      allPharmacies.value = []
+    }
+  } catch (e) {
+    console.error('Error fetching pharmacies:', e)
+    error.value = "Impossible de charger la liste des pharmacies."
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Fetch when modal opens
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    fetchPharmacies()
+  }
+})
 
 // Computed filtered pharmacies
 const filteredPharmacies = computed(() => {

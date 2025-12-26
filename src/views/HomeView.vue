@@ -54,6 +54,19 @@ const initialProducts = ref<any[]>([])
 const searchTerm = ref('')
 const searchDebounce = ref<number | undefined>(undefined)
 let currentSearchId = 0
+ 
+ function isPrescriptionRequiredForProduct(product: any): boolean {
+   const categorie = String(product?.categorie ?? '').trim().toUpperCase()
+   if (categorie === 'MEDICAMENT') return true
+   if (categorie === 'PARAPHARMACIE') return false
+   return Boolean(product?.prescriptionRequired ?? product?.prescription_required ?? false)
+ }
+ function prescriptionLabel(product: any): string {
+   return isPrescriptionRequiredForProduct(product) ? 'Oui' : 'Non'
+ }
+ function prescriptionClass(product: any): string {
+   return isPrescriptionRequiredForProduct(product) ? 'prescription-required' : 'prescription-not-required'
+ }
 const showConnexion = ref(false)
 const showParametre = ref(false)
 const showPanier = ref(false)
@@ -2021,10 +2034,10 @@ async function onPurchased(payload: any) {
               <span class="text">{{ creditStore.credits }} crédits</span>
             </div>
             <!-- Bouton Pharmacies -->
-            <!--<button class="pharmacies-btn ms-3" @click="showPharmacies = true">
+            <button class="pharmacies-btn ms-3" @click="showPharmacies = true">
               <i class="bi bi-hospital"></i>
               <span class="text">Pharmacies</span>
-            </button>-->
+            </button>
             <button style="border: none;" @click="showPanier = true">
               <span class="badge bg-success p-2 position-relative" style="border-radius: 50px;">
                 <i class="bi bi-cart4" style="font-size:25px"></i>
@@ -2160,6 +2173,7 @@ async function onPurchased(payload: any) {
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">Tous les produits disponibles</h2>
         <p class="lead">Recherchez et vérifiez la disponibilité de vos médicaments</p>
+        <div class="images-disclaimer"><span class="images-disclaimer-star">*</span>Toutes les images sont contractuelles</div>
       </div>
       <div class="search-container mb-5">
         <div class="search-input-wrapper">
@@ -2215,8 +2229,8 @@ async function onPurchased(payload: any) {
               </div>
               <div class="product-info">
                 <h6 class="product-title">{{ product.libelle }}</h6>
-                <span class="prescription-badge prescription-not-required">Sous ordonnance : Oui</span>
-                <button class="btn-verify" @click="disponibilite(product)">Vérifier la disponibilité</button>
+                <span class="prescription-badge" :class="prescriptionClass(product)">Sous ordonnance : {{ prescriptionLabel(product) }}</span>
+                <button class="btn-verify" @mousedown.prevent @click="disponibilite(product)">Vérifier la disponibilité</button>
               </div>
             </div>
           </div>
@@ -3171,6 +3185,17 @@ body {
   background: rgba(58, 178, 79, 0.1);
   color: var(--secondary-color);
   border: 1px solid rgba(58, 178, 79, 0.3);
+}
+
+.images-disclaimer {
+  margin-top: 6px;
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.images-disclaimer-star {
+  color: #dc3545;
+  margin-right: 4px;
 }
 
 .btn-verify {

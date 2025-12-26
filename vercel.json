@@ -11,7 +11,7 @@
     },
     {
       "source": "/api_epg/:path*",
-      "destination": "https://api-ttm.onrender.com/api_epg/:path*"
+      "destination": "https://ttm-backend.srv1079351.hstgr.cloud/api_epg/:path*"
     },
     {
       "source": "/reservations-api/:path*",

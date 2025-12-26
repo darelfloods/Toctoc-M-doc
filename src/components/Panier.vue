@@ -118,6 +118,21 @@
                   <div v-if="statusMessage" class="reservation-status mt-3" :class="statusType === 'success' ? 'text-success' : 'text-danger'">
                     {{ statusMessage }}
                   </div>
+                  <div v-if="cartPharmacy" class="pharmacy-contact-card mt-3">
+                    <div class="pharmacy-contact-title">Contact pharmacie</div>
+                    <div class="pharmacy-contact-line">
+                      <i class="bi bi-shop"></i>
+                      <span>{{ pharmacyName(cartPharmacy) }}<template v-if="pharmacyCity(cartPharmacy)">, {{ pharmacyCity(cartPharmacy) }}</template></span>
+                    </div>
+                    <div v-if="pharmacyDistrict(cartPharmacy)" class="pharmacy-contact-line">
+                      <i class="bi bi-geo"></i>
+                      <span>{{ pharmacyDistrict(cartPharmacy) }}</span>
+                    </div>
+                    <div v-if="pharmacyPhone(cartPharmacy)" class="pharmacy-contact-line">
+                      <i class="bi bi-telephone"></i>
+                      <span>{{ pharmacyPhone(cartPharmacy) }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -141,6 +156,10 @@ cart.loadFromStorage()
 
 const items = computed(() => cart.items)
 const total = computed(() => cart.total)
+const cartPharmacy = computed(() => {
+  const first: any = items.value?.[0]
+  return first?.pharmacy || first?.pharmacie || null
+})
 const loading = ref(false)
 const statusMessage = ref('')
 const statusType = ref<'success' | 'error'>('success')
@@ -171,6 +190,22 @@ function pharmacyCity(ph: any) {
   return (
     ph?.ville || ph?.city || ph?.localite || ph?.commune ||
     ph?.pharmacie?.ville || ph?.pharmacie?.city || ph?.pharmacie?.localite || ph?.pharmacie?.commune ||
+    ''
+  )
+}
+
+function pharmacyDistrict(ph: any) {
+  return (
+    ph?.souscription || ph?.quartier || ph?.district ||
+    ph?.pharmacie?.souscription || ph?.pharmacie?.quartier || ph?.pharmacie?.district ||
+    ''
+  )
+}
+
+function pharmacyPhone(ph: any) {
+  return (
+    ph?.telephone1 || ph?.telephone || ph?.phone || ph?.contact ||
+    ph?.pharmacie?.telephone1 || ph?.pharmacie?.telephone || ph?.pharmacie?.phone || ph?.pharmacie?.contact ||
     ''
   )
 }
@@ -376,6 +411,31 @@ async function commander() {
 .cart-content {
   padding:2rem;
   overflow-y: auto;
+}
+
+.pharmacy-contact-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.pharmacy-contact-title {
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.pharmacy-contact-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  margin: 6px 0;
+}
+
+.pharmacy-contact-line i {
+  color: #0F7ABB;
 }
 
 /* ========================================
