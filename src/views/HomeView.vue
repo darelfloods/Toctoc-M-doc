@@ -54,19 +54,19 @@ const initialProducts = ref<any[]>([])
 const searchTerm = ref('')
 const searchDebounce = ref<number | undefined>(undefined)
 let currentSearchId = 0
- 
- function isPrescriptionRequiredForProduct(product: any): boolean {
-   const categorie = String(product?.categorie ?? '').trim().toUpperCase()
-   if (categorie === 'MEDICAMENT') return true
-   if (categorie === 'PARAPHARMACIE') return false
-   return Boolean(product?.prescriptionRequired ?? product?.prescription_required ?? false)
- }
- function prescriptionLabel(product: any): string {
-   return isPrescriptionRequiredForProduct(product) ? 'Oui' : 'Non'
- }
- function prescriptionClass(product: any): string {
-   return isPrescriptionRequiredForProduct(product) ? 'prescription-required' : 'prescription-not-required'
- }
+
+function isPrescriptionRequiredForProduct(product: any): boolean {
+  const categorie = String(product?.categorie ?? '').trim().toUpperCase()
+  if (categorie === 'MEDICAMENT') return true
+  if (categorie === 'PARAPHARMACIE') return false
+  return Boolean(product?.prescriptionRequired ?? product?.prescription_required ?? false)
+}
+function prescriptionLabel(product: any): string {
+  return isPrescriptionRequiredForProduct(product) ? 'Oui' : 'Non'
+}
+function prescriptionClass(product: any): string {
+  return isPrescriptionRequiredForProduct(product) ? 'prescription-required' : 'prescription-not-required'
+}
 const showConnexion = ref(false)
 const showParametre = ref(false)
 const showPanier = ref(false)
@@ -429,7 +429,7 @@ function startTranscription() {
   if (smartSearchRecognition) {
     try {
       smartSearchRecognition.stop()
-    } catch {}
+    } catch { }
     smartSearchRecognition = null
   }
 
@@ -1707,19 +1707,19 @@ async function disponibilite(product: any) {
     // Ouvrir la modale immédiatement pour afficher le chargement
     showDisponibilite.value = true
     const response = await homeService.disponibilite(product.cip)
-    
+
     // DEBUG: Afficher la réponse brute de l'API
     console.log('[Manual Check] 📦 Raw API response:', response)
     console.log('[Manual Check] 📦 Disponibilites array:', response?.disponibilites)
     console.log('[Manual Check] 📦 Disponibilites count:', response?.disponibilites?.length || 0)
-    
+
     // DEBUG: Afficher les premiers éléments pour voir leur structure
     if (response?.disponibilites?.length > 0) {
       console.log('[Manual Check] 📋 First item structure:', JSON.stringify(response.disponibilites[0], null, 2))
       console.log('[Manual Check] 📋 Statut values:', response.disponibilites.map((p: any) => p.statut).slice(0, 10))
       console.log('[Manual Check] 📋 Qte values:', response.disponibilites.map((p: any) => p.qte).slice(0, 10))
     }
-    
+
     // Filtrer uniquement les pharmacies disponibles avec quantité >= 1
     const pharmacies = (response?.disponibilites || []).filter((p: any) => {
       const qte = Number(p.qte || 0)
@@ -1732,12 +1732,12 @@ async function disponibilite(product: any) {
       return isDisponible && hasStock
     })
     console.log(`[Manual Check] 📊 Found ${pharmacies.length} pharmacies with status 'disponible' and quantity >= 1`)
-    
+
     // DEBUG: Afficher le groupement par province
     if (pharmacies.length > 0) {
       console.log('[Manual Check] 🗺️ Sample pharmacy for province extraction:', pharmacies[0])
     }
-    
+
     appStore.setDisponibilityPharmacies(pharmacies)
   } catch (err) {
     console.error('[Manual Check] ❌ Error:', err)
@@ -1755,10 +1755,10 @@ async function onConfirmProvince(key: string) {
   selectedProvince.value = key
   // Le débit de 2 crédits a déjà été effectué avec succès dans DisponibiliteMedoc.vue
   // On ouvre directement le modal de sélection de pharmacie sans revérifier les crédits
-  
+
   // Rafraîchir le solde pour afficher la valeur à jour
   await creditStore.refreshForCurrentUser()
-  
+
   // Fermer le modal de disponibilité et ouvrir celui de sélection de pharmacie
   showDisponibilite.value = false
   showSelectPharmacy.value = true
@@ -1902,19 +1902,18 @@ async function onPurchased(payload: any) {
       <div class="notice-content">
         <h3 class="notice-heading">
           {{ aiNoticeType === 'success' ? 'Réservation effectuée' :
-             aiNoticeType === 'alternative' ? 'Alternative disponible' :
-             'Information' }}
+            aiNoticeType === 'alternative' ? 'Alternative disponible' :
+              'Information' }}
         </h3>
         <p class="notice-message">{{ aiNoticeText }}</p>
       </div>
 
       <!-- Actions -->
       <div class="notice-actions">
-        <button class="btn-notice-primary" @click="closeAiNotice()"
-          :class="{
-            'btn-notice-success': aiNoticeType === 'success',
-            'btn-notice-alternative': aiNoticeType === 'alternative'
-          }">
+        <button class="btn-notice-primary" @click="closeAiNotice()" :class="{
+          'btn-notice-success': aiNoticeType === 'success',
+          'btn-notice-alternative': aiNoticeType === 'alternative'
+        }">
           {{ aiNoticeType === 'success' ? 'Voir mon panier' : 'J\'ai compris' }}
           <i class="bi ms-2" :class="{
             'bi-cart3': aiNoticeType === 'success',
@@ -1945,7 +1944,7 @@ async function onPurchased(payload: any) {
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           <div>
             Cette action va consommer <strong>{{ creditConfirmAmount }} crédit{{ creditConfirmAmount > 1 ? 's' : ''
-              }}</strong> de votre compte.
+            }}</strong> de votre compte.
           </div>
         </div>
         <p class="mb-2">
@@ -2162,7 +2161,17 @@ async function onPurchased(payload: any) {
         <div class="province-item"><img src="/assets/Ogooué-Lolo.png" alt="Ogooué-Lolo" class="province-icon me-3"
             style="height: 3vh;" />OGOOUE-LOLO</div>
         <div class="province-item"><img src="/assets/Woleu-Ntem.png" alt="Woleu-Ntem" class="province-icon me-3"
-            style="height: 3vh;" />WOLEU-NTEM</div>
+            style="height: 3vh;" />WOLEU-NTEM
+        </div>
+        <div
+          class="d-flex align-items-center justify-content-center gap-2 px-2 rounded bg-warning bg-gradient shadow-sm"
+          style="height:3vh;">
+          <span class="badge bg-danger">PUB</span>
+          <small class="fw-bold text-dark">
+            Votre publicité ici
+          </small>
+        </div>
+
       </div>
     </div>
   </section>
@@ -2173,7 +2182,8 @@ async function onPurchased(payload: any) {
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">Tous les produits disponibles</h2>
         <p class="lead">Recherchez et vérifiez la disponibilité de vos médicaments</p>
-        <div class="images-disclaimer"><span class="images-disclaimer-star">*</span>Toutes les images sont non contractuelles</div>
+        <div class="images-disclaimer"><span class="images-disclaimer-star">*</span>Toutes les images sont non
+          contractuelles</div>
       </div>
       <div class="search-container mb-5">
         <div class="search-input-wrapper">
@@ -2215,22 +2225,19 @@ async function onPurchased(payload: any) {
           <div class="col-lg-3 col-md-8 col-sm-12" v-for="(product, idx) in products" :key="idx">
             <div class="product-card mb-4 mx-3">
               <div class="product-image">
-                <img 
-                  :src="getProductImage(product)" 
-                  :alt="product.libelle" 
-                  loading="lazy"
-                  @error="(e) => { 
-                    const target = e.target as HTMLImageElement
-                    if (target.src !== '/assets/placeholder.png') {
-                      target.src = '/assets/placeholder.png'
-                    }
-                  }"
-                />
+                <img :src="getProductImage(product)" :alt="product.libelle" loading="lazy" @error="(e) => {
+                  const target = e.target as HTMLImageElement
+                  if (target.src !== '/assets/placeholder.png') {
+                    target.src = '/assets/placeholder.png'
+                  }
+                }" />
               </div>
               <div class="product-info">
                 <h6 class="product-title">{{ product.libelle }}</h6>
-                <span class="prescription-badge" :class="prescriptionClass(product)">Sous ordonnance : {{ prescriptionLabel(product) }}</span>
-                <button class="btn-verify" @mousedown.prevent @click="disponibilite(product)">Vérifier la disponibilité</button>
+                <span class="prescription-badge" :class="prescriptionClass(product)">Sous ordonnance : {{
+                  prescriptionLabel(product) }}</span>
+                <button class="btn-verify" @mousedown.prevent @click="disponibilite(product)">Vérifier la
+                  disponibilité</button>
               </div>
             </div>
           </div>
@@ -2239,22 +2246,14 @@ async function onPurchased(payload: any) {
       <!-- Actions liste produits: Pagination simple (controls fixed at bottom corners) -->
       <div v-if="!isLoadingProducts && searchTerm.trim().length === 0">
         <!-- Left chevron (previous) -->
-        <button
-          class="pagination-fixed pagination-left"
-          :disabled="currentPage <= 1"
-          @click="prevPage"
-          aria-label="Page précédente"
-        >
+        <button class="pagination-fixed pagination-left" :disabled="currentPage <= 1" @click="prevPage"
+          aria-label="Page précédente">
           <i class="bi bi-chevron-left" style="font-size:18px"></i>
         </button>
 
         <!-- Right chevron (next) -->
-        <button
-          class="pagination-fixed pagination-right"
-          :disabled="currentPage >= totalPages"
-          @click="nextPage"
-          aria-label="Page suivante"
-        >
+        <button class="pagination-fixed pagination-right" :disabled="currentPage >= totalPages" @click="nextPage"
+          aria-label="Page suivante">
           <i class="bi bi-chevron-right" style="font-size:18px"></i>
         </button>
 
@@ -2302,7 +2301,7 @@ async function onPurchased(payload: any) {
 
             <div class="partner-card">
               <div class="logo">
-                <img src="..\assets\avoile.png" width="150" alt="Pharmacy" class="partner-image pb-3"/>
+                <img src="..\assets\avoile.png" width="150" alt="Pharmacy" class="partner-image pb-3" />
               </div>
               <h6 class="partner-name">PHARMACIE AVOILENZAME</h6>
             </div>
@@ -2357,40 +2356,40 @@ async function onPurchased(payload: any) {
             </div>
 
             <div class="partner-card">
-            <div class="partner-icon">
-              <i class="bi bi-building"></i>
+              <div class="partner-icon">
+                <i class="bi bi-building"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE AYITEBE</h6>
             </div>
-            <h6 class="partner-name">DEPOT PHARMACEUTIQUE AYITEBE</h6>
-          </div>
 
-          <div class="partner-card">
-            <div class="partner-icon">
-              <i class="bi bi-heart-pulse"></i>
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-heart-pulse"></i>
+              </div>
+              <h6 class="partner-name">NOTRE PHARMACIE</h6>
             </div>
-            <h6 class="partner-name">NOTRE PHARMACIE</h6>
-          </div>
 
-          <!-- Pharmacies supplémentaires avec icônes variées -->
-          <div class="partner-card">
-            <div class="partner-icon">
-              <img src="../assets/logo_manufac.png" width="70" alt="Pharmacy" class="partner-image" />
+            <!-- Pharmacies supplémentaires avec icônes variées -->
+            <div class="partner-card">
+              <div class="partner-icon">
+                <img src="../assets/logo_manufac.png" width="70" alt="Pharmacy" class="partner-image" />
+              </div>
+              <h6 class="partner-name">DEPOT MEDICAL LA MANUFAC-MEDIC</h6>
             </div>
-            <h6 class="partner-name">DEPOT MEDICAL LA MANUFAC-MEDIC</h6>
-          </div>
 
-          <div class="partner-card">
-            <div class="partner-icon">
-              <i class="bi bi-plus-circle-fill"></i>
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-plus-circle-fill"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU BON REMÈDE</h6>
             </div>
-            <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU BON REMÈDE</h6>
-          </div>
 
-          <div class="partner-card">
-            <div class="partner-icon">
-              <i class="bi bi-shield-heart"></i>
+            <div class="partner-card">
+              <div class="partner-icon">
+                <i class="bi bi-shield-heart"></i>
+              </div>
+              <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU ROSAIRE</h6>
             </div>
-            <h6 class="partner-name">DEPOT PHARMACEUTIQUE NOTRE DAME DU ROSAIRE</h6>
-          </div>
 
           </div>
 
@@ -2522,12 +2521,14 @@ async function onPurchased(payload: any) {
       </div>
       <div class="ai-body">
         <div class="ai-note mb-3">
-          <strong>Exemple :</strong> « Je me situe à <em>l'Estuaire</em> et je souhaite acheter <em>2 boîtes</em> du médicament <em>EFFERALGAN</em> »
+          <strong>Exemple :</strong> « Je me situe à <em>l'Estuaire</em> et je souhaite acheter <em>2 boîtes</em> du
+          médicament <em>EFFERALGAN</em> »
         </div>
         <div class="input-group input-group-sm">
           <button class="btn btn-outline-secondary ai-mic-btn" type="button" v-if="supportsSpeech"
-            :class="{ 'btn-danger': isTranscribing, 'btn-success': isListening }" :aria-pressed="isTranscribing ? 'true' : 'false'"
-            :disabled="aiIsParsing" @click="toggleTranscription()" title="Transcription vocale gratuite">
+            :class="{ 'btn-danger': isTranscribing, 'btn-success': isListening }"
+            :aria-pressed="isTranscribing ? 'true' : 'false'" :disabled="aiIsParsing" @click="toggleTranscription()"
+            title="Transcription vocale gratuite">
             <i :class="isTranscribing ? 'bi bi-stop-circle' : 'bi bi-mic'" style="font-size: 1rem;"></i>
             <span class="ms-1 d-none d-md-inline">{{ isTranscribing ? 'Stop' : 'Transcrire' }}</span>
             <span v-if="isListening" class="ai-listening-pulse"></span>
@@ -3086,6 +3087,7 @@ body {
     transform: translate(-50%, -50%) scale(0.8);
     opacity: 1;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(1.5);
     opacity: 0;
@@ -3876,6 +3878,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -3898,6 +3901,7 @@ body {
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -4144,7 +4148,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   z-index: 2000;
-  background: rgba(15,122,187,0.95);
+  background: rgba(15, 122, 187, 0.95);
   color: #fff;
   border: none;
   width: 48px;
@@ -4153,19 +4157,30 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   cursor: pointer;
 }
-.pagination-fixed:disabled { opacity: 0.45; cursor: not-allowed; }
-.pagination-left { left: 18px; }
-.pagination-right { right: 18px; }
+
+.pagination-fixed:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-left {
+  left: 18px;
+}
+
+.pagination-right {
+  right: 18px;
+}
+
 .pagination-center {
   position: fixed;
   bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1999;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   color: #fff;
   padding: 10px 18px;
   min-width: 220px;
