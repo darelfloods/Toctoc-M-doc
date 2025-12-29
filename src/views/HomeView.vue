@@ -2173,7 +2173,7 @@ async function onPurchased(payload: any) {
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">Tous les produits disponibles</h2>
         <p class="lead">Recherchez et vérifiez la disponibilité de vos médicaments</p>
-        <div class="images-disclaimer"><span class="images-disclaimer-star">*</span>Toutes les images sont contractuelles</div>
+        <div class="images-disclaimer"><span class="images-disclaimer-star">*</span>Toutes les images sont non contractuelles</div>
       </div>
       <div class="search-container mb-5">
         <div class="search-input-wrapper">

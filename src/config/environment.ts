@@ -1,7 +1,7 @@
 // Configuration de l'environnement
 
 // Nouvelle URL du backend TTM
-const PRIMARY_BACKEND_URL = 'https://ttm-backend.srv1079351.hstgr.cloud'
+const PRIMARY_BACKEND_URL = 'https://api-ttm.onrender.com'
 const FALLBACK_BACKEND_URL = 'https://api-ttm.onrender.com'
 
 export const ENV = {
