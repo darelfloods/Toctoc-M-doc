@@ -127,7 +127,7 @@
         <div class="modal-dialog" style="--bs-modal-width:520px;">
           <div class="modal-content p-4">
             <h5>Confirmation</h5>
-            <p>Cette action vaut 2 crédits. Voulez-vous continuer ?</p>
+            <p>Cette action vaut {{ creditCost }} crédits. Voulez-vous continuer ?</p>
             <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
               <button class="btn-cancel-provinces" @click="cancelConfirm">Annuler</button>
               <button class="btn-confirm-provinces" :disabled="isDebiting" @click="doConfirm">Confirmer</button>
@@ -171,7 +171,9 @@ const selectedProvince = ref<string | null>(null)
 const showDebitConfirm = ref<boolean>(false)
 const isDebiting = ref<boolean>(false)
 // Protection contre le double débit : flag pour éviter les débits multiples dans la même session
+
 const hasDebited = ref<boolean>(false)
+const creditCost = ref<number>(2) // Default cost
 
 // Réinitialiser l'état quand le modal se ferme pour permettre une nouvelle session
 watch(() => props.visible, (newVal) => {
@@ -181,6 +183,14 @@ watch(() => props.visible, (newVal) => {
     showDebitConfirm.value = false
     isDebiting.value = false
     hasDebited.value = false
+  } else {
+    // Modal ouvert : rafraîchir le coût de vérification
+    import('../stores/credit').then(({ useCreditStore }) => {
+      const creditStore = useCreditStore()
+      creditStore.getVerificationCost().then(cost => {
+        creditCost.value = cost
+      })
+    })
   }
 })
 
@@ -260,9 +270,9 @@ async function doConfirm() {
     const { useCreditStore } = await import('../stores/credit')
     const creditStore = useCreditStore()
     
-    // Débiter 2 crédits via le store
-    console.log('[DisponibiliteMedoc] Débit de 2 crédits...')
-    const ok = await creditStore.debitCredits(2)
+    // Débiter 'creditCost' crédits via le store
+    console.log(`[DisponibiliteMedoc] Débit de ${creditCost.value} crédits...`)
+    const ok = await creditStore.debitCredits(creditCost.value)
     if (!ok) {
       // Échec: garder la modale ouverte et alerter l'utilisateur
       alert('Le débit de crédits a échoué. Vérifiez votre solde ou votre connexion.')

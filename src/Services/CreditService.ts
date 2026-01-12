@@ -17,17 +17,17 @@ export class CreditService {
   private static lastError: string | null = null
 
   static getLastError(): string | null { return this.lastError }
-  
+
   // Fonction utilitaire pour déterminer si une erreur est récupérable
   static isRecoverableError(error: string | null): boolean {
     if (!error) return true
     return !/HTTP\s+(401|403)/i.test(error)
   }
-  
+
   // Fonction utilitaire pour formater les messages d'erreur utilisateur
   static formatUserError(error: string | null): string {
     if (!error) return "Erreur inconnue"
-    
+
     if (/HTTP\s+404/i.test(error)) {
       return "Service temporairement indisponible"
     } else if (/HTTP\s+(401|403)/i.test(error)) {
@@ -39,7 +39,7 @@ export class CreditService {
     } else if (/HTTP\s+500/i.test(error)) {
       return "Erreur serveur temporaire"
     }
-    
+
     return "Erreur technique"
   }
   static async getAccountByUserId(userId: number): Promise<AccountResponse | null> {
@@ -59,6 +59,17 @@ export class CreditService {
     } catch (e) {
       console.error('Erreur getLibelleTarif:', e)
       return null
+    }
+  }
+
+  static async getAllRates(): Promise<any[]> {
+    try {
+      // Endpoint identified from Admin project
+      const res = await HttpService.get<any[]>('/rate/all')
+      return (Array.isArray(res.data) ? res.data : []) as any[]
+    } catch (e) {
+      console.error('Erreur getAllRates:', e)
+      return []
     }
   }
 
@@ -94,11 +105,11 @@ export class CreditService {
       },
       // 6) POST /account/transaction - enregistrement de transaction générique (crédit)
       async () => {
-        await HttpService.post(`/account/transaction`, { 
-          accountId: Number(accountId), 
-          amount: Number(credit), 
+        await HttpService.post(`/account/transaction`, {
+          accountId: Number(accountId),
+          amount: Number(credit),
           type: 'credit',
-          reason: 'payment_recharge' 
+          reason: 'payment_recharge'
         })
         return true
       },
@@ -118,7 +129,7 @@ export class CreditService {
       },
     ]
     console.log(`🏦 [CreditService] AJOUT DE CRÉDITS - Tentative d'ajout de ${credit} crédits au compte ${accountId}`)
-    
+
     for (let i = 0; i < attempts.length; i++) {
       try {
         console.log(`🏦 [CreditService] Tentative ${i + 1}/${attempts.length}`)
@@ -133,17 +144,17 @@ export class CreditService {
           : (e?.message || String(e))
         CreditService.lastError = msg
         console.warn(`[CreditService] ❌ Credit attempt ${i + 1}/${attempts.length} failed:`, msg)
-        
+
         // Si c'est une erreur d'auth (401/403), pas la peine de continuer
         if (e instanceof HttpError && (e.status === 401 || e.status === 403)) {
           console.error('[CreditService] Authentication error, stopping attempts')
           break
         }
-        
+
         // Continue to next attempt pour les autres erreurs
       }
     }
-    
+
     console.error('[CreditService] ❌ All credit attempts failed. Last error:', CreditService.lastError)
     return false
   }
@@ -151,9 +162,9 @@ export class CreditService {
   static async souscrireCredit(accountId: number, credit: number): Promise<boolean> {
     // Utiliser UNIQUEMENT l'endpoint correct de l'API pour éviter les doubles débits
     CreditService.lastError = null
-    
+
     console.log('💳 [CreditService] Débit de', credit, 'crédit(s) pour le compte', accountId)
-    
+
     try {
       // PUT /account/spent/{id}?credit={amount} - ENDPOINT CORRECT DE L'API
       console.log('💳 [CreditService] PUT /account/spent avec query param')

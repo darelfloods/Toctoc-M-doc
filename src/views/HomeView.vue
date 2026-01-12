@@ -101,6 +101,32 @@ let creditDebitedTimer: number | undefined
 const isProductsError = ref(false)
 const productsErrorMessage = ref('')
 
+// Contact Form State
+const contactForm = ref({
+  name: '',
+  email: '',
+  message: ''
+})
+
+function sendContactEmail() {
+  const { name, email, message } = contactForm.value
+  if (!name || !email || !message) {
+    alert('Veuillez remplir tous les champs')
+    return
+  }
+  
+  // Construct mailto link
+  const subject = encodeURIComponent('Contact depuis Toctoc Medoc')
+  const body = encodeURIComponent(`Nom: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)
+  const mailtoLink = `mailto:contact@epharma.ga?subject=${subject}&body=${body}`
+  
+  // Open mail client
+  window.location.href = mailtoLink
+  
+  // Optional: Reset form
+  contactForm.value = { name: '', email: '', message: '' }
+}
+
 function notifyCreditDebited() {
   const id = 'credit-debited-toast'
   let el = document.getElementById(id)
@@ -193,6 +219,25 @@ const aiOriginalQuery = ref('')
 const aiPendingPlace = ref<string | null>(null)
 const aiPendingQty = ref<number>(1)
 const showAiNotice = ref(false)
+const showPubModal = ref(false)
+
+function openPubModal() {
+  showPubModal.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+function closePubModal() {
+  showPubModal.value = false
+  document.body.style.overflow = ''
+}
+
+function scrollToContact() {
+  closePubModal()
+  const el = document.getElementById('contact-section')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 const aiNoticeText = ref('')
 const aiNoticeType = ref<'success' | 'alternative' | 'info'>('info') // Type de notification
 const aiConfirmLoading = ref(false)
@@ -1879,6 +1924,95 @@ async function onPurchased(payload: any) {
   <Magasin :visible="showMagasin" @close="showMagasin = false" @purchased="onPurchased" />
   <Pharmacies :visible="showPharmacies" @close="showPharmacies = false" />
 
+  <!-- Modal Pub Version 2 -->
+  <div class="pub-modal-overlay" :class="{ 'active': showPubModal }" @click.self="closePubModal">
+      <div class="pub-modal">
+          <!-- Bandeau supérieur -->
+          <div class="pub-modal-banner">
+              🎉 Offre de lancement • Premiers annonceurs avantagés
+          </div>
+
+          <!-- Bouton fermer -->
+          <button class="pub-close-btn" @click="closePubModal">×</button>
+
+          <!-- Header -->
+          <div class="pub-modal-header">
+              <div class="header-decoration"></div>
+              <h1 class="pub-modal-title">
+                  Propulsez votre <span class="highlight">visibilité</span>
+              </h1>
+              <p class="pub-modal-subtitle">
+                  Rejoignez la plateforme n°1 de mise en relation santé et atteignez des milliers de professionnels et patients chaque jour
+              </p>
+          </div>
+
+          <!-- Corps -->
+          <div class="pub-modal-body">
+              <!-- Services grid -->
+              <div class="pub-services-grid">
+                  <div class="pub-service-card">
+                      <div class="pub-service-icon">🏥</div>
+                      <h3 class="pub-service-title">Structures médicales</h3>
+                      <p class="pub-service-desc">Pharmacies, cliniques, cabinets : augmentez votre notoriété locale</p>
+                  </div>
+
+                  <div class="pub-service-card">
+                      <div class="pub-service-icon">💊</div>
+                      <h3 class="pub-service-title">Produits de santé</h3>
+                      <p class="pub-service-desc">Médicaments, parapharmacie, dispositifs médicaux et compléments</p>
+                  </div>
+
+                  <div class="pub-service-card">
+                      <div class="pub-service-icon">🎯</div>
+                      <h3 class="pub-service-title">Ciblage précis</h3>
+                      <p class="pub-service-desc">Atteignez exactement votre audience : par zone, spécialité, profil</p>
+                  </div>
+
+                  <div class="pub-service-card">
+                      <div class="pub-service-icon">📊</div>
+                      <h3 class="pub-service-title">Performance tracking</h3>
+                      <p class="pub-service-desc">Suivez vos résultats en temps réel avec des analytics détaillés</p>
+                  </div>
+              </div>
+
+              <!-- Section stats -->
+              <div class="pub-stats-section">
+                  <h2 class="pub-stats-title">ToctocMedoc en chiffres</h2>
+                  <div class="pub-stats-grid">
+                      <div class="pub-stat-item">
+                          <span class="pub-stat-number">50K+</span>
+                          <span class="pub-stat-label">Visiteurs/mois</span>
+                      </div>
+                      <div class="pub-stat-item">
+                          <span class="pub-stat-number">2500+</span>
+                          <span class="pub-stat-label">Professionnels</span>
+                      </div>
+                      <div class="pub-stat-item">
+                          <span class="pub-stat-number">95%</span>
+                          <span class="pub-stat-label">Taux satisfaction</span>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- CTA -->
+              <div class="pub-cta-section">
+                  <div class="pub-decorative-circle circle-1"></div>
+                  <div class="pub-decorative-circle circle-2"></div>
+                  <h2 class="pub-cta-title">Prêt à démarrer ?</h2>
+                  <p class="pub-cta-text">
+                      Lancez votre première campagne dès aujourd'hui et bénéficiez d'un accompagnement personnalisé
+                  </p>
+                  <button class="pub-cta-button" @click="scrollToContact">
+                      <span>
+                          Contactez-nous
+                          <span style="font-size: 24px;">🚀</span>
+                      </span>
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
+
 
   <!-- AI Notice Modal - Modern Design (Dynamic based on type) -->
   <div v-if="showAiNotice" class="modal-overlay-modern" @click.self="closeAiNotice()">
@@ -2163,14 +2297,18 @@ async function onPurchased(payload: any) {
         <div class="province-item"><img src="/assets/Woleu-Ntem.png" alt="Woleu-Ntem" class="province-icon me-3"
             style="height: 3vh;" />WOLEU-NTEM
         </div>
-        <div
-          class="d-flex align-items-center justify-content-center gap-2 px-2 rounded bg-warning bg-gradient shadow-sm"
-          style="height:3vh;">
-          <span class="badge bg-danger">PUB</span>
-          <small class="fw-bold text-dark">
-            Votre publicité ici
-          </small>
+        <!-- Publicité Version 2 -->
+        <div class="pub-floating-btn-wrapper ms-3 me-3 my-auto">
+            <span class="pub-promo-badge">Nouveau</span>
+            <button class="pub-open-btn" @click="openPubModal">
+                <span class="btn-icon">🎯</span>
+                <span>Faites-vous connaître</span>
+            </button>
         </div>
+
+
+
+
 
       </div>
     </div>
@@ -2441,7 +2579,7 @@ async function onPurchased(payload: any) {
   </section>
 
   <!-- Contact -->
-  <section class="contact-section d-flex justify-content-center">
+  <section id="contact-section" class="contact-section d-flex justify-content-center">
     <div class="container">
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">À propos de nous</h2>
@@ -2485,13 +2623,13 @@ async function onPurchased(payload: any) {
           <div class="contact-form ms-5">
             <div class="contact-icon mb-3">📝</div>
             <h5 class="fw-bold mb-4 text-center">Envoyer un message</h5>
-            <form @submit.prevent>
+            <form @submit.prevent="sendContactEmail">
               <div class="form-floating mb-3"><input type="text" class="form-control" id="name"
-                  placeholder="Votre nom" /><label for="name">Votre nom</label></div>
+                  placeholder="Votre nom" v-model="contactForm.name" /><label for="name">Votre nom</label></div>
               <div class="form-floating mb-3"><input type="email" class="form-control" id="email2"
-                  placeholder="Votre email" /><label for="email2">Votre email</label></div>
+                  placeholder="Votre email" v-model="contactForm.email" /><label for="email2">Votre email</label></div>
               <div class="form-floating mb-3"><textarea class="form-control" id="message" rows="4"
-                  placeholder="Votre message"></textarea><label for="message">Votre message</label></div>
+                  placeholder="Votre message" v-model="contactForm.message"></textarea><label for="message">Votre message</label></div>
               <button type="submit" class="btn btn-success col-md-4  p-2" style="border-radius: 15px;">Envoyer</button>
             </form>
           </div>
@@ -4188,4 +4326,535 @@ body {
   border-radius: 14px;
   font-weight: 700;
 }
+
+/* Publicité Version 2 CSS */
+:root {
+    --mint: #4ECDC4;
+    --mint-dark: #3BA39C;
+    --coral: #FF6B9D;
+    --coral-dark: #E5527D;
+    --cream: #FFF8F0;
+    --peach: #FFE5D9;
+    --navy: #1F2937;
+    --slate: #475569;
+    --soft-white: #FEFEFE;
+}
+
+/* Bouton flottant avec badge */
+.pub-floating-btn-wrapper {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+}
+
+.pub-promo-badge {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: var(--coral);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    animation: pub-badge-pulse 2s infinite;
+    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+    z-index: 2;
+}
+
+@keyframes pub-badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.pub-open-btn {
+    background: white;
+    color: var(--navy);
+    border: 3px solid var(--navy);
+    padding: 12px 24px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 6px 6px 0 var(--navy);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+.pub-open-btn:hover {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 var(--navy);
+}
+
+.pub-open-btn:active {
+    transform: translate(6px, 6px);
+    box-shadow: 0 0 0 var(--navy);
+}
+
+.btn-icon {
+    font-size: 24px;
+    animation: pub-wiggle 1s ease-in-out infinite;
+}
+
+@keyframes pub-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
+/* Modal Overlay */
+.pub-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 41, 55, 0.8);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.pub-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Modal avec style papier découpé */
+.pub-modal {
+    background: var(--soft-white);
+    border-radius: 32px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.8) rotate(-2deg);
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 
+        0 0 0 8px var(--peach),
+        0 0 0 16px var(--cream),
+        0 30px 60px rgba(0, 0, 0, 0.3);
+}
+
+.pub-modal-overlay.active .pub-modal {
+    transform: scale(1) rotate(0deg);
+}
+
+/* Bandeau supérieur créatif */
+.pub-modal-banner {
+    background: linear-gradient(135deg, var(--mint) 0%, var(--coral) 100%);
+    padding: 8px 40px;
+    text-align: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+}
+
+.pub-modal-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: pub-shine 3s infinite;
+}
+
+@keyframes pub-shine {
+    to { left: 100%; }
+}
+
+/* Close button artistique */
+.pub-close-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
+}
+
+.pub-close-btn:hover {
+    background: var(--coral);
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Header avec style magazine */
+.pub-modal-header {
+    padding: 60px 40px 40px;
+    text-align: center;
+    position: relative;
+}
+
+.header-decoration {
+    width: 80px;
+    height: 6px;
+    background: var(--mint);
+    margin: 0 auto 24px;
+    border-radius: 3px;
+    position: relative;
+}
+
+.header-decoration::before,
+.header-decoration::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 6px;
+    background: var(--coral);
+    border-radius: 3px;
+}
+
+.header-decoration::before {
+    left: -50px;
+}
+
+.header-decoration::after {
+    right: -50px;
+}
+
+.pub-modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--navy);
+    line-height: 1.1;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+}
+
+.pub-modal-title .highlight {
+    color: var(--coral);
+    position: relative;
+    display: inline-block;
+}
+
+.pub-modal-title .highlight::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: var(--mint);
+    opacity: 0.3;
+    z-index: -1;
+}
+
+.pub-modal-subtitle {
+    font-size: 20px;
+    color: var(--slate);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Corps avec disposition asymétrique */
+.pub-modal-body {
+    padding: 0 40px 60px;
+}
+
+/* Cartes avec style collage */
+.pub-services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+.pub-service-card {
+    background: white;
+    padding: 32px;
+    border-radius: 24px;
+    border: 3px solid var(--navy);
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 6px 6px 0 var(--peach);
+}
+
+.pub-service-card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 10px 10px 0 var(--peach);
+}
+
+.pub-service-card:nth-child(1) {
+    transform: rotate(-1deg);
+}
+
+.pub-service-card:nth-child(2) {
+    transform: rotate(1deg);
+}
+
+.pub-service-card:nth-child(3) {
+    transform: rotate(0.5deg);
+}
+
+.pub-service-card:nth-child(4) {
+    transform: rotate(-0.5deg);
+}
+
+.pub-service-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: inline-block;
+    filter: grayscale(0.3);
+}
+
+.pub-service-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 12px;
+}
+
+.pub-service-desc {
+    font-size: 15px;
+    color: var(--slate);
+    line-height: 1.6;
+}
+
+/* Section stats style brutaliste */
+.pub-stats-section {
+    background: var(--navy);
+    color: white;
+    padding: 48px;
+    border-radius: 24px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pub-stats-section::before {
+    content: '✨';
+    position: absolute;
+    font-size: 200px;
+    opacity: 0.05;
+    top: -40px;
+    right: -40px;
+    transform: rotate(-15deg);
+}
+
+.pub-stats-title {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.pub-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    text-align: center;
+}
+
+.pub-stat-item {
+    position: relative;
+}
+
+.pub-stat-number {
+    font-family: 'Fraunces', serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--mint);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.pub-stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Section CTA style pop-art */
+.pub-cta-section {
+    text-align: center;
+    background: linear-gradient(135deg, var(--peach) 0%, var(--cream) 100%);
+    padding: 56px 48px;
+    border-radius: 24px;
+    border: 3px dashed var(--coral);
+    position: relative;
+}
+
+.pub-cta-title {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--navy);
+    margin-bottom: 16px;
+}
+
+.pub-cta-text {
+    font-size: 18px;
+    color: var(--slate);
+    margin-bottom: 32px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pub-cta-button {
+    background: var(--coral);
+    color: white;
+    border: none;
+    padding: 22px 56px;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(255, 107, 157, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.pub-cta-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: var(--coral-dark);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+}
+
+.pub-cta-button:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.pub-cta-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(255, 107, 157, 0.5);
+}
+
+.pub-cta-button span {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Petits détails décoratifs */
+.pub-decorative-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid var(--mint);
+    opacity: 0.2;
+}
+
+.circle-1 {
+    width: 100px;
+    height: 100px;
+    top: 20px;
+    left: 20px;
+}
+
+.circle-2 {
+    width: 60px;
+    height: 60px;
+    bottom: 40px;
+    right: 40px;
+    border-color: var(--coral);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pub-modal-title {
+        font-size: 36px;
+    }
+
+    .pub-modal-subtitle {
+        font-size: 16px;
+    }
+
+    .pub-modal-header,
+    .pub-modal-body {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .pub-services-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .pub-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .pub-stats-section {
+        padding: 32px 24px;
+    }
+
+    .pub-cta-section {
+        padding: 40px 24px;
+    }
+
+    .pub-cta-button {
+        width: 100%;
+        padding: 18px 32px;
+    }
+
+    .pub-open-btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+}
+
+/* Scroll personnalisé */
+.pub-modal::-webkit-scrollbar {
+    width: 10px;
+}
+
+.pub-modal::-webkit-scrollbar-track {
+    background: var(--cream);
+}
+
+.pub-modal::-webkit-scrollbar-thumb {
+    background: var(--mint);
+    border-radius: 5px;
+}
+
+.pub-modal::-webkit-scrollbar-thumb:hover {
+    background: var(--mint-dark);
+}
+
 </style>
+

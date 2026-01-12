@@ -58,26 +58,26 @@ export const useCreditStore = defineStore('credit', () => {
 
   async function addCreditsAfterPayment(creditAmount: number): Promise<boolean> {
     console.log(`🏦 [CREDIT STORE] AJOUT MANUEL de ${creditAmount} crédits`)
-    
+
     if (!accountId.value) {
       console.warn('⚠️ [CREDIT STORE] Pas de compte ID')
       return false
     }
-    
+
     const oldCredits = credits.value
-    
+
     // 🎯 AJOUT DIRECT ET SIMPLE - Bypass de tous les endpoints défaillants
     // On ajoute directement les crédits calculés par resolvePricing()
     credits.value = oldCredits + creditAmount
-    
+
     console.log(`💰 [CREDIT STORE] SUCCÈS: ${oldCredits} + ${creditAmount} = ${credits.value} crédits`)
-    
+
     // Optionnel: Sauvegarder le nouveau solde via un rafraîchissement en arrière-plan
     // (ne pas attendre le résultat pour ne pas bloquer l'UI)
     setTimeout(() => {
       refreshForCurrentUser().catch(e => console.warn('Rafraîchissement différé échoué:', e))
     }, 2000)
-    
+
     return true
   }
 
@@ -125,5 +125,30 @@ export const useCreditStore = defineStore('credit', () => {
     addCreditsAfterPayment,
     debitCredits,
     reset,
+    getVerificationCost,
+  }
+
+  async function getVerificationCost(): Promise<number> {
+    try {
+      console.log('💰 [CREDIT STORE] Fetching verification cost from rates...')
+      const rates = await CreditService.getAllRates()
+      if (rates && rates.length > 0) {
+        // Look for rate named "Verification" (case insensitive)
+        const verificationRate = rates.find(r =>
+          r.libelle && r.libelle.toLowerCase().trim() === 'verification'
+        )
+
+        if (verificationRate && typeof verificationRate.credit === 'number') {
+          console.log('✅ [CREDIT STORE] Found Verification rate:', verificationRate.credit)
+          return verificationRate.credit
+        }
+      }
+
+      console.log('⚠️ [CREDIT STORE] "Verification" rate not found, using default 2')
+      return 2;
+    } catch (e) {
+      console.warn('⚠️ [CREDIT STORE] Failed to fetch verification cost, using default 2', e)
+      return 2
+    }
   }
 })
