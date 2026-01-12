@@ -1976,23 +1976,7 @@ async function onPurchased(payload: any) {
               </div>
 
               <!-- Section stats -->
-              <div class="pub-stats-section">
-                  <h2 class="pub-stats-title">ToctocMedoc en chiffres</h2>
-                  <div class="pub-stats-grid">
-                      <div class="pub-stat-item">
-                          <span class="pub-stat-number">50K+</span>
-                          <span class="pub-stat-label">Visiteurs/mois</span>
-                      </div>
-                      <div class="pub-stat-item">
-                          <span class="pub-stat-number">2500+</span>
-                          <span class="pub-stat-label">Professionnels</span>
-                      </div>
-                      <div class="pub-stat-item">
-                          <span class="pub-stat-number">95%</span>
-                          <span class="pub-stat-label">Taux satisfaction</span>
-                      </div>
-                  </div>
-              </div>
+              
 
               <!-- CTA -->
               <div class="pub-cta-section">
