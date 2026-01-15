@@ -18,11 +18,11 @@
   
   # Proxy pour api_epg
   RewriteCond %{REQUEST_URI} ^/api_epg/(.*)$
-  RewriteRule ^api_epg/(.*)$ https://api-ttm.onrender.com/api_epg/$1 [P,L]
+  RewriteRule ^api_epg/(.*)$ http://ttm-backend.srv1079351.hstgr.cloud//api_epg/$1 [P,L]
   
   # Proxy pour /api
   RewriteCond %{REQUEST_URI} ^/api/(.*)$
-  RewriteRule ^api/(.*)$ https://api-ttm.onrender.com/$1 [P,L]
+  RewriteRule ^api/(.*)$ http://ttm-backend.srv1079351.hstgr.cloud//$1 [P,L]
   
   # SPA fallback - toutes les autres requêtes vers index.html
   RewriteCond %{REQUEST_FILENAME} !-f

@@ -1,8 +1,8 @@
 // Configuration de l'environnement
 
 // Nouvelle URL du backend TTM
-const PRIMARY_BACKEND_URL = 'https://api-ttm.onrender.com'
-const FALLBACK_BACKEND_URL = 'https://api-ttm.onrender.com'
+const PRIMARY_BACKEND_URL = 'http://ttm-backend.srv1079351.hstgr.cloud/'
+const FALLBACK_BACKEND_URL = 'http://ttm-backend.srv1079351.hstgr.cloud/'
 
 export const ENV = {
   // URL de base de l'API - Backend TTM sur Hostinger
@@ -15,7 +15,7 @@ export const ENV = {
   API_BASE_URLS: (() => {
     const list: string[] = []
     const norm = (u?: string) => (u ? String(u).replace(/\/+$/g, '') : u)
-    
+
     // En production, utiliser HTTPS puis fallback HTTP si nécessaire
     if (import.meta.env.PROD) {
       const envUrl = norm(import.meta.env.VITE_API_BASE_URL)
@@ -23,17 +23,13 @@ export const ENV = {
         list.push(envUrl)
       }
       list.push(PRIMARY_BACKEND_URL)
-      list.push(FALLBACK_BACKEND_URL)
       return list
     }
-    
-    // En développement, garder les fallbacks
+
+    // En développement, utiliser uniquement le backend distant
     const candidates = [
       norm(import.meta.env.VITE_API_BASE_URL),
       PRIMARY_BACKEND_URL,
-      FALLBACK_BACKEND_URL, // Fallback HTTP si HTTPS ne fonctionne pas
-      'http://localhost:8000', // Backend local pour développement
-      norm(import.meta.env.VITE_API_FALLBACK_BASE_URL),
     ] as const
     for (const c of candidates) {
       if (c && !list.includes(c)) list.push(c)
@@ -67,12 +63,12 @@ export async function testApiConnection(url: string, timeoutMs = 5000): Promise<
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-    
+
     const response = await fetch(`${url}/`, {
       method: 'HEAD',
       signal: controller.signal,
     })
-    
+
     clearTimeout(timeoutId)
     return response.ok || response.status < 500
   } catch {
@@ -92,7 +88,7 @@ export async function getWorkingApiUrl(): Promise<string> {
     }
     console.warn(`⚠️ Backend non accessible: ${url}`)
   }
-  
+
   // Retourne l'URL par défaut si aucune ne fonctionne
   console.error('❌ Aucun backend accessible, utilisation de l\'URL par défaut')
   return ENV.API_BASE_URL

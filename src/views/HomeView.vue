@@ -108,24 +108,34 @@ const contactForm = ref({
   message: ''
 })
 
-function sendContactEmail() {
+const isSendingContact = ref(false)
+
+async function sendContactEmail() {
   const { name, email, message } = contactForm.value
   if (!name || !email || !message) {
     alert('Veuillez remplir tous les champs')
     return
   }
   
-  // Construct mailto link
-  const subject = encodeURIComponent('Contact depuis Toctoc Medoc')
-  const body = encodeURIComponent(`Nom: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)
-  const mailtoLink = `mailto:contact@epharma.ga?subject=${subject}&body=${body}`
+  isSendingContact.value = true
   
-  // Open mail client
-  window.location.href = mailtoLink
-  
-  // Optional: Reset form
-  contactForm.value = { name: '', email: '', message: '' }
+  try {
+    await homeService.sendContactEmail(contactForm.value)
+    alert('Message envoyé avec succès !')
+    contactForm.value = { name: '', email: '', message: '' }
+  } catch (e) {
+    console.error('Erreur envoi contact:', e)
+    // Fallback mailto si l'API échoue (ex: endpoint pas encore déployé)
+    if (confirm('L\'envoi automatique a échoué. Voulez-vous ouvrir votre client mail par défaut ?')) {
+      const subject = encodeURIComponent('Contact depuis Toctoc Medoc')
+      const body = encodeURIComponent(`Nom: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)
+      window.location.href = `mailto:contact@epharma.ga?subject=${subject}&body=${body}`
+    }
+  } finally {
+    isSendingContact.value = false
+  }
 }
+
 
 function notifyCreditDebited() {
   const id = 'credit-debited-toast'

@@ -249,7 +249,7 @@ export class HomeService {
         '/epharma-api/public/api/produits',
         'https://epharma-panel.srv557357.hstgr.cloud/public/api/produits'
       )
-      
+
       console.log(`[HomeService] Fetching products from: ${apiUrl}`)
       const res = await fetch(apiUrl)
       if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`)
@@ -269,7 +269,7 @@ export class HomeService {
       const normalized = allProducts.map((p: any) => {
         // Normaliser l'image du produit avec fallback vers placeholder
         const productWithImage = normalizeProductImage(p)
-        
+
         // Construire l'objet final : d'abord les propriétés de base, puis le reste, enfin les images normalisées
         return {
           id: p.id,
@@ -363,7 +363,7 @@ export class HomeService {
       const enriched = (data || []).map((p: any) => {
         const cip = String(p.cip || p.cip_deux || '').trim()
         const photoFromApi = cip ? cipToPhotoMap.get(cip) : null
-        
+
         // Si on a trouvé une image dans l'API, l'utiliser, sinon normaliser avec placeholder
         if (photoFromApi) {
           return normalizeProductImage({
@@ -373,7 +373,7 @@ export class HomeService {
             image: photoFromApi
           })
         }
-        
+
         return normalizeProductImage(p)
       })
 
@@ -429,5 +429,22 @@ export class HomeService {
   // Alias supplémentaire avec l'orthographe exacte demandée (typo incluse)
   async produtcs_by_searrch(term: string) {
     return this.searchProducts(term);
+  }
+
+  /**
+   * Send contact email via backend
+   */
+  async sendContactEmail(data: { name: string; email: string; message: string }) {
+    const res = await fetchApi('/contact/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: data
+    })
+
+    if (!res.ok) {
+      throw new Error('Erreur lors de l\'envoi du message')
+    }
+
+    return await res.json()
   }
 }

@@ -212,8 +212,8 @@ export class AuthService {
   static async forgotPassword(email: string): Promise<{ message?: string }> {
     try {
       const endpoint = API_CONFIG.ENDPOINTS.AUTH.RECOVERY_PASSWORD(email)
-      // PUT avec body vide pour coller à l'implémentation Angular
-      const response = await HttpService.put<{ message?: string }>(endpoint, {})
+      // POST pour éviter les erreurs 405 (method not allowed) sur certains hébergements
+      const response = await HttpService.post<{ message?: string }>(endpoint, {})
       return response.data
     } catch (error) {
       console.error('Erreur lors de la demande de réinitialisation:', error)

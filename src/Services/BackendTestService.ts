@@ -6,7 +6,8 @@ export class BackendTestService {
    */
   static async testConnection(): Promise<{ status: 'ok' | 'error', message: string, data?: any }> {
     try {
-      console.log('🔗 Test de connexion au backend TTM local (localhost:8000)...')
+      console.log('🔗 Test de connexion au backend TTM...')
+
 
       // Test de la route racine du backend TTM
       const response = await HttpService.get('/')
@@ -71,7 +72,7 @@ export class BackendTestService {
   static getConfigInfo(): { environment: string, apiBaseUrl: string, proxyConfigured: boolean } {
     return {
       environment: import.meta.env.MODE,
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://ttm-backend.srv1079351.hstgr.cloud/',
       proxyConfigured: import.meta.env.DEV // Le proxy n'est actif qu'en mode dev
     }
   }

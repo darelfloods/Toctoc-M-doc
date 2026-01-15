@@ -16,7 +16,7 @@ Créez un fichier `.env.local` à la racine de votre projet avec le contenu suiv
 
 ```bash
 # Configuration de l'API
-VITE_API_BASE_URL=https://api-ttm.onrender.com/api
+VITE_API_BASE_URL=http://ttm-backend.srv1079351.hstgr.cloud//api
 
 # Configuration de l'environnement
 VITE_APP_ENV=development
@@ -24,7 +24,7 @@ VITE_APP_ENV=development
 
 ### 2. Variables d'environnement disponibles
 
-- `VITE_API_BASE_URL` : URL de base de votre API (défaut: `https://api-ttm.onrender.com/api`)
+- `VITE_API_BASE_URL` : URL de base de votre API (défaut: `http://ttm-backend.srv1079351.hstgr.cloud//api`)
 - `VITE_APP_ENV` : Environnement de l'application (défaut: `development`)
 
 ## Utilisation dans vos services
@@ -126,7 +126,7 @@ ENDPOINTS: {
 ### Développement
 
 ```bash
-VITE_API_BASE_URL=https://api-ttm.onrender.com/api
+VITE_API_BASE_URL=http://ttm-backend.srv1079351.hstgr.cloud//api
 ```
 
 ### Production
