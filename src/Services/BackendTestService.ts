@@ -72,7 +72,7 @@ export class BackendTestService {
   static getConfigInfo(): { environment: string, apiBaseUrl: string, proxyConfigured: boolean } {
     return {
       environment: import.meta.env.MODE,
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://ttm-backend.srv1079351.hstgr.cloud/',
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api-ttm.onrender.com/',
       proxyConfigured: import.meta.env.DEV // Le proxy n'est actif qu'en mode dev
     }
   }

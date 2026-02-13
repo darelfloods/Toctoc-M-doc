@@ -4,7 +4,7 @@
 export async function quickWebhookTest(medicament = 'Paracetamol'): Promise<void> {
   console.group(`🧪 Quick test webhook for: ${medicament}`)
 
-  const webhookUrl = 'http://ttm-backend.srv1079351.hstgr.cloud/:5678/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+  const webhookUrl = 'https://api-ttm.onrender.com/:5678/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
   const message = `quel est l'alternatif de ${medicament}`
 
   console.log('🎯 Message to send:', message)

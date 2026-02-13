@@ -28,54 +28,54 @@ export default defineConfig({
     proxy: {
       // Proxy vers le backend TTM LOCAL (api_ttm dans le dossier parent)
       '/auth': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/user': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/account': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/rate': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/event': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/price_list': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/my_pay_ga': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       '/sing_pay_api': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       // API EPG vers le backend TTM local
       '/api_epg': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
       },
       // Fallback pour anciens endpoints /api
       '/api': {
-        target: 'http://ttm-backend.srv1079351.hstgr.cloud',
+        target: 'https://api-ttm.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

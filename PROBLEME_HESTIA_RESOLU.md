@@ -63,7 +63,7 @@ location /reservations-api/ {
 
 # Proxy pour api_epg
 location /api_epg/ {
-  proxy_pass http://ttm-backend.srv1079351.hstgr.cloud//api_epg/;
+  proxy_pass https://api-ttm.onrender.com//api_epg/;
   # ...
 }
 ```
@@ -150,10 +150,10 @@ curl https://votre-domaine.tld/epharma-api/public/api/produits
 | Endpoint local | Destination | Utilisation |
 |---------------|-------------|-------------|
 | `/epharma-api/*` | `https://epharma-panel.srv557357.hstgr.cloud/` | **CRITIQUE** - Chargement produits |
-| `/api_epg/*` | `http://ttm-backend.srv1079351.hstgr.cloud//api_epg/` | Disponibilité, alternatives |
+| `/api_epg/*` | `https://api-ttm.onrender.com//api_epg/` | Disponibilité, alternatives |
 | `/n8n-webhook/*` | `https://n8n-workflows-cktx.onrender.com/` | Suggestions IA |
 | `/reservations-api/*` | `https://demo2.srv557357.hstgr.cloud/` | Réservations |
-| `/api/*` | `http://ttm-backend.srv1079351.hstgr.cloud//` | Autres endpoints |
+| `/api/*` | `https://api-ttm.onrender.com//` | Autres endpoints |
 
 ## 🎯 Résumé
 

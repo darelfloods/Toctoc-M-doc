@@ -1,6 +1,6 @@
 // Utilitaire de test pour l'intégration webhook n8n
 export class WebhookTester {
-  private static readonly WEBHOOK_URL = 'http://ttm-backend.srv1079351.hstgr.cloud/:5678/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
+  private static readonly WEBHOOK_URL = 'https://api-ttm.onrender.com/:5678/webhook/659daf74-ca15-40e2-a52c-54054db41de6'
 
   /**
    * Test the n8n webhook with sample data
