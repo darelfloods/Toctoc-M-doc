@@ -1,8 +1,8 @@
 // Configuration de l'environnement
 
-// Nouvelle URL du backend TTM
-const PRIMARY_BACKEND_URL = 'https://api-ttm.onrender.com/'
-const FALLBACK_BACKEND_URL = 'https://api-ttm.onrender.com/'
+// Nouvelle URL du backend TTM (Laravel – en prod, les routes sont sous /api/)
+const PRIMARY_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
+const FALLBACK_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
 
 export const ENV = {
   // URL de base de l'API - Backend TTM sur Hostinger

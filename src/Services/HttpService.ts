@@ -49,7 +49,7 @@ export class HttpService {
     const { method = 'GET', headers = {}, body, timeout = API_CONFIG.TIMEOUT } = options
 
     // Construction de l'URL complète
-    const url = `${API_CONFIG.BASE_URL}${endpoint}`
+    const url = /^https?:\/\//i.test(endpoint) ? endpoint : `${API_CONFIG.BASE_URL}${endpoint}`
 
     // Fusion des en-têtes (Record pour pouvoir ajouter Authorization dynamiquement)
     const requestHeaders: Record<string, string> = {

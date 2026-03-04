@@ -26,80 +26,88 @@ export default defineConfig({
     strictPort: true,  // oblige Vite à rester sur ce port
     cors: true,        // autorise les appels cross-origin
     proxy: {
-      // Proxy vers le backend TTM LOCAL (api_ttm dans le dossier parent)
+      // Proxy vers le backend TTM LOCAL (Laravel) – les routes Laravel sont sous /api/
       '/auth': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/user': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/account': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/rate': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/event': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/price_list': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/my_pay_ga': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       '/sing_pay_api': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
       // API EPG vers le backend TTM local
       '/api_epg': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
+        rewrite: (path: string) => '/api' + path,
       },
-      // Fallback pour anciens endpoints /api
+      // Fallback – ajoute le préfixe /api pour tout endpoint non-matché ci-dessus
       '/api': {
-        target: 'https://api-ttm.onrender.com',
+        target: 'https://backend.srv1079351.hstgr.cloud',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Proxy for reservation products endpoint to bypass CORS in dev
       '/reservations-api': {
         target: 'https://demo2.srv557357.hstgr.cloud',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/reservations-api/, ''),
+        rewrite: (path: string) => path.replace(/^\/reservations-api/, ''),
       },
       // Proxy direct vers n8n webhook
       '/n8n-webhook': {
         target: 'https://n8n-workflows-cktx.onrender.com',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/n8n-webhook/, ''),
+        rewrite: (path: string) => path.replace(/^\/n8n-webhook/, ''),
       },
       // Proxy vers epharma-panel API pour contourner CORS en dev
       '/epharma-api': {
         target: 'https://epharma-panel.srv557357.hstgr.cloud',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/epharma-api/, ''),
+        rewrite: (path: string) => path.replace(/^\/epharma-api/, ''),
       },
     },
   },

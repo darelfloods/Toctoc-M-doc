@@ -49,7 +49,7 @@ async function testAuth() {
     console.log('🔑 Password:', testPassword.value ? '***' : 'vide')
 
     // Test direct de l'endpoint d'authentification
-    const response = await fetch('https://vps-b9ccb6e1.vps.ovh.net:8000/auth/login', {
+    const response = await fetch('https://backend.srv1079351.hstgr.cloud/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

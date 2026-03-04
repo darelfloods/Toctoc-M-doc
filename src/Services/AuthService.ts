@@ -1,5 +1,6 @@
 import { HttpService } from './HttpService'
 import API_CONFIG from '@/config/api.config'
+import { ENV } from '@/config/environment'
 import { useAuthStore } from '@/stores/auth'
 
 export interface User {
