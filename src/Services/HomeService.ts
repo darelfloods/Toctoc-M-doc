@@ -301,13 +301,13 @@ export class HomeService {
     const path = joinUrl('api_epg', 'disponibility_product');
     const res = await fetchApi(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',        // Force Laravel à répondre en JSON (pas 302)
+      },
       body: {
         cip: String(cip),
-        pharmacy: '', // Champ requis mais non utilisé par le backend (ligne 132 du ProductApi.py)
-        name: 'Product', // Champs requis par le schema Pydantic
-        price: 0,
-        stock: 0
+        pharmacy: 'default', // Champ optionnel – backend ne l'utilise pas
       }
     });
     if (!res.ok) throw new Error('Erreur lors de la vérification de disponibilité');
