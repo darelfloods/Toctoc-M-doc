@@ -128,7 +128,7 @@ const typingIndex = ref(0)
 const typingSpeed = 40 // ms per character
 let typingTimer: number | undefined
 
-const userName = computed(() => auth.currentUser?.name || 'Cher utilisateur')
+const userName = computed(() => auth.currentUser?.pseudo || auth.currentUser?.name || 'Cher utilisateur')
 const fullText = computed(() => `Bienvenue sur TocToc Médoc ${userName.value}`)
 const greetingVisible = computed(() => !!fullText.value?.length)
 

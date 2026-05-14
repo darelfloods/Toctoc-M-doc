@@ -7,6 +7,21 @@ export const useCreditStore = defineStore('credit', () => {
   const credits = ref<number>(0)
   const accountId = ref<number | null>(null)
   const loading = ref<boolean>(false)
+  /** Tant que défini, le solde affiché ne descend pas en dessous de ce minimum (sync serveur après paiement). */
+  const settlementFloor = ref<number | null>(null)
+
+  function beginPurchaseSettlement(expectedMinCredits: number) {
+    settlementFloor.value = expectedMinCredits
+    credits.value = Math.max(Number(credits.value || 0), expectedMinCredits)
+  }
+
+  function endPurchaseSettlement() {
+    settlementFloor.value = null
+  }
+
+  function isPurchaseSettlementActive() {
+    return settlementFloor.value !== null
+  }
 
   async function refreshForCurrentUser() {
     const auth = useAuthStore()
@@ -23,20 +38,16 @@ export const useCreditStore = defineStore('credit', () => {
       console.log('📦 [CREDIT STORE] Account received:', acc)
       if (acc) {
         accountId.value = acc.id
-        // Back-end renvoie typiquement le champ "credit"; il peut être un nombre ou une chaîne formatée (ex: "9 433", "9,433", "9.433", "9'433")
         const raw: any = (acc as any).credit ?? (acc as any).credits
         console.log('💰 [CREDIT STORE] Raw credit value:', raw, 'type:', typeof raw)
         let parsed = 0
         if (typeof raw === 'number') {
           parsed = raw
         } else if (typeof raw === 'string') {
-          // Stratégie la plus robuste: retirer tout ce qui n'est pas un chiffre, puis parser en entier
-          // Exemple: "9 433", "9,433", "9.433", "9'433", "9433,00" -> "9433"
           const onlyDigits = raw.replace(/[^0-9]/g, '')
           if (onlyDigits.length > 0) {
             parsed = parseInt(onlyDigits, 10)
           } else {
-            // fallback plus permissif
             const cleaned = raw.replace(/\s+/g, '').replace(/[,']/g, '')
             const n = Number(cleaned)
             parsed = Number.isFinite(n) ? n : 0
@@ -45,7 +56,16 @@ export const useCreditStore = defineStore('credit', () => {
           parsed = 0
         }
         console.log('✅ [CREDIT STORE] Parsed credit:', parsed, '(was:', credits.value, ')')
-        credits.value = parsed
+
+        const floor = settlementFloor.value
+        if (floor !== null) {
+          credits.value = Math.max(parsed, floor)
+          if (parsed >= floor) {
+            settlementFloor.value = null
+          }
+        } else {
+          credits.value = parsed
+        }
       } else {
         console.warn('⚠️ [CREDIT STORE] No account returned from API')
       }
@@ -65,15 +85,10 @@ export const useCreditStore = defineStore('credit', () => {
     }
 
     const oldCredits = credits.value
-
-    // 🎯 AJOUT DIRECT ET SIMPLE - Bypass de tous les endpoints défaillants
-    // On ajoute directement les crédits calculés par resolvePricing()
     credits.value = oldCredits + creditAmount
 
     console.log(`💰 [CREDIT STORE] SUCCÈS: ${oldCredits} + ${creditAmount} = ${credits.value} crédits`)
 
-    // Optionnel: Sauvegarder le nouveau solde via un rafraîchissement en arrière-plan
-    // (ne pas attendre le résultat pour ne pas bloquer l'UI)
     setTimeout(() => {
       refreshForCurrentUser().catch(e => console.warn('Rafraîchissement différé échoué:', e))
     }, 2000)
@@ -81,7 +96,6 @@ export const useCreditStore = defineStore('credit', () => {
     return true
   }
 
-  // Débiter des crédits du compte utilisateur
   async function debitCredits(amount: number): Promise<boolean> {
     console.log(`🏧 [CREDIT STORE] Débit demandé: ${amount} crédits`)
     if (!accountId.value) {
@@ -93,11 +107,9 @@ export const useCreditStore = defineStore('credit', () => {
       return false
     }
 
-    // Appeler le service backend pour tenter le débit
     try {
       const ok = await CreditService.souscrireCredit(accountId.value, amount)
       if (ok) {
-        // Mise à jour locale immédiate
         const before = credits.value
         credits.value = Math.max(0, Number(credits.value || 0) - Number(amount))
         console.log(`✅ [CREDIT STORE] Débit appliqué: ${before} -> ${credits.value}`)
@@ -115,17 +127,7 @@ export const useCreditStore = defineStore('credit', () => {
     credits.value = 0
     accountId.value = null
     loading.value = false
-  }
-
-  return {
-    credits,
-    accountId,
-    loading,
-    refreshForCurrentUser,
-    addCreditsAfterPayment,
-    debitCredits,
-    reset,
-    getVerificationCost,
+    settlementFloor.value = null
   }
 
   async function getVerificationCost(): Promise<number> {
@@ -133,7 +135,6 @@ export const useCreditStore = defineStore('credit', () => {
       console.log('💰 [CREDIT STORE] Fetching verification cost from rates...')
       const rates = await CreditService.getAllRates()
       if (rates && rates.length > 0) {
-        // Look for rate named "Verification" (case insensitive)
         const verificationRate = rates.find(r =>
           r.libelle && r.libelle.toLowerCase().trim() === 'verification'
         )
@@ -145,10 +146,24 @@ export const useCreditStore = defineStore('credit', () => {
       }
 
       console.log('⚠️ [CREDIT STORE] "Verification" rate not found, using default 2')
-      return 2;
+      return 2
     } catch (e) {
       console.warn('⚠️ [CREDIT STORE] Failed to fetch verification cost, using default 2', e)
       return 2
     }
+  }
+
+  return {
+    credits,
+    accountId,
+    loading,
+    refreshForCurrentUser,
+    addCreditsAfterPayment,
+    debitCredits,
+    reset,
+    getVerificationCost,
+    beginPurchaseSettlement,
+    endPurchaseSettlement,
+    isPurchaseSettlementActive,
   }
 })

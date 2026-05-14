@@ -4,9 +4,9 @@ import { ref, computed } from 'vue'
 export interface User {
   id: number
   email: string
+  pseudo: string
+  /** Alias affichage (égal au pseudo) pour rétrocompatibilité localStorage */
   name: string
-  firstname: string
-  lastname: string
   phone?: string
   role: string
   created_at?: string

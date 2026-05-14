@@ -70,10 +70,13 @@ const errorMessage = ref('')
 onMounted(() => {
   const u: any = authStore.currentUser || getStoredUser()
   if (u) {
-    // Pré-remplir le pseudo à partir des diverses sources possibles
-    const first = u.firstname || u.first_name || u.prenom || u.firstName || ''
-    const last = u.lastname || u.last_name || u.nom || u.lastName || ''
-    form.pseudo = u.pseudo || u.username || u.name || u.login || u.identifiant || `${first}${first && last ? ' ' : ''}${last}` || ''
+    form.pseudo =
+      u.pseudo ||
+      u.username ||
+      u.name ||
+      u.login ||
+      u.identifiant ||
+      ''
     form.email = u.email || ''
     form.phone = u.phone || u.telephone || u.tel || ''
   }

@@ -28,20 +28,6 @@
             <div class="d-flex justify-content-center mt-3">
               <form class="col-md-8 pe-0 ps-0" @submit.prevent="register">
                 <div class="mb-3">
-                  <label class="form-label mb-1 text-dark" for="firstname"
-                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Prénom*</label>
-                  <input class="form-control" type="text" id="firstname" name="firstname"
-                         style="border-radius: 16px" placeholder="Entrez votre prénom" v-model.trim="firstname" required>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label mb-1 text-dark" for="lastname"
-                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Nom*</label>
-                  <input class="form-control" type="text" id="lastname" name="lastname"
-                         style="border-radius: 16px" placeholder="Entrez votre nom" v-model.trim="lastname" required>
-                </div>
-
-                <div class="mb-3">
                   <label for="email" class="form-label mb-1 text-dark"
                          style="font-size: 16px;font-weight: 600;font-family: sans-serif;">Adresse mail*</label>
                   <input type="email" class="form-control" id="email" name="email" style="border-radius: 16px"
@@ -49,11 +35,11 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="phone" class="form-label mb-1 text-dark"
-                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Numéro de téléphone</label>
-                  <input type="tel" class="form-control" id="phone" name="phone"
-                         style="font-family: sans-serif;border-radius: 16px"
-                         placeholder="Entrez votre numéro de téléphone" v-model.trim="phone">
+                  <label class="form-label mb-1 text-dark" for="pseudo"
+                         style="font-family: sans-serif;font-size: 16px;font-weight: 600;">Pseudo*</label>
+                  <input class="form-control" type="text" id="pseudo" name="pseudo"
+                         style="border-radius: 16px" placeholder="Choisissez un pseudo" v-model.trim="pseudo" required
+                         minlength="2" maxlength="100" autocomplete="username">
                 </div>
 
                 <div class="mb-3">
@@ -165,10 +151,8 @@ import { useCreditStore } from '@/stores/credit'
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits(['close', 'openConnexion', 'registerSuccess'])
 
-const firstname = ref('')
-const lastname = ref('')
+const pseudo = ref('')
 const email = ref('')
-const phone = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
 const showPassword = ref(false)
@@ -192,7 +176,7 @@ function onOpenConnexion() {
 async function register() {
   errorMessage.value = ''
 
-  if (!firstname.value || !lastname.value || !email.value || !password.value || !passwordConfirmation.value) {
+  if (!email.value || !pseudo.value || !password.value || !passwordConfirmation.value) {
     errorMessage.value = 'Veuillez remplir tous les champs requis.'
     showErrorToast.value = true
     return
@@ -208,11 +192,9 @@ async function register() {
 
     // Utilise l'API existante via AuthService.register
     const response = await AuthService.register({
-      firstname: firstname.value,
-      lastname: lastname.value,
+      pseudo: pseudo.value,
       email: email.value,
       password: password.value,
-      phone: phone.value || undefined,
     })
 
     // Si l'inscription a réussi et qu'un token est retourné, l'utilisateur est déjà connecté

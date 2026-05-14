@@ -6,8 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 export interface User {
   id: number
   email: string
-  firstname: string
-  lastname: string
+  pseudo: string
   phone?: string
   role: string
   created_at?: string
@@ -25,8 +24,7 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  firstname: string
-  lastname: string
+  pseudo: string
   email: string
   password: string
   phone?: string
@@ -34,8 +32,20 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  user: User
+  user: User & Record<string, unknown>
   token: Token
+}
+
+function mapUserToStore(raw: User & Record<string, unknown>) {
+  const pseudo = String(raw.pseudo ?? '').trim() || (raw.email ? String(raw.email).split('@')[0] : 'Utilisateur')
+  return {
+    id: raw.id,
+    email: raw.email,
+    pseudo,
+    name: pseudo,
+    phone: raw.phone,
+    role: raw.role,
+  }
 }
 
 // Service d'authentification
@@ -66,16 +76,7 @@ export class AuthService {
       // Utiliser le store Pinia pour gérer l'état
       const authStore = useAuthStore()
 
-      // Adapter les données du backend pour le frontend
-      const userData = {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
-        firstname: response.data.user.firstname,
-        lastname: response.data.user.lastname,
-        phone: response.data.user.phone,
-        role: response.data.user.role
-      }
+      const userData = mapUserToStore(response.data.user as User & Record<string, unknown>)
 
       authStore.login(userData as any, response.data.token as any)
 
@@ -120,15 +121,7 @@ export class AuthService {
 
       const authStore = useAuthStore()
 
-      const userData = {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
-        firstname: response.data.user.firstname,
-        lastname: response.data.user.lastname,
-        phone: response.data.user.phone,
-        role: response.data.user.role
-      }
+      const userData = mapUserToStore(response.data.user as User & Record<string, unknown>)
 
       authStore.login(userData as any, response.data.token as any)
 
@@ -150,12 +143,11 @@ export class AuthService {
     try {
       // Préparer les données selon le schema UserSchema.Create du backend
       const payload = {
-        firstname: userData.firstname,
-        lastname: userData.lastname,
+        pseudo: userData.pseudo,
         email: userData.email,
         password: userData.password,
         phone: userData.phone || null,
-        role: userData.role || 'USER', // Par défaut USER selon le backend
+        role: userData.role || 'USER',
       }
 
       console.log('📤 Données d\'inscription:', { ...payload, password: '[HIDDEN]' })
@@ -183,15 +175,7 @@ export class AuthService {
       // Le backend retourne maintenant un token après l'inscription
       if (response.data.token && response.data.user) {
         const authStore = useAuthStore()
-        const userData = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: `${response.data.user.firstname || ''} ${response.data.user.lastname || ''}`.trim(),
-          firstname: response.data.user.firstname,
-          lastname: response.data.user.lastname,
-          phone: response.data.user.phone,
-          role: response.data.user.role
-        }
+        const userData = mapUserToStore(response.data.user as User & Record<string, unknown>)
 
         authStore.login(userData as any, response.data.token as any)
         HttpService.setAuthToken(response.data.token.access_token)
@@ -260,29 +244,27 @@ export class AuthService {
   // Mettre à jour le profil utilisateur (parité avec Angular: PUT /user/update/{id})
   static async updateProfile(userId: number, payload: Record<string, any>): Promise<User> {
     try {
-      // Harmoniser avec le backend (Angular envoie firstname/lastname)
       const apiPayload: Record<string, any> = { ...payload }
-      if (typeof apiPayload.pseudo === 'string' && apiPayload.pseudo.trim().length > 0) {
-        const raw = apiPayload.pseudo.trim()
-        // Découper le pseudo en prénom/nom si possible, sinon tout dans lastname
-        const [first, ...rest] = raw.split(/\s+/)
-        const firstname = first || ''
-        const lastname = rest.join(' ') || (first || '')
-        // Ne pas écraser des valeurs explicitement fournies
-        if (!('firstname' in apiPayload)) apiPayload.firstname = firstname
-        if (!('lastname' in apiPayload)) apiPayload.lastname = lastname
-        delete apiPayload.pseudo
-      }
-      // Inclure l'id si utile côté backend (certains handlers l'attendent dans le body)
       if (!('id' in apiPayload)) apiPayload.id = userId
 
-      const response = await HttpService.put<User>(`/user/update/${userId}`, apiPayload)
-      // Mettre à jour le store avec les nouvelles infos
+      const response = await HttpService.put<{ msg?: string; user?: Record<string, unknown> }>(
+        `/user/update/${userId}`,
+        apiPayload,
+      )
       const authStore = useAuthStore()
-      if (authStore.currentUser) {
-        authStore.updateUser(response.data as any)
+      const updated = response.data.user
+      if (authStore.currentUser && updated) {
+        const merged = mapUserToStore({
+          ...authStore.currentUser,
+          ...updated,
+        } as User & Record<string, unknown>)
+        authStore.updateUser(merged as any)
+        return merged as unknown as User
       }
-      return response.data
+      if (authStore.currentUser) {
+        return authStore.currentUser as unknown as User
+      }
+      throw new Error('Utilisateur non connecté')
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil:', error)
       throw new Error('Échec de la mise à jour du profil')

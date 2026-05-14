@@ -29,7 +29,7 @@
               <form class="col-md-8 pe-0 ps-0" @submit.prevent>
                 <div class="mb-3">
                   <label for="username1" class="form-label mb-1 text-dark"
-                    style="font-size: 16px;font-weight: 600;font-family: sans-serif;">Nom d'utilisateur*</label>
+                    style="font-size: 16px;font-weight: 600;font-family: sans-serif;">Pseudo*</label>
                   <input id="username1" type="text" class="form-control" style="border-radius: 15px"
                     placeholder="Entrez votre nom d'utilisateur" v-model="username">
                 </div>

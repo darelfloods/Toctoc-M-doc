@@ -729,7 +729,7 @@ function getAnswer(key: string): string | null {
         <div class="answer-title mb-1">Se connecter</div>
         <ol class="step-list mb-2 ps-3">
           <li>Cliquez sur <span class="chip">Se connecter</span> dans la barre du haut.</li>
-          <li>Dans la fenêtre Connexion, saisissez votre <strong>Nom d'utilisateur</strong> et votre <strong>Mot de passe</strong>.</li>
+          <li>Dans la fenêtre Connexion, saisissez votre <strong>Pseudo</strong> et votre <strong>Mot de passe</strong>.</li>
           <li>Utilisez l'icône <i class="bi bi-eye"></i> pour afficher/masquer le mot de passe si besoin.</li>
           <li>Cliquez sur <span class="chip chip-primary">Connexion</span>. Un message confirme la réussite.</li>
         </ol>

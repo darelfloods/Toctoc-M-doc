@@ -1,22 +1,22 @@
 // Configuration de l'environnement
 
-// Nouvelle URL du backend TTM (Laravel – en prod, les routes sont sous /api/)
+/** Laravel local (php artisan serve → http://127.0.0.1:8000 , routes sous /api/) */
+const LOCAL_BACKEND_URL = 'http://127.0.0.1:8000/api'
+
+// Backend TTM hébergé (fallback)
 const PRIMARY_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
-const FALLBACK_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
 
 export const ENV = {
-  // URL de base de l'API - Backend TTM sur Hostinger
+  // URL de base de l'API
   API_BASE_URL:
-    // Priorité: Variable d'environnement > Backend Hostinger HTTPS > Fallback HTTP
     (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-    PRIMARY_BACKEND_URL,
+    (import.meta.env.DEV ? LOCAL_BACKEND_URL : PRIMARY_BACKEND_URL),
 
   // Liste ordonnée des bases (avec fallback). La première qui répond est utilisée.
   API_BASE_URLS: (() => {
     const list: string[] = []
     const norm = (u?: string) => (u ? String(u).replace(/\/+$/g, '') : u)
 
-    // En production, utiliser HTTPS puis fallback HTTP si nécessaire
     if (import.meta.env.PROD) {
       const envUrl = norm(import.meta.env.VITE_API_BASE_URL)
       if (envUrl) {
@@ -26,9 +26,10 @@ export const ENV = {
       return list
     }
 
-    // En développement, utiliser uniquement le backend distant
+    // Développement : d'abord l’URL explicite .env, puis le local, puis l’hébergé
     const candidates = [
       norm(import.meta.env.VITE_API_BASE_URL),
+      LOCAL_BACKEND_URL,
       PRIMARY_BACKEND_URL,
     ] as const
     for (const c of candidates) {

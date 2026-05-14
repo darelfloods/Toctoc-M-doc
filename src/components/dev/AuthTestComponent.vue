@@ -71,7 +71,7 @@
         <div class="text-sm">
           <div><strong>Connecté:</strong> {{ authStore.isLoggedIn ? 'Oui' : 'Non' }}</div>
           <div v-if="authStore.currentUser">
-            <strong>Utilisateur:</strong> {{ authStore.currentUser.name || authStore.currentUser.email }}
+            <strong>Utilisateur:</strong> {{ authStore.currentUser.pseudo || authStore.currentUser.name || authStore.currentUser.email }}
           </div>
           <div v-if="authStore.authToken">
             <strong>Token:</strong> {{ authStore.authToken.substring(0, 20) }}...

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import DisponibiliteMedoc from '../components/DisponibiliteMedoc.vue'
 import Panier from '../components/Panier.vue'
 import DonneesPerso from '../components/DonneesPerso.vue'
@@ -27,6 +27,43 @@ import ForgotPassword from '../components/ForgotPassword.vue'
 import ChangePassword from '../components/ChangePassword.vue'
 import EditProfile from '../components/EditProfile.vue'
 import Pharmacies from '../components/Pharmacies.vue'
+import { HttpService } from '../Services/HttpService'
+
+const statsUsersCount = ref<number | string>('121+')
+const statsConnexionsCount = ref<number | string>('100+')
+
+async function loadStats() {
+  try {
+    const usersRes = await HttpService.get<any[]>('/account/get_by_role_user')
+    if (usersRes.data && Array.isArray(usersRes.data)) {
+      statsUsersCount.value = usersRes.data.length
+    }
+    
+    const eventsRes = await HttpService.get<any[]>('/event/stat')
+    if (eventsRes.data && Array.isArray(eventsRes.data)) {
+      const authEvents = eventsRes.data.filter((e: any) => e.action === 'Authentification')
+      statsConnexionsCount.value = authEvents.length
+    }
+  } catch (e) {
+    console.error('Erreur lors du chargement des statistiques:', e)
+  }
+}
+
+let statsPollId: ReturnType<typeof setInterval> | null = null
+function startStatsPolling() {
+  stopStatsPolling()
+  statsPollId = setInterval(loadStats, 10000)
+}
+function stopStatsPolling() {
+  if (statsPollId) {
+    clearInterval(statsPollId)
+    statsPollId = null
+  }
+}
+
+onUnmounted(() => {
+  stopStatsPolling()
+})
 
 const homeService = new HomeService()
 const authStore = useAuthStore()
@@ -41,6 +78,11 @@ onMounted(() => {
   loadAllProduct()
   // Charger les crédits utilisateur si connecté
   creditStore.refreshForCurrentUser()
+  
+  // Charger les statistiques réelles
+  loadStats()
+  startStatsPolling()
+  
   // Debug auth user
   try {
     const stored = getStoredUser()
@@ -1501,29 +1543,16 @@ function getStoredUser(): any | null {
 const displayName = computed<string>(() => {
   const u = authStore.currentUser || getStoredUser() || null
   if (!u) return ''
+  const fromPseudo = u.pseudo || u.username || u.name
+  if (fromPseudo && String(fromPseudo).trim()) return String(fromPseudo).trim()
   const fromEmail = (u.email && typeof u.email === 'string') ? String(u.email).split('@')[0] : ''
-  // Common combinations for full name
-  const first = u.firstname || u.first_name || u.prenom || u.firstName
-  const last = u.lastname || u.last_name || u.nom || u.lastName
-  if (first && last) return `${first} ${last}`
-  if (first) return String(first)
-  if (last) return String(last)
-  // Single-field candidates
-  return (
-    u.username ||
-    u.pseudo ||
-    u.name ||
-    u.login ||
-    u.identifiant ||
-    fromEmail ||
-    ''
-  )
+  return fromEmail || ''
 })
 
 const welcomeText = computed(() =>
   isUserLoggedIn.value && displayName.value
     ? `Bienvenue sur Toctoc Médoc ${displayName.value}`
-    : ''
+    : '',
 )
 
 // Log when user changes
@@ -2552,13 +2581,13 @@ async function onPurchased(payload: any) {
         </div>
         <div class="col-lg-2 col-md-4 col-6">
           <div class="stat-card">
-            <div class="stat-number">121+</div>
+            <div class="stat-number">{{ statsUsersCount }}</div>
             <div class="stat-label">Utilisateurs</div>
           </div>
         </div>
         <div class="col-lg-2 col-md-4 col-6">
           <div class="stat-card">
-            <div class="stat-number">100+</div>
+            <div class="stat-number">{{ statsConnexionsCount }}</div>
             <div class="stat-label">Nouvelles Connexions</div>
           </div>
         </div>
@@ -4321,21 +4350,19 @@ body {
   font-weight: 700;
 }
 
-/* Publicité Version 2 CSS */
-:root {
-    --mint: #4ECDC4;
-    --mint-dark: #3BA39C;
-    --coral: #FF6B9D;
-    --coral-dark: #E5527D;
-    --cream: #FFF8F0;
-    --peach: #FFE5D9;
-    --navy: #1F2937;
-    --slate: #475569;
-    --soft-white: #FEFEFE;
-}
+/* Publicité Version 2 — couleurs charte TTM (#0F7ABB / #3AB24F) */
 
 /* Bouton flottant avec badge */
 .pub-floating-btn-wrapper {
+    --mint: #0F7ABB;
+    --mint-dark: #0a5a8a;
+    --coral: #3AB24F;
+    --coral-dark: #2d8f3e;
+    --cream: #f0f7fc;
+    --peach: #e3eef6;
+    --navy: #0d3a5a;
+    --slate: #475569;
+    --soft-white: #FEFEFE;
     position: relative;
     z-index: 1;
     display: inline-block;
@@ -4352,7 +4379,7 @@ body {
     font-size: 12px;
     font-weight: 700;
     animation: pub-badge-pulse 2s infinite;
-    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+    box-shadow: 0 4px 12px rgba(15, 122, 187, 0.35);
     z-index: 2;
 }
 
@@ -4403,9 +4430,19 @@ body {
 
 /* Modal Overlay */
 .pub-modal-overlay {
+    /* Charte application (primary / accent) */
+    --mint: #0F7ABB;
+    --mint-dark: #0a5a8a;
+    --coral: #3AB24F;
+    --coral-dark: #2d8f3e;
+    --cream: #f0f7fc;
+    --peach: #e3eef6;
+    --navy: #0d3a5a;
+    --slate: #475569;
+    --soft-white: #FEFEFE;
     position: fixed;
     inset: 0;
-    background: rgba(31, 41, 55, 0.8);
+    background: rgba(13, 58, 90, 0.82);
     backdrop-filter: blur(12px);
     display: none;
     align-items: center;
@@ -4726,7 +4763,7 @@ body {
     border-radius: 50px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 24px rgba(255, 107, 157, 0.4);
+    box-shadow: 0 8px 24px rgba(15, 122, 187, 0.35);
     position: relative;
     overflow: hidden;
 }
@@ -4751,7 +4788,7 @@ body {
 
 .pub-cta-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 12px 32px rgba(255, 107, 157, 0.5);
+    box-shadow: 0 12px 32px rgba(58, 178, 79, 0.35);
 }
 
 .pub-cta-button span {

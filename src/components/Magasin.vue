@@ -144,7 +144,7 @@
             <p class="text-muted small">Vous allez recevoir un message de votre opérateur Mobile Money</p>
           </div>
           <div class="modal-footer border-0 justify-content-center">
-            <button type="button" class="btn btn-outline-secondary" @click="showPaymentPending=false">Annuler</button>
+            <button type="button" class="btn btn-outline-secondary" @click="onCancelPendingPayment">Annuler</button>
             <button type="button" class="btn btn-primary" @click="checkPendingPayment">
               <i class="bi bi-arrow-clockwise me-2"></i>
               Vérifier le statut
@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import Paiement from './Paiement.vue'
 import { MyPayGaService } from '@/Services/MyPayGaService'
 import { useAuthStore } from '@/stores/auth'
@@ -262,22 +262,18 @@ function getBadge(libelle: string, price: number): { icon: string; text: string 
 }
 
 // Fonction pour charger les offres depuis l'API
-async function loadOffers() {
-  isLoading.value = true
+async function loadOffers(silent = false) {
+  if (!silent) isLoading.value = true
   try {
-    console.log('📡 [MAGASIN] Chargement des tarifs depuis le backend (/rate/all)...')
+    if (!silent) console.log('📡 [MAGASIN] Chargement des tarifs depuis le backend (/rate/all)...')
     const res = await HttpService.get<Rate[]>('/rate/all')
-    
-    console.log('📦 [MAGASIN] Réponse brute de l\'API:', res)
     
     // Gérer différents formats de réponse
     const ratesData = res.data || res || []
     rates.value = Array.isArray(ratesData) ? ratesData : []
     
-    console.log('📊 [MAGASIN] Tarifs extraits:', rates.value)
-
     if (rates.value.length === 0) {
-      console.warn('⚠️ [MAGASIN] Aucun tarif reçu de l\'API')
+      if (!silent) console.warn('⚠️ [MAGASIN] Aucun tarif reçu de l\'API')
     } else {
       // 🎯 GÉNÉRATION AUTOMATIQUE DES OFFRES depuis les tarifs backend
       offers.value = rates.value.map((rate, index) => ({
@@ -289,15 +285,27 @@ async function loadOffers() {
         popular: isPopular(rate.libelle, rate.price),
         badge: getBadge(rate.libelle, rate.price)
       }))
-
-      console.log('✅ [MAGASIN] Tarifs backend chargés:', rates.value)
-      console.log('✅ [MAGASIN] Offres générées automatiquement:', offers.value)
     }
   } catch (e: any) {
-    console.error('❌ [MAGASIN] Erreur lors du chargement des tarifs backend:', e)
-    console.error('❌ [MAGASIN] Détails de l\'erreur:', e?.response || e?.message || e)
+    if (!silent) console.error('❌ [MAGASIN] Erreur lors du chargement des tarifs backend:', e)
   } finally {
-    isLoading.value = false
+    if (!silent) isLoading.value = false
+  }
+}
+
+let ratesPollId: ReturnType<typeof setInterval> | null = null
+
+function startRatesPolling() {
+  stopRatesPolling()
+  ratesPollId = setInterval(() => {
+    loadOffers(true) // silent load
+  }, 10000)
+}
+
+function stopRatesPolling() {
+  if (ratesPollId) {
+    clearInterval(ratesPollId)
+    ratesPollId = null
   }
 }
 
@@ -306,11 +314,18 @@ onMounted(() => {
   loadOffers()
 })
 
+onUnmounted(() => {
+  stopRatesPolling()
+})
+
 // 🔥 FIX: Recharger automatiquement les offres à chaque ouverture du magasin
 watch(() => props.visible, (newValue) => {
   if (newValue) {
     console.log('🔄 [MAGASIN] Modal ouverte, rechargement des offres...')
     loadOffers()
+    startRatesPolling()
+  } else {
+    stopRatesPolling()
   }
 })
 
@@ -380,6 +395,22 @@ const showPaymentSuccess = ref(false)
 const showPaymentError = ref(false)
 const paymentErrorMessage = ref('')
 const pendingPaymentPhone = ref('')
+/** Solde au moment où la demande Mobile Money est envoyée (hors statut 200 immédiat). */
+const pendingPaymentBaseline = ref<number | null>(null)
+let pendingPaymentPollId: ReturnType<typeof setInterval> | null = null
+
+function clearPendingPaymentPoll() {
+  if (pendingPaymentPollId !== null) {
+    clearInterval(pendingPaymentPollId)
+    pendingPaymentPollId = null
+  }
+}
+
+function onCancelPendingPayment() {
+  clearPendingPaymentPoll()
+  pendingPaymentBaseline.value = null
+  showPaymentPending.value = false
+}
 
 async function onPaymentValidate(payload: { method: string; phone: string; offer?: any }) {
   try {
@@ -446,7 +477,7 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
     const paymentResult = await MyPayGaService.subscribePricing({
       phone: payload.phone,
       amount,
-      lastname: user?.name || 'Client',
+      lastname: user?.pseudo || user?.name || 'Client',
       email: user?.email || '',
       rate_id,
       network: payload.method
@@ -464,77 +495,54 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
                               message.toLowerCase().includes('callback') ||
                               message.toLowerCase().includes('final status will be sent')
 
-    // 🎯 LOGIQUE CORRIGÉE: Vérifier que les crédits ont bien été ajoutés
+    // Paiement confirmé côté MyPayGa (200) : mise à jour solde tout de suite (sans recharger la page)
     if (status === 200) {
-      // ✅ Paiement confirmé immédiatement - mais on vérifie les crédits
       console.log('✅ [MAGASIN] Paiement confirmé par MyPayGa')
-      showPayment.value = false
-      
-      // Sauvegarder les crédits avant paiement
       const creditsBefore = creditStore.credits
       console.log('💰 [MAGASIN] Crédits avant paiement:', creditsBefore)
-      
-      // Attendre progressivement et vérifier plusieurs fois (max 10 secondes)
-      let creditsAfter = creditsBefore
-      let attempts = 0
-      const maxAttempts = 5
-      
-      while (attempts < maxAttempts && creditsAfter <= creditsBefore) {
-        attempts++
-        const waitTime = attempts * 2000 // 2s, 4s, 6s, 8s, 10s
-        console.log(`⏳ [MAGASIN] Tentative ${attempts}/${maxAttempts} - Attente ${waitTime}ms...`)
-        await new Promise(resolve => setTimeout(resolve, waitTime))
-        
-        // Rafraîchir les crédits
+      creditStore.beginPurchaseSettlement(creditsBefore + creditAmount)
+
+      showPayment.value = false
+      showPaymentSuccess.value = true
+      emit('purchased', payload)
+
+      void (async () => {
         await creditStore.refreshForCurrentUser()
-        creditsAfter = creditStore.credits
-        console.log('💰 [MAGASIN] Crédits après tentative', attempts, ':', creditsAfter)
-        
-        if (creditsAfter > creditsBefore) {
-          break
+        for (let i = 0; i < 25; i++) {
+          if (!creditStore.isPurchaseSettlementActive()) break
+          await new Promise(r => setTimeout(r, 1000))
+          await creditStore.refreshForCurrentUser()
         }
-      }
-      
-      // Vérifier si les crédits ont bien augmenté
-      if (creditsAfter > creditsBefore) {
-        console.log('✅ [MAGASIN] Crédits ajoutés avec succès!')
-        showPaymentSuccess.value = true
-        emit('purchased', payload)
-      } else {
-        // ❌ Les crédits n'ont PAS augmenté = le paiement a échoué
-        console.error('❌ [MAGASIN] Les crédits n\'ont pas été ajoutés après', maxAttempts, 'tentatives')
-        console.error('❌ [MAGASIN] Le paiement a probablement été annulé ou a échoué')
-        paymentErrorMessage.value = 'Le paiement a échoué ou a été annulé.\n\nPossibles raisons:\n• Paiement annulé sur votre téléphone\n• Mot de passe Mobile Money incorrect\n• Solde insuffisant\n• Problème de réseau\n\nVeuillez réessayer.'
-        showPaymentError.value = true
-        showPayment.value = false
-      }
+      })()
     } else if (status === 0 || isPendingCallback) {
       // ⏳ Demande envoyée, en attente de confirmation sur le téléphone ou du callback
       console.log('📲 [MAGASIN] Demande de paiement envoyée, en attente de confirmation')
       console.log('📲 [MAGASIN] Message:', message)
       pendingPaymentPhone.value = payload.phone
+      await creditStore.refreshForCurrentUser()
+      pendingPaymentBaseline.value = creditStore.credits
       showPayment.value = false
       showPaymentPending.value = true
-      
-      // 🔄 Démarrer une vérification automatique des crédits toutes les 5 secondes
-      const checkInterval = setInterval(async () => {
+
+      clearPendingPaymentPoll()
+      pendingPaymentPollId = setInterval(async () => {
         console.log('🔄 [MAGASIN] Vérification automatique des crédits...')
-        const creditsBefore = creditStore.credits
+        const baseline = pendingPaymentBaseline.value ?? 0
         await creditStore.refreshForCurrentUser()
         const creditsAfter = creditStore.credits
-        
-        if (creditsAfter > creditsBefore) {
+
+        if (creditsAfter > baseline) {
           console.log('✅ [MAGASIN] Crédits détectés! Paiement confirmé.')
-          clearInterval(checkInterval)
+          clearPendingPaymentPoll()
+          pendingPaymentBaseline.value = null
           showPaymentPending.value = false
           showPaymentSuccess.value = true
           emit('purchased', payload)
         }
-      }, 5000)
-      
-      // Arrêter la vérification après 2 minutes
+      }, 2000)
+
       setTimeout(() => {
-        clearInterval(checkInterval)
+        clearPendingPaymentPoll()
         console.log('⏱️ [MAGASIN] Timeout de vérification automatique atteint')
       }, 120000)
     } else {
@@ -555,23 +563,22 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 // Fonction pour vérifier le statut du paiement en attente
 async function checkPendingPayment() {
   console.log('🔄 [MAGASIN] Vérification manuelle du paiement...')
-  
-  // Sauvegarder les crédits avant rafraîchissement
-  const creditsBefore = creditStore.credits
-  console.log('💰 [MAGASIN] Crédits avant vérification:', creditsBefore)
-  
-  // Rafraîchir les crédits depuis le serveur
+
+  const creditsBefore = pendingPaymentBaseline.value ?? creditStore.credits
+  console.log('💰 [MAGASIN] Crédits baseline (référence paiement):', creditsBefore)
+
   await creditStore.refreshForCurrentUser()
   const creditsAfter = creditStore.credits
   console.log('💰 [MAGASIN] Crédits après vérification:', creditsAfter)
-  
-  // Vérifier si les crédits ont augmenté
+
   if (creditsAfter > creditsBefore) {
     // ✅ Les crédits ont augmenté = paiement réussi
     console.log('✅ [MAGASIN] Paiement confirmé! Les crédits ont augmenté.')
+    clearPendingPaymentPoll()
+    pendingPaymentBaseline.value = null
     showPaymentPending.value = false
     showPaymentSuccess.value = true
-  } else {
+    emit('purchased', { manualCheck: true })
     // ❌ Les crédits n'ont pas augmenté = paiement toujours en attente ou échoué
     console.warn('⚠️ [MAGASIN] Les crédits n\'ont pas encore augmenté')
     console.warn('⚠️ [MAGASIN] Le paiement est toujours en attente ou a échoué')
@@ -589,7 +596,8 @@ async function checkPendingPayment() {
     )
     
     if (!userChoice) {
-      // L'utilisateur veut fermer
+      clearPendingPaymentPoll()
+      pendingPaymentBaseline.value = null
       showPaymentPending.value = false
       paymentErrorMessage.value = 'Vérification annulée. Si vous avez effectué le paiement, vos crédits arriveront dans quelques minutes. Sinon, veuillez réessayer.'
       showPaymentError.value = true
@@ -600,6 +608,8 @@ async function checkPendingPayment() {
 
 // Fonction pour fermer toutes les modales
 function closeAllModals() {
+  clearPendingPaymentPoll()
+  pendingPaymentBaseline.value = null
   showPaymentSuccess.value = false
   showPaymentPending.value = false
   showPaymentError.value = false
@@ -607,6 +617,20 @@ function closeAllModals() {
   showConfirm.value = false
   emit('close')
 }
+
+watch(
+  () => props.visible,
+  v => {
+    if (!v) {
+      clearPendingPaymentPoll()
+      pendingPaymentBaseline.value = null
+    }
+  },
+)
+
+onUnmounted(() => {
+  clearPendingPaymentPoll()
+})
 </script>
 
 <style scoped>
