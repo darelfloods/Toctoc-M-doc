@@ -1,7 +1,7 @@
 // Configuration de l'environnement
 
 /** Laravel local (php artisan serve → http://127.0.0.1:8000 , routes sous /api/) */
-const LOCAL_BACKEND_URL = 'http://127.0.0.1:8000/api'
+const LOCAL_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
 
 // Backend TTM hébergé (fallback)
 const PRIMARY_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'

@@ -8,8 +8,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  /** Backend Laravel local par défaut ; surcharger avec VITE_DEV_PROXY_TARGET si besoin */
-  const laravelTarget = (env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+  /** Backend Laravel distant par défaut ; surcharger avec VITE_DEV_PROXY_TARGET si besoin */
+  const laravelTarget = (env.VITE_DEV_PROXY_TARGET || 'https://backend.srv1079351.hstgr.cloud').replace(/\/+$/, '')
 
   const laravelApiRewrite = {
     target: laravelTarget,
@@ -56,6 +56,8 @@ export default defineConfig(({ mode }) => {
           target: 'https://n8n-workflows-cktx.onrender.com',
           changeOrigin: true,
           secure: true,
+          timeout: 60000,
+          proxyTimeout: 60000,
           rewrite: (path: string) => path.replace(/^\/n8n-webhook/, ''),
         },
         '/epharma-api': {
