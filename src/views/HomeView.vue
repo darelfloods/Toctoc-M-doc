@@ -2288,7 +2288,7 @@ async function onPurchased(payload: any) {
             ordinateur !
           </p>
           <div class="d-flex flex-row align-items-center justify-content-center gap-3 hero-actions">
-            <a class="btn btn-modern fade-in-up text-white" style="animation-delay: 0.6s;" href="https://epharma.ga/">En
+            <a class="btn btn-modern fade-in-up text-white" style="animation-delay: 0.6s;" href="http://about-ttm.srv1079351.hstgr.cloud/">En
               savoir plus</a>
             <button class="btn btn-modern fade-in-up text-white" style="animation-delay: 0.6s;"
               @click="showDonneesPerso = true">Politique de confidentialité</button>
