@@ -49,7 +49,9 @@ export class HttpService {
     const { method = 'GET', headers = {}, body, timeout = API_CONFIG.TIMEOUT } = options
 
     // Construction de l'URL complète
-    const url = /^https?:\/\//i.test(endpoint) ? endpoint : `${API_CONFIG.BASE_URL}${endpoint}`
+    const url = /^https?:\/\//i.test(endpoint)
+      ? endpoint
+      : HttpService.buildUrl(API_CONFIG.BASE_URL, endpoint)
 
     // Fusion des en-têtes (Record pour pouvoir ajouter Authorization dynamiquement)
     const requestHeaders: Record<string, string> = {
@@ -158,6 +160,17 @@ export class HttpService {
 
       throw new HttpError(err?.message || 'Erreur réseau', 0, 'Network Error')
     }
+  }
+
+  private static buildUrl(baseUrl: string, endpoint: string): string {
+    const normalizedBase = baseUrl.replace(/\/+$|\s+$/g, '')
+    let normalizedEndpoint = endpoint.replace(/^\/+/, '')
+
+    if (normalizedBase.toLowerCase().endsWith('/api') && normalizedEndpoint.toLowerCase().startsWith('api/')) {
+      normalizedEndpoint = normalizedEndpoint.replace(/^api\//i, '')
+    }
+
+    return `${normalizedBase}/${normalizedEndpoint}`
   }
 
   // Méthodes HTTP

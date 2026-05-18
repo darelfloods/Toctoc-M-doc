@@ -194,15 +194,17 @@ export class AuthService {
   }
 
   // Demander la réinitialisation de mot de passe par email (même route qu'Angular)
-  static async forgotPassword(email: string): Promise<{ message?: string }> {
+  static async forgotPassword(email: string): Promise<{ message?: string; msg?: string }> {
     try {
-      const endpoint = API_CONFIG.ENDPOINTS.AUTH.RECOVERY_PASSWORD(email)
-      // POST pour éviter les erreurs 405 (method not allowed) sur certains hébergements
-      const response = await HttpService.post<{ message?: string }>(endpoint, {})
+      const response = await HttpService.post<{ message?: string; msg?: string; detail?: string }>(
+        API_CONFIG.ENDPOINTS.AUTH.RECOVERY_PASSWORD,
+        { email: email.trim() },
+      )
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la demande de réinitialisation:', error)
-      throw new Error('Échec de la demande de réinitialisation de mot de passe')
+      const detail = error?.data?.detail || error?.message
+      throw new Error(detail || 'Échec de la demande de réinitialisation de mot de passe')
     }
   }
 
@@ -223,9 +225,8 @@ export class AuthService {
       return response.data
     } catch (error: any) {
       console.error('❌ Erreur lors de la réinitialisation du mot de passe:', error)
-
-      // Extraire le message d'erreur détaillé
-      const errorMessage = error?.data?.detail || error?.message || 'Échec de la réinitialisation du mot de passe'
+      const errorMessage =
+        error?.data?.detail || error?.message || 'Échec de la réinitialisation du mot de passe'
       throw new Error(errorMessage)
     }
   }

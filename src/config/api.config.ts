@@ -2,8 +2,9 @@ import { ENV } from './environment'
 
 // Configuration des URLs de l'API
 const API_CONFIG = {
-  // URL de base de l'API - vide en dev pour utiliser le proxy Vite
-  BASE_URL: ENV.IS_DEV ? '' : ENV.API_BASE_URL,
+  // URL de base de l'API : en dev on utilise directement le backend distant si défini,
+  // afin d'éviter les erreurs de proxy Vite quand la connexion est instable.
+  BASE_URL: ENV.API_BASE_URL,
 
   // Endpoints de l'API
   ENDPOINTS: {
@@ -13,7 +14,7 @@ const API_CONFIG = {
       REGISTER: '/auth/register', // Endpoint public d'inscription
       PROFILE: '/auth/me',
       LOGOUT: '/auth/logout',
-      RECOVERY_PASSWORD: (email: string) => `/user/recovery_password/${email}`,
+      RECOVERY_PASSWORD: '/user/recovery_password',
     },
 
     // Produits (EPG)

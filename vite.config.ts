@@ -8,13 +8,16 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  /** Backend Laravel distant par défaut ; surcharger avec VITE_DEV_PROXY_TARGET si besoin */
+  /** Backend Laravel local par défaut ; surcharger avec VITE_DEV_PROXY_TARGET si besoin */
   const laravelTarget = (env.VITE_DEV_PROXY_TARGET || 'https://backend.srv1079351.hstgr.cloud').replace(/\/+$/, '')
 
+  const isHttps = laravelTarget.startsWith('https')
   const laravelApiRewrite = {
     target: laravelTarget,
     changeOrigin: true,
-    secure: false,
+    secure: isHttps,
+    timeout: 60000,
+    proxyTimeout: 60000,
     rewrite: (path: string) => '/api' + path,
   }
 
@@ -44,7 +47,9 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: laravelTarget,
           changeOrigin: true,
-          secure: false,
+          secure: isHttps,
+          timeout: 60000,
+          proxyTimeout: 60000,
         },
         '/reservations-api': {
           target: 'https://demo2.srv557357.hstgr.cloud',

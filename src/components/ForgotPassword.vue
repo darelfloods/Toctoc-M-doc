@@ -82,8 +82,8 @@ async function onSubmit() {
     successMessage.value = 'Un lien de réinitialisation a été envoyé à votre email. Vérifiez votre boîte de réception.'
     // fermer après un court délai
     setTimeout(() => emit('close'), 2500)
-  } catch (e) {
-    errorMessage.value = "Échec de l'envoi. Veuillez réessayer."
+  } catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : "Échec de l'envoi. Veuillez réessayer."
   } finally {
     isLoading.value = false
   }

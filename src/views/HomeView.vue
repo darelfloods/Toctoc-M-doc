@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import DisponibiliteMedoc from '../components/DisponibiliteMedoc.vue'
 import Panier from '../components/Panier.vue'
 import DonneesPerso from '../components/DonneesPerso.vue'
@@ -63,7 +63,14 @@ function stopStatsPolling() {
 
 onUnmounted(() => {
   stopStatsPolling()
+  productsZoneObserver?.disconnect()
+  productsZoneObserver = null
 })
+
+/** Chevrons visibles uniquement lorsque la zone produits est à l'écran */
+const productsZoneRef = ref<HTMLElement | null>(null)
+const productsZoneVisible = ref(false)
+let productsZoneObserver: IntersectionObserver | null = null
 
 const homeService = new HomeService()
 const authStore = useAuthStore()
@@ -82,6 +89,26 @@ onMounted(() => {
   // Charger les statistiques réelles
   loadStats()
   startStatsPolling()
+
+  productsZoneObserver = new IntersectionObserver(
+    (entries) => {
+      productsZoneVisible.value = entries.some((e) => e.isIntersecting)
+    },
+    { root: null, threshold: 0.15 },
+  )
+
+  watch(
+    productsZoneRef,
+    (el, prev) => {
+      if (prev) productsZoneObserver?.unobserve(prev)
+      if (el) productsZoneObserver?.observe(el)
+    },
+    { flush: 'post' },
+  )
+
+  nextTick(() => {
+    if (productsZoneRef.value) productsZoneObserver?.observe(productsZoneRef.value)
+  })
   
   // Debug auth user
   try {
@@ -132,9 +159,9 @@ const isSearching = ref(false)
 const pendingProductForCheck = ref<any | null>(null)
 const isLoadingProducts = ref(true)
 // Nombre d'articles visibles sur la page d'accueil
-const visibleCount = ref(8)
-// Pagination: page size and current page for product listing
-const pageSize = ref(50)
+const visibleCount = ref(10)
+// Pagination: 10 produits par page sur l'accueil
+const pageSize = ref(10)
 const currentPage = ref(1)
 // Notification temporaire après débit de crédit
 const showCreditDebited = ref(false)
@@ -1623,6 +1650,15 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil((initialProducts.value || []).length / pageSize.value))
 })
 
+const showProductPagination = computed(
+  () =>
+    productsZoneVisible.value &&
+    !isLoadingProducts.value &&
+    searchTerm.value.trim().length === 0 &&
+    products.value.length > 0 &&
+    totalPages.value > 1,
+)
+
 function prevPage() {
   if (currentPage.value <= 1) return
   currentPage.value -= 1
@@ -1698,7 +1734,7 @@ function triggerImmediateSearch(openModal = false) {
   if (searchDebounce.value) clearTimeout(searchDebounce.value)
   const q = searchTerm.value.trim()
   if (q.length === 0) {
-    products.value = (initialProducts.value || []).slice(0, 8)
+    products.value = (initialProducts.value || []).slice(0, visibleCount.value)
   } else {
     performSearch(q)
   }
@@ -2338,7 +2374,7 @@ async function onPurchased(payload: any) {
   </section>
 
   <!-- Search and Products -->
-  <section class="search-section d-flex justify-content-center">
+  <section ref="productsZoneRef" class="search-section products-zone d-flex justify-content-center">
     <div class="container">
       <div class="text-center mb-5">
         <h2 class="display-5 fw-bold mb-3">Tous les produits disponibles</h2>
@@ -2405,7 +2441,7 @@ async function onPurchased(payload: any) {
         </div>
       </div>
       <!-- Actions liste produits: Pagination simple (controls fixed at bottom corners) -->
-      <div v-if="!isLoadingProducts && searchTerm.trim().length === 0">
+      <div v-if="showProductPagination" class="products-pagination-controls">
         <!-- Left chevron (previous) -->
         <button class="pagination-fixed pagination-left" :disabled="currentPage <= 1" @click="prevPage"
           aria-label="Page précédente">
@@ -4303,9 +4339,30 @@ body {
   }
 }
 
-/* Pagination fixed chevrons */
+.products-zone {
+  position: relative;
+}
+
+.products-pagination-controls {
+  pointer-events: none;
+}
+
+.products-pagination-controls .pagination-fixed,
+.products-pagination-controls .pagination-center {
+  pointer-events: auto;
+}
+
+/* Pagination chevrons - affichés seulement dans la zone produits via v-if */
+.products-pagination-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .pagination-fixed {
-  position: fixed;
+  position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 2000;
@@ -4336,7 +4393,7 @@ body {
 }
 
 .pagination-center {
-  position: fixed;
+  position: absolute;
   bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
