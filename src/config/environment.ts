@@ -4,7 +4,7 @@
 const LOCAL_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
 
 // Backend hébergé (fallback)
-const PRIMARY_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloud/api'
+const PRIMARY_BACKEND_URL = 'https://backend.srv1079351.hstgr.cloudapi'
 
 export const ENV = {
   // URL de base de l'API

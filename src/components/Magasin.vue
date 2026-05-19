@@ -395,10 +395,9 @@ const showPaymentSuccess = ref(false)
 const showPaymentError = ref(false)
 const paymentErrorMessage = ref('')
 const pendingPaymentPhone = ref('')
+const pendingTransactionId = ref<string | null>(null)
 /** Solde au moment où la demande Mobile Money est envoyée (hors statut 200 immédiat). */
 const pendingPaymentBaseline = ref<number | null>(null)
-/** ✅ ID de la transaction pour récupérer le vrai statut */
-const pendingTransactionId = ref<number | string | null>(null)
 let pendingPaymentPollId: ReturnType<typeof setInterval> | null = null
 let pendingPaymentTimeoutId: ReturnType<typeof setTimeout> | null = null
 
@@ -411,6 +410,7 @@ function clearPendingPaymentPoll() {
     clearTimeout(pendingPaymentTimeoutId)
     pendingPaymentTimeoutId = null
   }
+  pendingTransactionId.value = null
 }
 
 function formatPaymentError(message?: string): string {
@@ -439,85 +439,44 @@ function formatPaymentError(message?: string): string {
   return `${msg}\n\nVérifiez votre numéro, votre solde Mobile Money et votre connexion.`
 }
 
-function startPendingPaymentPoll(payload: { method: string; phone: string; offer?: any }) {
+function startPendingPaymentPoll(transactionId: string | null) {
   clearPendingPaymentPoll()
-
-  // ✅ Si pas de transaction_id, impossible de vérifier le statut
-  if (!pendingTransactionId.value) {
-    console.error('❌ [MAGASIN] Pas de transaction_id, impossible de vérifier le statut')
-    pendingPaymentTimeoutId = setTimeout(() => {
-      clearPendingPaymentPoll()
-      if (showPaymentPending.value) {
-        showPaymentPending.value = false
-        showPaymentError.value = true
-        paymentErrorMessage.value = 'Erreur: ID de transaction manquant. Veuillez réessayer.'
-      }
-    }, 3000)
+  if (!transactionId) {
+    console.error('[MAGASIN] Aucun transaction_id pour le polling de paiement.')
+    showPaymentPending.value = false
+    paymentErrorMessage.value = 'Impossible de suivre le paiement. Veuillez réessayer.'
+    showPaymentError.value = true
     return
   }
 
-  // ✅ Vérifier le statut toutes les 3 secondes
+  pendingTransactionId.value = transactionId
+
   pendingPaymentPollId = setInterval(async () => {
     try {
-      console.log('🔄 [MAGASIN] Vérification du statut de la transaction:', pendingTransactionId.value)
+      const statusResult = await MyPayGaService.getStatus(transactionId)
+      console.log('[MAGASIN] Statut transaction MyPayGa:', statusResult)
 
-      const statusResponse = await MyPayGaService.getTransactionStatus(pendingTransactionId.value!)
+      if (statusResult.status === 'pending') {
+        return
+      }
 
-      console.log('📦 [MAGASIN] Réponse statut:', statusResponse)
+      clearPendingPaymentPoll()
+      showPaymentPending.value = false
 
-      // ✅ Traiter les différents statuts
-      if (statusResponse.status === 'success') {
-        console.log('✅ [MAGASIN] Paiement réussi!')
-        clearPendingPaymentPoll()
-        showPaymentPending.value = false
-        showPaymentSuccess.value = true
+      if (statusResult.status === 'success') {
         await creditStore.refreshForCurrentUser()
-        emit('purchased', payload)
+        showPaymentSuccess.value = true
+        emit('purchased', { transactionId, paidStatus: statusResult.status })
         return
       }
 
-      if (statusResponse.status === 'failed') {
-        console.log('❌ [MAGASIN] Paiement échoué:', statusResponse.message)
-        clearPendingPaymentPoll()
-        showPaymentPending.value = false
-        paymentErrorMessage.value = statusResponse.message || 'Paiement refusé'
-        showPaymentError.value = true
-        return
-      }
-
-      if (statusResponse.status === 'timeout') {
-        console.log('⏱️ [MAGASIN] Timeout:', statusResponse.message)
-        clearPendingPaymentPoll()
-        showPaymentPending.value = false
-        paymentErrorMessage.value = statusResponse.message || 'Le délai de validation Mobile Money a expiré.'
-        showPaymentError.value = true
-        return
-      }
-
-      if (statusResponse.status === 'cancelled') {
-        console.log('🚫 [MAGASIN] Paiement annulé:', statusResponse.message)
-        clearPendingPaymentPoll()
-        showPaymentPending.value = false
-        paymentErrorMessage.value = statusResponse.message || 'Paiement annulé.'
-        showPaymentError.value = true
-        return
-      }
-
-      if (statusResponse.status === 'pending') {
-        console.log('⏳ [MAGASIN] Le paiement est toujours en attente...')
-        // Continuer à vérifier
-        return
-      }
-
-      // Status inconnu
-      console.warn('⚠️ [MAGASIN] Statut inconnu:', statusResponse.status)
+      paymentErrorMessage.value = statusResult.message || 'Échec du paiement.'
+      showPaymentError.value = true
     } catch (e) {
-      console.warn('[MAGASIN] Erreur polling statut:', e)
-      // Continuer à essayer en cas d'erreur
+      console.warn('[MAGASIN] Erreur polling statut transaction:', e)
     }
   }, 3000)
 
-  // ✅ Timeout global après 3 minutes
   pendingPaymentTimeoutId = setTimeout(() => {
     clearPendingPaymentPoll()
     if (showPaymentPending.value) {
@@ -532,7 +491,6 @@ function startPendingPaymentPoll(payload: { method: string; phone: string; offer
 function onCancelPendingPayment() {
   clearPendingPaymentPoll()
   pendingPaymentBaseline.value = null
-  pendingTransactionId.value = null
   showPaymentPending.value = false
 }
 
@@ -611,33 +569,16 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
     const status = Number(paymentResult.request_status)
     const message = paymentResult.message || ''
-    const transactionId = paymentResult.transaction_id
+    const transactionId = paymentResult.transaction_id ?? null
+    pendingTransactionId.value = transactionId
 
-    // ✅ Sauvegarder le transaction_id pour récupérer le statut plus tard
-    if (transactionId) {
-      pendingTransactionId.value = transactionId
-      console.log('✅ [MAGASIN] Transaction ID sauvegardé:', transactionId)
-    }
-
-    // Comme ttm_front : 200 = demande envoyée au téléphone ; crédits via callback MyPayGa
-    if (status === 200) {
-      pendingPaymentPhone.value = payload.phone
-      await creditStore.refreshForCurrentUser()
-      pendingPaymentBaseline.value = creditStore.credits
-      showPayment.value = false
-      showPaymentPending.value = true
-      showPaymentError.value = false
-      paymentErrorMessage.value = ''
-      startPendingPaymentPoll(payload)
-      return
-    }
-
-    const isPendingCallback =
+    const paymentIsPending =
+      status === 200 ||
       status === 0 ||
       message.toLowerCase().includes('request sent') ||
       message.toLowerCase().includes('callback')
 
-    if (isPendingCallback) {
+    if (paymentIsPending) {
       pendingPaymentPhone.value = payload.phone
       await creditStore.refreshForCurrentUser()
       pendingPaymentBaseline.value = creditStore.credits
@@ -645,7 +586,7 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
       showPaymentPending.value = true
       showPaymentError.value = false
       paymentErrorMessage.value = ''
-      startPendingPaymentPoll(payload)
+      startPendingPaymentPoll(transactionId)
       return
     }
 
@@ -664,84 +605,50 @@ async function onPaymentValidate(payload: { method: string; phone: string; offer
 
 // Fonction pour vérifier le statut du paiement en attente
 async function checkPendingPayment() {
-  if (!pendingTransactionId.value) {
-    paymentErrorMessage.value = 'Erreur: ID de transaction manquant. Veuillez fermer et réessayer.'
+  console.log('🔄 [MAGASIN] Vérification manuelle du paiement...')
+  const transactionId = pendingTransactionId.value
+
+  if (!transactionId) {
+    paymentErrorMessage.value = 'Impossible de vérifier le statut du paiement. Identifiant de transaction manquant.'
     showPaymentError.value = true
+    showPaymentPending.value = false
     return
   }
 
-  console.log('🔄 [MAGASIN] Vérification manuelle du paiement...')
-
   try {
-    const statusResponse = await MyPayGaService.getTransactionStatus(pendingTransactionId.value)
-    console.log('📦 [MAGASIN] Statut reçu:', statusResponse)
+    const statusResult = await MyPayGaService.getStatus(transactionId)
+    console.log('🔍 [MAGASIN] Statut transaction manuel:', statusResult)
 
-    // ✅ Traiter les différents statuts
-    if (statusResponse.status === 'success') {
+    if (statusResult.status === 'success') {
+      await creditStore.refreshForCurrentUser()
       clearPendingPaymentPoll()
-      pendingTransactionId.value = null
+      pendingPaymentBaseline.value = null
       showPaymentPending.value = false
       showPaymentSuccess.value = true
-      await creditStore.refreshForCurrentUser()
+      emit('purchased', { manualCheck: true, transactionId })
       return
     }
 
-    if (statusResponse.status === 'failed') {
-      clearPendingPaymentPoll()
-      pendingTransactionId.value = null
-      showPaymentPending.value = false
-      paymentErrorMessage.value = statusResponse.message || 'Paiement refusé'
-      showPaymentError.value = true
+    if (statusResult.status === 'pending') {
+      console.log('[MAGASIN] Paiement toujours en attente après vérification manuelle.')
       return
     }
 
-    if (statusResponse.status === 'timeout') {
-      clearPendingPaymentPoll()
-      pendingTransactionId.value = null
-      showPaymentPending.value = false
-      paymentErrorMessage.value = 'Le délai de validation Mobile Money a expiré.'
-      showPaymentError.value = true
-      return
-    }
-
-    if (statusResponse.status === 'cancelled') {
-      clearPendingPaymentPoll()
-      pendingTransactionId.value = null
-      showPaymentPending.value = false
-      paymentErrorMessage.value = 'Paiement annulé.'
-      showPaymentError.value = true
-      return
-    }
-
-    if (statusResponse.status === 'pending') {
-      console.log('⏳ [MAGASIN] Le paiement est toujours en attente')
-      const userChoice = confirm(
-        'Le paiement est toujours en attente.\n\n' +
-        'Cela peut signifier que :\n' +
-        '• Le paiement est toujours en cours de traitement\n' +
-        '• Le paiement a été annulé\n' +
-        '• Le paiement a échoué\n\n' +
-        'Voulez-vous continuer à attendre ?\n\n' +
-        'Cliquez sur "OK" pour continuer à attendre\n' +
-        'Cliquez sur "Annuler" pour fermer et réessayer plus tard'
-      )
-
-      if (!userChoice) {
-        clearPendingPaymentPoll()
-        pendingTransactionId.value = null
-        showPaymentPending.value = false
-        paymentErrorMessage.value = 'Vérification annulée. Si vous avez effectué le paiement, vos crédits arriveront dans quelques minutes. Sinon, veuillez réessayer.'
-        showPaymentError.value = true
-      }
-      return
-    }
-
-    // Status inconnu
-    paymentErrorMessage.value = 'Statut de paiement inconnu. Veuillez réessayer.'
+    paymentErrorMessage.value = statusResult.message || 'Échec du paiement.'
+    showPaymentPending.value = false
     showPaymentError.value = true
   } catch (e: any) {
-    console.error('❌ [MAGASIN] Erreur lors de la vérification:', e)
-    paymentErrorMessage.value = 'Impossible de vérifier le statut. Veuillez réessayer ou contacter le support.'
+    console.error('[MAGASIN] Erreur vérification manuelle de paiement:', e)
+    paymentErrorMessage.value = 'Impossible de vérifier le statut du paiement. Veuillez réessayer.'
+    showPaymentError.value = true
+    showPaymentPending.value = false
+  }
+
+  if (!userChoice) {
+    clearPendingPaymentPoll()
+    pendingPaymentBaseline.value = null
+    showPaymentPending.value = false
+    paymentErrorMessage.value = 'Vérification annulée. Si vous avez effectué le paiement, vos crédits arriveront dans quelques minutes. Sinon, veuillez réessayer.'
     showPaymentError.value = true
   }
 }
@@ -750,7 +657,6 @@ async function checkPendingPayment() {
 function closeAllModals() {
   clearPendingPaymentPoll()
   pendingPaymentBaseline.value = null
-  pendingTransactionId.value = null
   showPaymentSuccess.value = false
   showPaymentPending.value = false
   showPaymentError.value = false
@@ -765,7 +671,6 @@ watch(
     if (!v) {
       clearPendingPaymentPoll()
       pendingPaymentBaseline.value = null
-      pendingTransactionId.value = null
     }
   },
 )

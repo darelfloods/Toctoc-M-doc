@@ -7,13 +7,14 @@ export interface MyPayGaSubscribeResponse {
   success_url?: string
   fail_url?: string
   transaction?: unknown
-  transaction_id?: number | string
+  transaction_id?: string
 }
 
-export interface TransactionStatusResponse {
-  status: 'pending' | 'success' | 'failed' | 'timeout' | 'cancelled' | 'not_found'
-  message: string
-  credits_added: boolean
+export interface MyPayGaStatusResponse {
+  transaction_id: string
+  status: 'pending' | 'success' | 'failed' | 'timeout' | 'cancelled'
+  message?: string
+  credits_added?: boolean
 }
 
 /** Même contrat que ttm_front MyPayGa.service → POST /my_pay_ga/subscribe_pricing */
@@ -48,19 +49,13 @@ export class MyPayGaService {
     return res.data
   }
 
-  /**
-   * GET /my_pay_ga/transaction_status/{transactionId}
-   * Récupère le vrai statut de la transaction
-   */
-  static async getTransactionStatus(transactionId: number | string): Promise<TransactionStatusResponse> {
+  static async getStatus(transactionId: string): Promise<MyPayGaStatusResponse> {
     AuthService.initializeAuth()
     const authToken = AuthService.getAuthToken()
-    if (!authToken) throw new Error('Vous devez être connecté.')
+    if (!authToken) throw new Error('Vous devez être connecté pour vérifier le statut du paiement.')
     HttpService.setAuthToken(authToken)
 
-    const res = await HttpService.get<TransactionStatusResponse>(
-      `/my_pay_ga/transaction_status/${transactionId}`,
-    )
+    const res = await HttpService.get<MyPayGaStatusResponse>(`/payments/status/${encodeURIComponent(transactionId)}`)
     return res.data
   }
 }
